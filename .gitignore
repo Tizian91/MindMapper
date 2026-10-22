@@ -1,0 +1,12 @@
+# Personal data: maps and project settings never belong into the repository
+*.mindmap.json
+mindmapper.settings.json
+Assets/
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+*.tmp

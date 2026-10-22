@@ -1,0 +1,327 @@
+'use strict';
+/*
+ * Moving notes between maps ("carry over by hand") and picking a target map.
+ *
+ * A moved note follows the bullet-journal idea the templates already use:
+ *   - the copy in the target map gets `movedFrom` = path of the source map
+ *   - the original stays where it is, but gets `movedTo` = path of the target
+ *     and is greyed out. Everything that lists work (overview, carry over,
+ *     filter counts) ignores notes with `movedTo`, so nothing shows up twice.
+ *   - `movedCopyId` on the original remembers the copy, so "undo move" can
+ *     delete it again.
+ */
+(function (MM) {
+  const S = MM.state;
+  const T = (MM.transfer = {});
+
+  // ---- Target map picker -----------------------------------------------------
+
+  let dlg = null;
+  let resolver = null;
+
+  function build() {
+    dlg = document.createElement('dialog');
+    dlg.id = 'map-picker-dialog';
+    dlg.innerHTML = `
+      <div class="dlg mp">
+        <h3 class="mp-title">Move to map</h3>
+        <div class="pick mp-quick"></div>
+        <input type="search" class="mp-search" placeholder="Filter maps…">
+        <div class="mp-list"></div>
+        <div class="dlg-buttons">
+          <button type="button" data-mp="cancel">Cancel</button>
+        </div>
+      </div>`;
+    document.body.appendChild(dlg);
+    const search = dlg.querySelector('.mp-search');
+    search.addEventListener('input', render);
+    search.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        const first = dlg.querySelector('.mp-row');
+        if (first) choose(first.dataset.path);
+      }
+    });
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) return close(null); // backdrop
+      const row = e.target.closest('.mp-row');
+      if (row) return choose(row.dataset.path);
+      const q = e.target.closest('[data-mp-quick]');
+      if (q) return choose(q.dataset.mpQuick);
+      if (e.target.closest('[data-mp="cancel"]')) close(null);
+    });
+    dlg.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') close(null);
+    });
+    dlg.addEventListener('close', () => {
+      if (resolver) {
+        const r = resolver;
+        resolver = null;
+        r(null);
+      }
+    });
+  }
+
+  function render() {
+    if (!dlg) return;
+    // static texts follow the current language
+    dlg.querySelector('.mp-search').placeholder = MM.tr('Filter maps…');
+    dlg.querySelector('[data-mp="cancel"]').textContent = MM.tr('Cancel');
+    const title = dlg.querySelector('.mp-title');
+    if (title.dataset.en) title.textContent = MM.tr(title.dataset.en);
+    const text = dlg.querySelector('.mp-search').value.trim().toLowerCase();
+    const cur = S.file.path;
+    const paths = MM.project.mapPaths().filter((p) => p !== cur);
+    const quick = dlg.querySelector('.mp-quick');
+    quick.innerHTML = (T.quickTargets() || []).map((q) =>
+      `<button type="button" class="pick-chip" data-mp-quick="${MM.render.esc(q.path)}">${MM.render.esc(q.label)}</button>`).join('');
+    const shown = text ? paths.filter((p) => p.toLowerCase().includes(text)) : paths;
+    dlg.querySelector('.mp-list').innerHTML = shown.length
+      ? shown.map((p) => {
+        const exists = !!MM.project.find(p);
+        return `<div class="mp-row${exists ? '' : ' missing'}" data-path="${MM.render.esc(p)}">
+          <span class="mp-name">${MM.render.esc(MM.project.mapName(p))}</span>
+          <span class="mp-folder muted">${MM.render.esc(MM.project.folderOf(p) || MM.tr('(top level)'))}</span>
+        </div>`;
+      }).join('')
+      : `<p class="hint">${MM.tr('No maps found. Create one from the sidebar first.')}</p>`;
+  }
+
+  function choose(path) {
+    if (!path) return;
+    close(path);
+  }
+
+  function close(value) {
+    T._extraQuick = null; // the quick picks of this call must not leak into the next menu
+    // hand the result over first: the dialog's own 'close' listener would
+    // otherwise resolve with null
+    const r = resolver;
+    resolver = null;
+    if (dlg && dlg.open) dlg.close();
+    if (r) r(value || null);
+  }
+
+  /**
+   * Ask for a target map. Resolves with the chosen path or null.
+   * opts.title: dialog heading; opts.suggestions: extra quick buttons.
+   */
+  T.pickMap = function (opts) {
+    if (MM.project.status !== 'ready') {
+      alert(MM.tr('Maps live in a project folder.\nOpen a folder in the "Project" sidebar first.'));
+      return Promise.resolve(null);
+    }
+    if (!dlg) build();
+    const o = opts || {};
+    const titleEl = dlg.querySelector('.mp-title');
+    titleEl.dataset.en = o.title || 'Move to map';
+    titleEl.textContent = MM.tr(titleEl.dataset.en);
+    dlg.querySelector('.mp-search').value = '';
+    T._extraQuick = Array.isArray(o.suggestions) ? o.suggestions : null;
+    render();
+    dlg.showModal();
+    dlg.querySelector('.mp-search').focus();
+    return new Promise((resolve) => (resolver = resolve));
+  };
+
+  /**
+   * Quick picks based on the kind of the open map (day / week / month).
+   * The dates are relative to the OPEN map, not to today: carrying a task from
+   * last week's plan should offer that plan's neighbour, not this week.
+   */
+  T.quickTargets = function () {
+    if (T._extraQuick) return T._extraQuick;
+    const out = [];
+    const cur = S.file.path;
+    const base = cur ? MM.templates.parsePath(cur) : null; // { kind, date }
+    const now = new Date();
+    const add = (label, path) => {
+      if (path && path !== cur && !out.some((q) => q.path === path)) out.push({ label, path });
+    };
+    const shift = (date, n) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
+
+    if (base && base.kind === 'day') {
+      add(MM.tr('Next day'), MM.templates.dayPath(shift(base.date, 1)));
+      add('This week', MM.templates.weekPath(base.date));
+      if (base.date.toDateString() !== now.toDateString()) add('Today', MM.templates.dayPath(now));
+    } else if (base && base.kind === 'week') {
+      const mon = MM.templates.mondayOf(base.date);
+      add(MM.tr('Next week'), MM.templates.weekPath(shift(mon, 7)));
+      add('This month', MM.templates.monthPath(mon));
+      add('Today', MM.templates.dayPath(now));
+    } else if (base && base.kind === 'month') {
+      const first = new Date(base.date.getFullYear(), base.date.getMonth(), 1);
+      add(MM.tr('Next month'), MM.templates.monthPath(new Date(first.getFullYear(), first.getMonth() + 1, 1)));
+      add('This week', MM.templates.weekPath(now));
+      add('Today', MM.templates.dayPath(now));
+    } else {
+      add('Today', MM.templates.dayPath(now));
+      add('This week', MM.templates.weekPath(now));
+      add('This month', MM.templates.monthPath(now));
+    }
+    return out;
+  };
+
+  // ---- Moving ----------------------------------------------------------------
+
+  /**
+   * Copy the given notes into the map at `targetPath` and mark the originals
+   * as moved. Returns the number of copied notes.
+   */
+  T.move = async function (nodeIds, targetPath) {
+    if (MM.project.status !== 'ready') {
+      alert(MM.tr('Moving notes needs a project folder.\nOpen a folder in the "Project" sidebar first.'));
+      return 0;
+    }
+    const ids = (nodeIds || []).filter((id) => MM.node(id));
+    if (!ids.length || !targetPath) return 0;
+    if (targetPath === S.file.path) {
+      alert(MM.tr('The notes are already in this map.'));
+      return 0;
+    }
+    const movable = ids.map(MM.node).filter((n) => !n.movedTo);
+    if (!movable.length) {
+      alert(MM.tr('These notes were already moved to another map.'));
+      return 0;
+    }
+
+    await MM.project.ensureMap(targetPath);
+    const doc = await MM.project.readMap(targetPath);
+    if (!doc) {
+      alert(MM.tr('Could not read {path}', { path: targetPath }));
+      return 0;
+    }
+
+    const fromLabel = S.file.path ? MM.project.mapName(S.file.path) : S.file.name;
+    const bottom = MM.templates.bottomOf(doc); // measured before the copies are added
+    const copies = [];
+    for (const src of movable) {
+      const n = MM.clone(src);
+      n.id = MM.uid('n');
+      (n.items || []).forEach((i) => (i.id = MM.uid('i')));
+      (n.blocks || []).forEach((b) => (b.id = MM.uid('b')));
+      // the copy lives on its own: no back-reference to the old map in link
+      n.movedFrom = S.file.path || null;
+      delete n.movedTo;
+      n.movedCopyId = null;
+      if (n.link === S.file.path) n.link = '';
+      copies.push({ src, copy: n });
+      doc.nodes[n.id] = n;
+      // image data travels along (like A.copy), the target map is self-contained
+      if (n.imageId && S.doc.assets[n.imageId]) {
+        doc.assets = doc.assets || {};
+        doc.assets[n.imageId] = S.doc.assets[n.imageId];
+      }
+    }
+
+    // connections between notes that travel together
+    for (const e of Object.values(S.doc.edges)) {
+      const a = copies.find((c) => c.src.id === (e.source && e.source.node));
+      const b = copies.find((c) => c.src.id === (e.target && e.target.node));
+      if (!a || !b) continue;
+      const ne = MM.clone(e);
+      ne.id = MM.uid('e');
+      ne.source = Object.assign({}, e.source, { node: a.copy.id });
+      ne.target = Object.assign({}, e.target, { node: b.copy.id });
+      doc.edges[ne.id] = ne;
+    }
+
+    // lay the copies out in a row below everything else, hint above them
+    const y = Math.round(bottom + 120);
+    let x = -560;
+    for (const c of copies) {
+      c.copy.x = x;
+      c.copy.y = y;
+      x += c.copy.w + 30;
+    }
+    const hint = MM.createNode('text', -560, y - 40, {
+      text: 'Moved from ' + fromLabel, w: 260, h: 32, shape: 'none',
+    });
+    hint.style.textColor = '#c53030';
+    hint.style.align = 'left';
+    hint.style.fontSize = 13;
+    doc.nodes[hint.id] = hint;
+    // the copies remember the hint so "undo move" can take it away again
+    for (const c of copies) c.copy.movedHintId = hint.id;
+
+    await MM.project.writeMap(targetPath, doc);
+
+    // mark the originals as moved (greyed out, no longer listed anywhere)
+    for (const c of copies) {
+      c.src.movedTo = targetPath;
+      c.src.movedCopyId = c.copy.id;
+      if (!c.src.link) c.src.link = targetPath;
+    }
+    MM.commit();
+    if (S.file.handle) await MM.storage.writeFile();
+
+    MM.tasks.refreshExternal(); // the target may be a derived map of a task here
+    MM.load.scheduleRefresh();
+    MM.ui.flash(MM.tr('Moved {n} note(s) to {map}', { n: copies.length, map: MM.project.mapName(targetPath) }));
+    MM.refresh();
+    return copies.length;
+  };
+
+  /** Move the selected notes to a map chosen in the picker. */
+  T.moveSelection = async function () {
+    const nodes = MM.selectedNodes().filter((n) => !n.movedTo);
+    if (!nodes.length) {
+      alert(MM.tr('Select one or more notes first (notes that were already moved cannot be moved again).'));
+      return;
+    }
+    const target = await T.pickMap({ title: MM.tr('Move {n} note(s) to map', { n: nodes.length }) });
+    if (!target) return;
+    await T.move(nodes.map((n) => n.id), target);
+  };
+
+  /**
+   * Undo a move: delete the copy in the target map and clear `movedTo`
+   * on the original.
+   */
+  T.undoMove = async function (node) {
+    const n = node || MM.selectedNodes().find((x) => x.movedTo);
+    if (!n || !n.movedTo) return;
+    const targetPath = n.movedTo;
+    const copyId = n.movedCopyId;
+
+    if (MM.project.find(targetPath)) {
+      const doc = await MM.project.readMap(targetPath);
+      if (doc) {
+        let changed = false;
+        const hintId = copyId && doc.nodes[copyId] ? doc.nodes[copyId].movedHintId : null;
+        if (copyId && doc.nodes[copyId]) {
+          delete doc.nodes[copyId];
+          changed = true;
+          // drop connections that pointed at the removed copy
+          // (free ends have no node and stay untouched)
+          for (const e of Object.values(doc.edges)) {
+            if ((e.source.node && !doc.nodes[e.source.node]) || (e.target.node && !doc.nodes[e.target.node])) {
+              delete doc.edges[e.id];
+            }
+          }
+        }
+        // the "Moved from …" hint goes too, unless another copy still uses it
+        if (hintId && doc.nodes[hintId] &&
+            !Object.values(doc.nodes).some((x) => x.movedHintId === hintId)) {
+          delete doc.nodes[hintId];
+          changed = true;
+        }
+        if (changed) await MM.project.writeMap(targetPath, doc);
+      }
+    }
+
+    if (n.link === targetPath) n.link = '';
+    n.movedTo = null;
+    n.movedCopyId = null;
+    MM.commit();
+    if (S.file.handle) await MM.storage.writeFile();
+    MM.tasks.refreshExternal();
+    MM.load.scheduleRefresh();
+    MM.ui.flash(MM.tr('Move undone'));
+    MM.refresh();
+  };
+
+  /** Move target of a note as a label ("2026-W44"). */
+  T.targetLabel = (node) => (node && node.movedTo ? MM.project.mapName(node.movedTo) : '');
+})(window.MM);

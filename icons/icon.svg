@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- MindMapper icon (same motif as MindMapper.ico): a central idea with five connected notes -->
+  <defs>
+    <radialGradient id="c" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#6fd0ff"/>
+      <stop offset="1" stop-color="#2ea7ea"/>
+    </radialGradient>
+    <radialGradient id="o" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#2f7fd0"/>
+      <stop offset="1" stop-color="#14559e"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#6f7f8f" stroke-width="4.5" stroke-linecap="round">
+    <path d="M48 48L15 29M48 48L55 14M48 48L81 40M48 48L22 80M48 48L74 79"/>
+  </g>
+  <g fill="url(#o)">
+    <circle cx="15" cy="29" r="8.5"/>
+    <circle cx="55" cy="14" r="8.5"/>
+    <circle cx="81" cy="40" r="8.5"/>
+    <circle cx="22" cy="80" r="8.5"/>
+    <circle cx="74" cy="79" r="8.5"/>
+  </g>
+  <circle cx="48" cy="48" r="14" fill="url(#c)"/>
+</svg>
