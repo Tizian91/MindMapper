@@ -35,6 +35,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 - **Rechtsklick** auf eine Note, eine Verbindung oder die Fläche öffnet ein Menü mit allen passenden Befehlen.
 - Das **Panel rechts** zeigt die Eigenschaften der Markierung: Typ, Form, Farben, Details. Ist nichts markiert, stehen dort die Einstellungen.
 - **Smart guides** und **Grid** helfen beim Ausrichten. `Alt` beim Ziehen schaltet das Einrasten aus.
+- **`Ctrl` beim Ziehen** nimmt alles mit, was unter der Note hängt: Notes, auf die ihre Pfeile zeigen (beliebig tief), bei einer Gruppe deren Inhalt, und verankerte Zeichnungen. `Ctrl` darf auch erst während des Ziehens gedrückt oder losgelassen werden – die Unter-Notes kommen dann dazu bzw. springen zurück.
 - Verbindungen: Rechtsklick → **Route** (gerade, Winkel, Kurve), **Line**, **Reverse direction**. Doppelklick auf eine Verbindung = Beschriftung.
 
 ## 3. Notiztypen

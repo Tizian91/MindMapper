@@ -135,6 +135,7 @@
     'Anchored {n} drawing(s) to "{note}"': '{n} Zeichnung(en) an „{note}“ verankert',
     'Detached {n} drawing(s)': '{n} Zeichnung(en) gelöst',
     'Nothing anchored here': 'Hier ist nichts verankert',
+    'Moving with {n} sub-note(s)': 'Verschieben mit {n} Unter-Notiz(en)',
     'Drag to draw – over a note or image it is anchored to it (Alt: not anchored). Esc cancels.':
       'Ziehen zum Zeichnen – über einer Note oder einem Bild wird daran verankert (Alt: nicht verankert). Esc bricht ab.',
     // ---- transfer.js (bundles) ----

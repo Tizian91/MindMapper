@@ -321,6 +321,12 @@
         for (const m of I.groupMembers(n)) if (!orig.has(m.id)) orig.set(m.id, { x: m.x, y: m.y });
       }
     }
+    // with Ctrl held while dragging, everything below goes along (arrows, group contents, anchored drawings)
+    const sub = new Map();
+    for (const id of MM.transfer.bundles(S.doc, [...orig.keys()], { group: false }).flat()) {
+      const n = MM.node(id);
+      if (!orig.has(id) && !n.movedTo) sub.set(id, { x: n.x, y: n.y });
+    }
     // free ends of selected connections move along
     const freeEnds = [];
     for (const edge of MM.selectedEdges()) {
@@ -328,7 +334,7 @@
         if (!edge[end].node) freeEnds.push({ end: edge[end], x: edge[end].x, y: edge[end].y });
       }
     }
-    startDrag(e, Object.assign({ mode: 'move', start: p, orig, freeEnds, moved: false }, extra));
+    startDrag(e, Object.assign({ mode: 'move', start: p, orig, sub, freeEnds, moved: false }, extra));
   }
 
   // ---- Pointer move ----------------------------------------------------------
@@ -421,9 +427,21 @@
     if (!drag.moved && Math.hypot(dx, dy) * S.doc.view.zoom < 3) return;
     drag.moved = true;
 
-    const ids = new Set(drag.orig.keys());
+    // Ctrl (Cmd) can be pressed or released during the drag: the sub-notes join or jump back
+    const withSub = (e.ctrlKey || e.metaKey) && drag.sub.size > 0;
+    for (const [id, o] of drag.sub) {
+      const n = MM.node(id);
+      if (n && !withSub) Object.assign(n, o);
+    }
+    const moving = withSub ? new Map([...drag.orig, ...drag.sub]) : drag.orig;
+    if (withSub !== !!drag.withSub) {
+      drag.withSub = withSub;
+      if (withSub) MM.ui.flash(MM.tr('Moving with {n} sub-note(s)', { n: drag.sub.size }));
+    }
+
+    const ids = new Set(moving.keys());
     if (ids.size && !e.altKey) {
-      const boxes = [...drag.orig].map(([id, o]) => {
+      const boxes = [...moving].map(([id, o]) => {
         const n = MM.node(id);
         return { x: o.x + dx, y: o.y + dy, w: n.w, h: n.h };
       });
@@ -434,7 +452,7 @@
     } else {
       S.guides = [];
     }
-    for (const [id, o] of drag.orig) {
+    for (const [id, o] of moving) {
       const n = MM.node(id);
       n.x = Math.round((o.x + dx) * 100) / 100;
       n.y = Math.round((o.y + dy) * 100) / 100;

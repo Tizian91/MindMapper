@@ -247,8 +247,10 @@
    * Connections from outside into the bundle are no reason to come along, and
    * notes moved before (movedTo) stay. Notes that are linked that way form one
    * bundle, unrelated notes separate ones. Returns arrays of ids.
+   * opts.group === false: without the group around a note (only what is below it).
    */
-  T.bundles = function (doc, ids) {
+  T.bundles = function (doc, ids, opts) {
+    const lift = !opts || opts.group !== false;
     const nodes = doc.nodes || {};
     const ok = (id) => !!nodes[id] && !nodes[id].movedTo;
     // smallest first, so the first group containing a note is the innermost one
@@ -273,7 +275,7 @@
         set.add(k);
         for (const c of below.get(k) || []) walk(c);
       };
-      const g = groups.find((x) => inside(nodes[id], x));
+      const g = lift && groups.find((x) => inside(nodes[id], x));
       walk(g ? g.id : id);
       // bundles sharing a note become one
       const overlap = out.filter((b) => b.some((k) => set.has(k)));

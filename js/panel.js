@@ -331,7 +331,7 @@
     ['key_codeNote', 'sc_codeNote'], ['key_group', 'sc_group'], ['key_dblClick', 'sc_dblClick'],
     ['key_dragAnchor', 'sc_dragAnchor'], ['Tab', 'sc_tab'], ['Enter / F2', 'sc_enterF2'],
     ['key_shiftEnter', 'sc_shiftEnter'], ['key_outline', 'sc_outline'], ['key_spaceDrag', 'sc_spaceDrag'],
-    ['key_altDrag', 'sc_altDrag'], ['key_shiftResize', 'sc_shiftResize'], ['key_undoRedo', 'sc_undoRedo'],
+    ['key_altDrag', 'sc_altDrag'], ['key_ctrlDrag', 'sc_ctrlDrag'], ['key_shiftResize', 'sc_shiftResize'], ['key_undoRedo', 'sc_undoRedo'],
     ['key_clipboard', 'sc_clipboard'], ['key_arrows', 'sc_arrows'], ['key_fit', 'sc_fit'],
   ];
 
