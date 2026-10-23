@@ -473,6 +473,17 @@
       `<p class="hint">${items.length ? tr('Nothing matches.') : tr('No tasks yet. Give notes a status, priority or deadline – or use task / to-do notes.')}</p>`;
   }
 
+  /**
+   * " · Ø 45 %" for a group head: plain average of the rows that show a progress
+   * (a main task counts once, with its calculated value). Empty if none has one.
+   */
+  function avgProgress(list) {
+    const vals = list.map((it) => it.shownProgress).filter((p) => p !== null && p !== undefined && !isNaN(p));
+    if (!vals.length) return '';
+    const avg = Math.round(vals.reduce((s, p) => s + p, 0) / vals.length);
+    return `<span title="${esc(tr('Average progress of {n} task(s)', { n: vals.length }))}"> · Ø ${avg} %</span>`;
+  }
+
   function renderBuckets(shown) {
     let h = '';
     for (const [key, label] of BUCKETS) {
@@ -481,7 +492,7 @@
       // no double counting: main tasks only add their part not split up into sub-tasks
       const total = list.reduce((s, it) => s + (it.minutes || 0), 0);
       h += `<div class="ov-group ov-${key}"><div class="ov-group-head">${tr(label)}<span class="muted">${list.length}` +
-        (total ? ` · ${MM.meta.formatDuration(total)}` : '') + '</span></div>';
+        (total ? ` · ${MM.meta.formatDuration(total)}` : '') + avgProgress(list) + '</span></div>';
       for (const it of list) h += rowHTML(it);
       h += '</div>';
     }
@@ -508,12 +519,12 @@
     // main tasks (with sub-tasks) first, then everything else
     const main = roots.filter((it) => kids(it).length), rest = roots.filter((it) => !kids(it).length);
     if (main.length) {
-      h += `<div class="ov-group"><div class="ov-group-head">${tr('Main tasks')}<span class="muted">${main.length}</span></div>`;
+      h += `<div class="ov-group"><div class="ov-group-head">${tr('Main tasks')}<span class="muted">${main.length}${avgProgress(main)}</span></div>`;
       for (const it of main) walk(it, 0);
       h += '</div>';
     }
     if (rest.length) {
-      h += `<div class="ov-group"><div class="ov-group-head">${tr('Other')}<span class="muted">${rest.length}</span></div>`;
+      h += `<div class="ov-group"><div class="ov-group-head">${tr('Other')}<span class="muted">${rest.length}${avgProgress(rest)}</span></div>`;
       for (const it of rest) walk(it, 0);
       h += '</div>';
     }

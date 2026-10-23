@@ -8,16 +8,16 @@ Alle neun Features sind im Code vorhanden. Die Tabelle nennt, was gegenüber dem
 
 | # | Feature | Stand | Abweichungen / offen |
 |---|---|---|---|
-| 0 | Infrastruktur (`getHandle`, `ensureDir`, `writeMap`, `ensureMap`, `createMap({open})`) | ✅ fertig | Map-Picker heißt `MM.transfer.pickMap` (nicht `MM.mapPicker.pick`), nur flache Liste mit Suche und Schnellwahl, **kein Ordnerbaum und kein „New map…“**. `markMoved()` schreibt weiter direkt statt über `P.writeMap`. `transfer.js` wird nach `project.js` geladen (funktioniert, weil alles erst zur Laufzeit aufgelöst wird). |
-| 1 | Maps umbenennen / verschieben | ✅ fertig | Zusätzlich „Delete map…“ im Kontextmenü. Der optionale ⋯-Hover-Button fehlt. Unterordner-Bug R6 behoben. |
+| 0 | Infrastruktur (`getHandle`, `ensureDir`, `writeMap`, `ensureMap`, `createMap({open})`) | ✅ fertig | Map-Picker heißt `MM.transfer.pickMap` (nicht `MM.mapPicker.pick`). Ordnerbaum und „New map…“ ✅ (23.10.2026). `markMoved()` schreibt weiter direkt statt über `P.writeMap`. `transfer.js` wird nach `project.js` geladen (funktioniert, weil alles erst zur Laufzeit aufgelöst wird). |
+| 1 | Maps umbenennen / verschieben | ✅ fertig | Zusätzlich „Delete map…“ im Kontextmenü. ⋯-Hover-Button ✅ (23.10.2026). Unterordner-Bug R6 behoben. |
 | 2 | Tages-Mindmaps | ✅ fertig | Neu (21.10.2026): Carry-over erst, wenn der Tag / die Woche / der Monat der neuen Map begonnen hat (`T.hasStarted`). Vorab angelegte Maps bekommen `doc.carriedOver = false` und fragen beim ersten Öffnen ab Beginn ihres Zeitraums einmal nach (`P.offerCarry`). Gilt für „New map“-Dialog, Links auf fehlende Maps und `P.ensureMap` (Move to map, abgeleitete Maps). Dabei behoben: `ensureMap` hat übertragene Einträge in der alten Map nicht als „moved“ markiert. |
 | 3 | Datennotes | ✅ fertig | Zusätzlich: Rechteabfrage vor dem Schreiben (`ensureWriteAccess`), fehlende Datei neu wählen, `Assets/` wird beim Scan übersprungen. Öffnen per Einfachklick aufs Icon statt Doppelklick. HTML/SVG/XML werden aus Sicherheitsgründen heruntergeladen statt angezeigt (R3). |
 | 4 | Filter „Keep sub-notes“ | ✅ fertig | Cache über `S.rev` wie geplant. |
 | 5 | Map aus Note ableiten | ✅ fertig | Kein klickbares Map-Badge, nur gestrichelter Rahmen (`.node.has-map`). Öffnen geht über Kontextmenü und ↗. |
 | 6 | Fortschritt (%) | ✅ fertig | Status ↔ Fortschritt liegt zentral in `MM.meta.setValue` (Panel, Kontextmenü, Chips). Neu (21.10.2026): Klick auf einen Metadaten-Chip einer Task öffnet ein Dropdown direkt am Chip (`MM.menu.openMeta`): Status, Priorität, Deadline (Schnellwahl + Datumsauswahl), Schätzung, Fortschritt; „More in panel…“ springt wie früher ins Panel. |
-| 7 | Overview erweitern | ✅ fertig | „Map not found“ für gelöschte abgeleitete Maps ✅ (21.10.2026). Durchschnittsfortschritt pro Gruppe fehlt (war optional). |
+| 7 | Overview erweitern | ✅ fertig | „Map not found“ für gelöschte abgeleitete Maps ✅ (21.10.2026). Durchschnittsfortschritt pro Gruppe (Ø im Gruppenkopf) ✅ (23.10.2026). |
 | 8 | Note in andere Map übertragen | ✅ fertig | Hinweisnote wird über `movedHintId` beim Undo mit entfernt. Badge „→ 2026-W44“ ✅ (21.10.2026, Klick öffnet die Ziel-Map). „Move to map“ bleibt bei bereits übertragenen Notes klickbar (nur Label ändert sich). Bugs R4/R5 behoben. |
-| 9 | Emoji / Symbole | ✅ fertig | `Ctrl+Shift+E` und der optionale Toolbar-Button ☺ fehlen. |
+| 9 | Emoji / Symbole | ✅ fertig | `Ctrl+Shift+E` und Toolbar-Button ☺ ✅ (23.10.2026). |
 | 10 | Task-Hierarchie in der Overview | ✅ fertig (21.10.2026) | Siehe Abschnitt „Feature 10“. |
 | 11 | Automatische Darstellungen + Auto-Layout | ✅ fertig (21.10.2026) | Siehe Abschnitt „Feature 11“. |
 | 12 | Auslastung (verplante Stunden, Puffer) | ✅ fertig (21.10.2026) | Siehe Abschnitt „Feature 12“. |

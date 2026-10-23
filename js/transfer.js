@@ -28,7 +28,14 @@
         <div class="pick mp-quick"></div>
         <input type="search" class="mp-search" placeholder="Filter maps…">
         <div class="mp-list"></div>
+        <div class="mp-new" hidden>
+          <input type="text" class="mp-new-name" placeholder="Name">
+          <input type="text" class="mp-new-folder" list="mp-folders" placeholder="Folder">
+          <datalist id="mp-folders"></datalist>
+          <button type="button" class="primary" data-mp="create">Create</button>
+        </div>
         <div class="dlg-buttons">
+          <button type="button" data-mp="new">New map…</button>
           <button type="button" data-mp="cancel">Cancel</button>
         </div>
       </div>`;
@@ -42,12 +49,23 @@
         if (first) choose(first.dataset.path);
       }
     });
+    dlg.querySelector('.mp-new').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') create();
+    });
     dlg.addEventListener('click', (e) => {
       if (e.target === dlg) return close(null); // backdrop
       const row = e.target.closest('.mp-row');
       if (row) return choose(row.dataset.path);
+      const dir = e.target.closest('.mp-dir');
+      if (dir) {
+        if (closedDirs.has(dir.dataset.dir)) closedDirs.delete(dir.dataset.dir);
+        else closedDirs.add(dir.dataset.dir);
+        return render();
+      }
       const q = e.target.closest('[data-mp-quick]');
       if (q) return choose(q.dataset.mpQuick);
+      if (e.target.closest('[data-mp="new"]')) return showNew();
+      if (e.target.closest('[data-mp="create"]')) return create();
       if (e.target.closest('[data-mp="cancel"]')) close(null);
     });
     dlg.addEventListener('keydown', (e) => {
@@ -63,29 +81,80 @@
     });
   }
 
+  const closedDirs = new Set(); // folders collapsed in the tree (kept while the page is open)
+
+  /** Folder tree of the project like the sidebar, without the open map and empty folders. */
+  function treeHTML(entries, depth, cur) {
+    const esc = MM.render.esc;
+    let h = '';
+    for (const e of entries) {
+      if (e.kind === 'dir') {
+        const inner = treeHTML(e.children, depth + 1, cur);
+        if (!inner) continue;
+        const closed = closedDirs.has(e.path);
+        h += `<div class="mp-dir${closed ? ' closed' : ''}" data-dir="${esc(e.path)}" style="--d:${depth}">` +
+          `<span class="sb-caret"></span>${esc(e.name)}</div>`;
+        if (!closed) h += inner;
+      } else if (e.path !== cur) {
+        h += `<div class="mp-row" data-path="${esc(e.path)}" style="--d:${depth}">` +
+          `<span class="mp-name">${esc(MM.project.mapName(e.path))}</span></div>`;
+      }
+    }
+    return h;
+  }
+
   function render() {
     if (!dlg) return;
+    const esc = MM.render.esc;
     // static texts follow the current language
     dlg.querySelector('.mp-search').placeholder = MM.tr('Filter maps…');
     dlg.querySelector('[data-mp="cancel"]').textContent = MM.tr('Cancel');
+    dlg.querySelector('[data-mp="new"]').textContent = MM.tr('New map…');
+    dlg.querySelector('[data-mp="create"]').textContent = MM.tr('Create');
+    dlg.querySelector('.mp-new-name').placeholder = MM.tr('Name');
+    dlg.querySelector('.mp-new-folder').placeholder = MM.tr('Folder (empty = top level)');
     const title = dlg.querySelector('.mp-title');
     if (title.dataset.en) title.textContent = MM.tr(title.dataset.en);
     const text = dlg.querySelector('.mp-search').value.trim().toLowerCase();
     const cur = S.file.path;
-    const paths = MM.project.mapPaths().filter((p) => p !== cur);
     const quick = dlg.querySelector('.mp-quick');
     quick.innerHTML = (T.quickTargets() || []).map((q) =>
-      `<button type="button" class="pick-chip" data-mp-quick="${MM.render.esc(q.path)}">${MM.render.esc(q.label)}</button>`).join('');
-    const shown = text ? paths.filter((p) => p.toLowerCase().includes(text)) : paths;
-    dlg.querySelector('.mp-list').innerHTML = shown.length
-      ? shown.map((p) => {
-        const exists = !!MM.project.find(p);
-        return `<div class="mp-row${exists ? '' : ' missing'}" data-path="${MM.render.esc(p)}">
-          <span class="mp-name">${MM.render.esc(MM.project.mapName(p))}</span>
-          <span class="mp-folder muted">${MM.render.esc(MM.project.folderOf(p) || MM.tr('(top level)'))}</span>
-        </div>`;
-      }).join('')
-      : `<p class="hint">${MM.tr('No maps found. Create one from the sidebar first.')}</p>`;
+      `<button type="button" class="pick-chip" data-mp-quick="${esc(q.path)}">${esc(q.label)}</button>`).join('');
+    const list = dlg.querySelector('.mp-list');
+    const none = `<p class="hint">${MM.tr('No maps found. Create one with "New map…".')}</p>`;
+    if (!text) {
+      list.innerHTML = treeHTML(MM.project.entries, 0, cur) || none;
+      return;
+    }
+    // searching: a flat list of the matches with their folder
+    const shown = MM.project.mapPaths().filter((p) => p !== cur && p.toLowerCase().includes(text));
+    list.innerHTML = shown.length
+      ? shown.map((p) => `<div class="mp-row" data-path="${esc(p)}">
+          <span class="mp-name">${esc(MM.project.mapName(p))}</span>
+          <span class="mp-folder muted">${esc(MM.project.folderOf(p) || MM.tr('(top level)'))}</span>
+        </div>`).join('')
+      : none;
+  }
+
+  /** "New map…": name and folder (the folder of the open map to start with). */
+  function showNew() {
+    const box = dlg.querySelector('.mp-new');
+    box.hidden = false;
+    dlg.querySelector('#mp-folders').innerHTML = MM.project.folders()
+      .map((f) => `<option value="${MM.render.esc(f)}">`).join('');
+    const name = dlg.querySelector('.mp-new-name');
+    name.value = dlg.querySelector('.mp-search').value.trim();
+    dlg.querySelector('.mp-new-folder').value = MM.project.folderOf(S.file.path);
+    name.focus();
+  }
+
+  /** Pick the new map; it is created when the notes are moved (with the template matching its name). */
+  function create() {
+    const P = MM.project;
+    const name = P.sanitizeName(dlg.querySelector('.mp-new-name').value).replace(/\.mindmap\.json$|\.json$/i, '');
+    if (!name) return dlg.querySelector('.mp-new-name').focus();
+    const folder = P.sanitizeFolder(dlg.querySelector('.mp-new-folder').value);
+    choose((folder ? folder + '/' : '') + name + '.mindmap.json');
   }
 
   function choose(path) {
@@ -118,6 +187,7 @@
     titleEl.dataset.en = o.title || 'Move to map';
     titleEl.textContent = MM.tr(titleEl.dataset.en);
     dlg.querySelector('.mp-search').value = '';
+    dlg.querySelector('.mp-new').hidden = true;
     T._extraQuick = Array.isArray(o.suggestions) ? o.suggestions : null;
     render();
     dlg.showModal();

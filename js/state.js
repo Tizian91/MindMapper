@@ -495,6 +495,7 @@ window.MM = window.MM || {};
       this.undoStack = [];
       this.redoStack = [];
       this.last = snapshot();
+      if (MM.routines) MM.routines.track('reset');
     },
 
     commit() {
@@ -514,6 +515,8 @@ window.MM = window.MM || {};
       this.last = s;
       MM.pruneSelection();
       MM.state.rev++;
+      // undo / redo of a checked-off meeting or appointment: the other plans follow (routines.js)
+      if (MM.routines) MM.routines.track('restore');
     },
 
     undo() {
@@ -533,6 +536,11 @@ window.MM = window.MM || {};
 
   /** Finish a user operation: record undo step, autosave, redraw. */
   MM.commit = function () {
+    // sub-tasks are due by their main task's deadline (see tasks.js)
+    const limited = MM.tasks ? MM.tasks.enforceDeadlines(MM.state.doc) : 0;
+    if (limited && MM.ui) MM.ui.flash(MM.tr('Sub-task deadline moved back to the main task\'s deadline ({n})', { n: limited }));
+    // a meeting / appointment checked off here is checked off in the other plans as well
+    if (MM.routines) MM.routines.track('commit');
     MM.state.rev++;
     if (MM.history.commit()) {
       MM.state.dirty = true;

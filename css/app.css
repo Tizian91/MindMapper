@@ -245,7 +245,15 @@ button.primary:hover:not(:disabled) { background: var(--accent-hover); border-co
 .sb-dir { font-weight: 600; color: var(--label); }
 .sb-caret::before { content: "▾"; display: inline-block; width: 14px; color: var(--muted); }
 .sb-dir.closed .sb-caret::before { content: "▸"; }
-.sb-file { padding-left: calc(28px + var(--d) * 14px); }
+.sb-file { padding-left: calc(28px + var(--d) * 14px); display: flex; align-items: center; }
+.sb-file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+/* ⋯ button: the same menu as a right click, shown on hover */
+.sb-more {
+  visibility: hidden; flex: none; margin-left: 4px; padding: 0 6px;
+  border: none; background: none; color: inherit; line-height: 1.2;
+}
+.sb-file:hover .sb-more, .sb-more:focus-visible { visibility: visible; }
+.sb-more:hover { background: var(--accent-soft); color: var(--text); }
 .sb-dir:hover, .sb-file:hover { background: var(--accent-soft); }
 .sb-file.active { background: var(--accent); color: #fff; }
 .sb-outside { border-top: 1px solid var(--border); padding-top: 8px; }
@@ -1042,7 +1050,16 @@ dl.keys dd { margin: 0; color: var(--label); }
   display: flex; align-items: baseline; gap: 8px;
   padding: 5px 8px; border-radius: 5px; cursor: pointer;
 }
-.mp-row:hover { background: var(--accent-soft); }
+.mp-row:hover, .mp-dir:hover { background: var(--accent-soft); }
+/* folder tree (like the sidebar); --d = depth, unset in the flat search list */
+.mp-row { padding-left: calc(22px + var(--d, 0) * 14px); }
+.mp-dir {
+  padding: 4px 8px 4px calc(8px + var(--d) * 14px); border-radius: 5px;
+  cursor: pointer; font-weight: 600; color: var(--label);
+}
+.mp-dir.closed .sb-caret::before { content: "▸"; }
+.mp-new { display: flex; gap: 6px; margin-top: 8px; }
+.mp-new input { flex: 1; min-width: 0; }
 .mp-row.missing .mp-name { opacity: 0.55; }
 .mp-name { font-weight: 600; }
 .mp-folder { font-size: 11px; margin-left: auto; }

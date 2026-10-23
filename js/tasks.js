@@ -53,7 +53,8 @@
    * Returns { info: Map(id -> { progress, count, effort, split, rest, over }),
    *           roots: [{ p, w }] of the top level tasks }.
    */
-  TK.compute = function (doc, external) {
+  /** Main task / sub-task relations of a document: { parent: Map(id -> id), children: Map(id -> [id]) }. */
+  function hierarchy(doc) {
     const nodes = doc.nodes || {};
     const parent = new Map(), children = new Map();
     // never create a cycle (A -> B -> A); the first main task wins
@@ -69,6 +70,41 @@
       if (!children.has(a)) children.set(a, []);
       children.get(a).push(b);
     }
+    return { parent, children };
+  }
+
+  /**
+   * A sub-task is due by its main task's deadline at the latest:
+   * without an own deadline it takes the main task's, a later one is moved
+   * back to it (also when the main task becomes due earlier). Sub-tasks with
+   * an appointment instead of a deadline are left alone. Changes doc in place
+   * (called by MM.commit). Returns the number of moved-back deadlines.
+   */
+  TK.enforceDeadlines = function (doc) {
+    const nodes = doc.nodes || {};
+    const { parent, children } = hierarchy(doc);
+    let limited = 0;
+    const visit = (id) => {
+      const due = nodes[id].meta && nodes[id].meta.deadline;
+      for (const k of children.get(id) || []) {
+        const m = nodes[k].meta;
+        if (due && m && !m.scheduled) {
+          if (!m.deadline) m.deadline = due;
+          else if (m.deadline > due) {
+            m.deadline = due;
+            limited++;
+          }
+        }
+        visit(k);
+      }
+    };
+    for (const id of children.keys()) if (!parent.has(id)) visit(id);
+    return limited;
+  };
+
+  TK.compute = function (doc, external) {
+    const nodes = doc.nodes || {};
+    const { parent, children } = hierarchy(doc);
     // effective { p, w } of a task: progress and effort (estimate, or the total of a main task)
     const memo = new Map(), info = new Map();
     const effective = (id) => {

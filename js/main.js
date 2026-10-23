@@ -198,6 +198,8 @@
       const btn = e.target.closest('button[data-action]');
       if (btn && !btn.disabled) MM.actions[btn.dataset.action](btn.dataset.value);
     });
+    // ☺ must not end a running text edit: the emoji goes in at the caret
+    document.getElementById('emoji-btn').addEventListener('mousedown', (e) => e.preventDefault());
     document.getElementById('status-hint').textContent = UI.defaultHint;
     document.getElementById('status-load').addEventListener('click', () => MM.overview.open('load'));
 

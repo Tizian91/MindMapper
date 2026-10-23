@@ -651,7 +651,8 @@
       } else {
         const active = S.file.path === e.path ? ' active' : '';
         h += `<div class="sb-file${active}" data-file="${esc(e.path)}" style="--d:${depth}" title="${esc(e.path)}">` +
-          `${esc(displayName(e.name))}</div>`;
+          `<span class="sb-file-name">${esc(displayName(e.name))}</span>` +
+          `<button class="sb-more" data-more title="${esc(tr('Rename, move, delete…'))}">⋯</button></div>`;
       }
     }
     return h;
@@ -705,7 +706,11 @@
     const file = e.target.closest('[data-file]');
     if (!file) return;
     e.preventDefault();
-    const path = file.dataset.file;
+    fileMenu(file.dataset.file, e.clientX, e.clientY);
+  }
+
+  /** Menu of a map in the sidebar (right click or its ⋯ button). */
+  function fileMenu(path, x, y) {
     const folders = [{ label: tr('(top level)'), action: () => moveTo(path, '') }]
       .concat(P.folders().map((f) => ({ label: f, action: () => moveTo(path, f) })),
         [{ label: 'New folder…', action: () => moveToNewFolder(path) }]);
@@ -716,7 +721,7 @@
       { label: 'Move to folder', submenu: folders },
       '-',
       { label: 'Delete map…', action: () => deleteMap(path) },
-    ], e.clientX, e.clientY);
+    ], x, y);
   }
 
   async function moveTo(path, folder) {
@@ -778,7 +783,10 @@
       return;
     }
     const file = t.closest('[data-file]');
-    if (file) P.openMap(file.dataset.file);
+    if (file && t.closest('[data-more]')) {
+      const r = t.closest('[data-more]').getBoundingClientRect();
+      fileMenu(file.dataset.file, r.left, r.bottom);
+    } else if (file) P.openMap(file.dataset.file);
   }
 
   // ---- "New map" dialog ----------------------------------------------------------

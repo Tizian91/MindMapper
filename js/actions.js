@@ -295,6 +295,11 @@
     MM.menu.open(MM.insertItems((type) => A.addNode(type), MM.viewCenter()), r.left, r.bottom + 2);
   };
 
+  /** Toolbar ☺: emoji picker below the button (into the edited / selected note, else as a note). */
+  A.emoji = function () {
+    MM.interaction.openEmojiPicker(document.getElementById('emoji-btn').getBoundingClientRect());
+  };
+
   /** Change the type of all selected notes. */
   A.setType = function (type) {
     for (const n of MM.selectedNodes()) MM.setNodeType(n, type);

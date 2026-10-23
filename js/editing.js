@@ -160,8 +160,8 @@
     const n = MM.node(ed.nodeId);
     if (!n) return;
 
-    // Ctrl+. opens the emoji picker; the picker restores the caret afterwards
-    if ((e.ctrlKey || e.metaKey) && e.key === '.') {
+    // Ctrl+. / Ctrl+Shift+E opens the emoji picker; the picker restores the caret afterwards
+    if (MM.interaction.isEmojiKey(e)) {
       e.preventDefault();
       const div = MM.render.nodeEls.get(n.id);
       const r = div ? div.getBoundingClientRect() : null;

@@ -289,5 +289,128 @@
     return count;
   };
 
+  // ---- Done in one place = done everywhere --------------------------------------------
+  //
+  // A meeting (🔁) or an appointment (📌) is listed in the day plan and in the
+  // week plan, and an appointment is a note of its own as well. Checking one of
+  // them off (or opening it again) does the same with the others. The history
+  // in state.js reports every change: track('commit') before a step is recorded,
+  // track('restore') after undo / redo, track('reset') when a map is loaded.
+  // The open map is adjusted within the same undo step; other maps are written
+  // in the background. Undo in the open map takes the other maps back as well.
+
+  /**
+   * What is done in a doc: Map(key -> { id, date, done }), id = routine / appointment note id.
+   *   entries: to-do items with item.routine in a dated column (day / week plan)
+   *   appointments: notes with meta.scheduled (not a routine definition)
+   * The weekly "Routines this week" list has no date and stays alone.
+   */
+  function doneState(doc) {
+    const out = new Map();
+    for (const n of Object.values((doc && doc.nodes) || {})) {
+      const m = n.meta || {};
+      if (m.scheduled && !n.repeat) out.set('n:' + n.id, { id: n.id, date: m.scheduled, done: m.status === 'done' });
+      if (n.type !== 'todo' || !m.deadline) continue;
+      for (const it of n.items || []) {
+        if (it.routine) out.set(`i:${n.id}:${it.id}`, { id: it.routine, date: m.deadline, done: !!it.done });
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Set entries and the appointment note of change c ({ id, date, done }) in doc.
+   * A routine definition (n.repeat) stays open - only its entry of that day is done;
+   * a note moved to another day is not touched by the entry of the old day.
+   * Returns true if something changed.
+   */
+  function applyDone(doc, c) {
+    let dirty = false;
+    for (const n of Object.values((doc && doc.nodes) || {})) {
+      const m = n.meta || {};
+      if (n.id === c.id && !n.repeat && m.scheduled === c.date && (m.status === 'done') !== c.done) {
+        MM.meta.setValue([n], 'status', c.done ? 'done' : 'open');
+        dirty = true;
+      }
+      if (n.type !== 'todo' || m.deadline !== c.date) continue;
+      for (const it of n.items || []) {
+        if (it.routine === c.id && !!it.done !== c.done) {
+          it.done = c.done;
+          dirty = true;
+        }
+      }
+    }
+    return dirty;
+  }
+
+  let base = { doc: null, state: new Map() };
+  let queue = Promise.resolve();
+
+  /** mode: 'commit' | 'restore' | 'reset' (see above). */
+  R.track = function (mode) {
+    const S = MM.state;
+    let before = base.doc === S.doc ? base.state : null;
+    if (!before && mode === 'commit' && MM.history.last) {
+      // no state of this doc yet (loaded before this file): the last undo snapshot is the state before the step
+      try {
+        before = doneState(JSON.parse(MM.history.last));
+      } catch (err) { /* no snapshot: nothing to compare */ }
+    }
+    let changes = [];
+    if (before && mode !== 'reset') {
+      const now = doneState(S.doc);
+      for (const [key, v] of now) {
+        const old = before.get(key);
+        if (old && old.done !== v.done) changes.push(v);
+      }
+      // the open map in the same step (after undo / redo it already is as it was)
+      if (mode === 'commit') changes.forEach((c) => applyDone(S.doc, c));
+    }
+    base = { doc: S.doc, state: doneState(S.doc) };
+    if (!changes.length) return;
+    const from = S.file.path;
+    queue = queue.then(() => syncOthers(changes, from));
+  };
+
+  /** Write the changes into the other maps of the project folder (not `from`, it has them). */
+  async function syncOthers(changes, from) {
+    const P = MM.project, T = MM.templates;
+    if (!P || P.status !== 'ready') return;
+    // the day plans and week plans of the dates (wherever they were moved to)
+    const days = new Set(changes.map((c) => c.date));
+    const weeks = new Set(changes.map((c) => iso(T.mondayOf(parse(c.date)))));
+    const isPlan = (path) => {
+      const info = T.parsePath(path);
+      return (info.kind === 'day' && days.has(iso(info.date))) || (info.kind === 'week' && weeks.has(iso(info.date)));
+    };
+    const ids = new Set(changes.map((c) => c.id));
+    let count = 0;
+    try {
+      for (const path of P.mapPaths()) {
+        if (path === from) continue;
+        // appointment notes live in any map - the cache tells where, the file is read fresh
+        const cached = MM.load.docs().get(path);
+        const hasNote = cached && cached.nodes && Object.keys(cached.nodes).some((id) => ids.has(id));
+        if (!isPlan(path) && !hasNote) continue;
+        const doc = await P.readMap(path);
+        if (!doc) continue;
+        let dirty = false;
+        for (const c of changes) dirty = applyDone(doc, c) || dirty;
+        if (!dirty) continue;
+        if (!(await P.ensureWriteAccess())) throw new Error(MM.tr('no write access to the project folder'));
+        await P.writeMap(path, doc);
+        count++;
+      }
+    } catch (err) {
+      MM.ui.flash(MM.tr('Could not update the other plans: {err}', { err: (err && err.message) || err }));
+      return;
+    }
+    if (count) {
+      MM.load.scheduleRefresh();
+      const done = changes[changes.length - 1].done;
+      MM.ui.flash(MM.tr(done ? 'Also checked off in {n} other map(s)' : 'Also unchecked in {n} other map(s)', { n: count }));
+    }
+  }
+
   R.iso = iso;
 })(window.MM);

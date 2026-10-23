@@ -623,8 +623,11 @@
       (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)));
   }
 
-  /** Open the emoji picker for the note being edited (or the selection). */
-  function openEmojiPicker() {
+  /**
+   * Open the emoji picker for the note being edited (or the selection).
+   * anchorRect: where it pops up (default: top centre of the canvas).
+   */
+  I.openEmojiPicker = function (anchorRect) {
     const ed = MM.editing;
     const node = (ed && MM.node(ed.nodeId)) || MM.selectedNodes()[0] || null;
     const r = document.getElementById('viewport').getBoundingClientRect();
@@ -632,16 +635,19 @@
       target: node,
       at: MM.viewCenter(),
       mode: node ? 'text' : 'note',
-      anchorRect: { left: r.left + r.width / 2 - 160, top: r.top + 80, bottom: r.top + 80 },
+      anchorRect: anchorRect || { left: r.left + r.width / 2 - 160, top: r.top + 80, bottom: r.top + 80 },
     });
-  }
+  };
+
+  /** Ctrl+. or Ctrl+Shift+E (Cmd on a Mac) */
+  I.isEmojiKey = (e) => (e.ctrlKey || e.metaKey) && (e.key === '.' || (e.shiftKey && e.key.toLowerCase() === 'e'));
 
   function onKeyDown(e) {
-    // Ctrl+. opens the emoji picker – also while editing a note text
-    if ((e.ctrlKey || e.metaKey) && e.key === '.') {
+    // the emoji picker shortcut works while editing a note text as well
+    if (I.isEmojiKey(e)) {
       e.preventDefault();
       e.stopPropagation();
-      openEmojiPicker();
+      I.openEmojiPicker();
       return;
     }
     if (isTyping(e)) return;

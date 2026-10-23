@@ -45,7 +45,7 @@ load the example map again (it is shown on the very first start and contains a s
 
 Rule of thumb: change the model in `MM.state.doc`, then call `MM.commit()`. That records an undo step, autosaves, and redraws.
 
-Handy keys: `Enter`/`F2` edit, `Tab` child note, `Ctrl+D` duplicate, `Ctrl+.` emoji picker,
+Handy keys: `Enter`/`F2` edit, `Tab` child note, `Ctrl+D` duplicate, `Ctrl+.` / `Ctrl+Shift+E` emoji picker,
 `Ctrl+Shift+S` save as, `Shift+1` fit, `Ctrl+click` a note opens its link / attached file.
 
 ## File format

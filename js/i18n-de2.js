@@ -104,6 +104,17 @@
     'no write access to the project folder': 'kein Schreibzugriff auf den Projektordner',
     'Could not save the classification: {err}': 'Einordnung konnte nicht gespeichert werden: {err}',
     'Delete task (Del) – its time no longer counts for the workload': 'Aufgabe löschen (Entf) – ihre Zeit zählt nicht mehr für die Auslastung',
+    // ---- tasks.js / routines.js ----
+    'Sub-task deadline moved back to the main task\'s deadline ({n})': 'Frist der Unteraufgabe auf die Frist der Hauptaufgabe zurückgesetzt ({n})',
+    'Also checked off in {n} other map(s)': 'Auch in {n} anderen Map(s) abgehakt',
+    'Also unchecked in {n} other map(s)': 'Auch in {n} anderen Map(s) wieder geöffnet',
+    'Could not update the other plans: {err}': 'Die anderen Pläne konnten nicht aktualisiert werden: {err}',
+    // ---- sidebar ⋯, map picker, overview groups ----
+    'Rename, move, delete…': 'Umbenennen, verschieben, löschen…',
+    'New map…': 'Neue Map…',
+    'Folder (empty = top level)': 'Ordner (leer = oberste Ebene)',
+    'No maps found. Create one with "New map…".': 'Keine Maps gefunden. Mit „Neue Map…“ eine anlegen.',
+    'Average progress of {n} task(s)': 'Durchschnittlicher Fortschritt von {n} Aufgabe(n)',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);
