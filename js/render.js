@@ -121,7 +121,7 @@
       n.type === 'task' ? [n.meta, n.tags, new Date().toDateString(), MM.tasks.info(n), n.repeat, MM.getLang(), MM.prioKey()] : 0,
       n.type === 'image' ? [n.imageId, !!S.doc.assets[n.imageId], st.fit] : 0,
       n.type === 'file' ? [n.file && n.file.path, n.file && n.file.size] : 0,
-      n.type === 'diary' ? [n.diary, MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id])] : 0]);
+      n.type === 'diary' ? [n.diary, MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id]), MM.diary.badge(n)] : 0]);
     if (div._contentKey !== contentKey && !editing) {
       R.buildContent(div, n);
       div._contentKey = contentKey;
@@ -280,8 +280,13 @@
       const wrap = el('div', 'diary-note');
       const head = el('div', 'todo-head diary-head');
       const dm = n.diary || {};
-      head.append(el('span', 'diary-date', MM.meta.formatDate(dm.date) + (dm.time ? ' · ' + dm.time : '')),
-        el('span', 'diary-book', dm.book || MM.tr('no diary chosen')));
+      // 🔒 its page was closed; ✎ the note was changed after that (the diary keeps the closed version)
+      const badge = MM.diary.badge(n);
+      const date = el('span', 'diary-date', (badge ? '🔒 ' : '') + MM.meta.formatDate(dm.date) + (dm.time ? ' · ' + dm.time : ''));
+      if (badge) date.title = MM.tr(badge === 'changed' ? 'Page closed – this note was changed afterwards' : 'Page closed in the diary');
+      head.append(date);
+      if (badge === 'changed') head.append(el('span', 'diary-changed', '✎ ' + MM.tr('changed')));
+      head.append(el('span', 'diary-book', dm.book || MM.tr('no diary chosen')));
       const body = el('div', 'diary-body md');
       body.dataset.field = 'text';
       body.innerHTML = n.text.trim()

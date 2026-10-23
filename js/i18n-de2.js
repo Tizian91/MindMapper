@@ -164,6 +164,33 @@
     'Could not read the image': 'Das Bild konnte nicht gelesen werden',
     'Markdown: # heading, **bold**, *italic*, - list, | table |. Paste or drop images while writing. Arrows pointing at the entry show their note in its head.':
       'Markdown: # Überschrift, **fett**, *kursiv*, - Liste, | Tabelle |. Bilder beim Schreiben einfügen oder hineinziehen. Pfeile auf den Eintrag zeigen ihre Notiz im Kopf.',
+    // ---- diary.js stage 2 (design, calendar, closed pages) ----
+    'Lines': 'Linien',
+    'Squares': 'Karos',
+    'Dots': 'Punkte',
+    'Font': 'Schrift',
+    'Size': 'Größe',
+    'Text': 'Text',
+    'Accent': 'Akzent',
+    'Paper': 'Papier',
+    'Ruling': 'Linierung',
+    'Reset': 'Zurücksetzen',
+    'Only for this diary – the maps stay as they are.': 'Nur für dieses Tagebuch – die Maps bleiben, wie sie sind.',
+    'Close page': 'Seite abschließen',
+    'Freeze this page: later changes to the notes no longer change it': 'Seite einfrieren: spätere Änderungen an den Notizen ändern sie nicht mehr',
+    'Closed {at}': 'Abgeschlossen {at}',
+    'Reopen': 'Wieder öffnen',
+    'Page closed': 'Seite abgeschlossen',
+    'Reopen the page of {day}?\n\nIt shows the notes as they are now again; the closed version is discarded.':
+      'Seite vom {day} wieder öffnen?\n\nSie zeigt dann wieder die Notizen in ihrem jetzigen Stand; die abgeschlossene Fassung wird verworfen.',
+    'the note was deleted or moved to another diary / day': 'die Notiz wurde gelöscht oder in ein anderes Tagebuch / auf einen anderen Tag verschoben',
+    'the note was changed after closing – this is the closed version': 'die Notiz wurde nach dem Abschluss geändert – hier steht die abgeschlossene Fassung',
+    'Added after closing': 'Nach dem Abschluss hinzugekommen',
+    'The note is no longer in this map': 'Die Notiz ist nicht mehr in dieser Map',
+    'Could not save the diary: {err}': 'Das Tagebuch konnte nicht gespeichert werden: {err}',
+    'Page closed – this note was changed afterwards': 'Seite abgeschlossen – diese Notiz wurde danach geändert',
+    'Page closed in the diary': 'Seite im Tagebuch abgeschlossen',
+    'changed': 'geändert',
     // ---- transfer.js (bundles) ----
     'Moved {n} note(s) to {map} (with {m} sub-note(s) / group)': '{n} Notiz(en) nach {map} verschoben (mit {m} Unter-Notiz(en) / Gruppe)',
   };

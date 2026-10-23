@@ -118,6 +118,7 @@
     if (!P.dir) return;
     P.entries = await list(P.dir, '', 0);
     P.diaries = await listDiaries();
+    MM.diary.loadIndex(); // 🔒 marks of diary notes on closed pages (background)
     P.render();
     MM.load.scheduleRefresh(); // workload of all maps (read in the background)
   };

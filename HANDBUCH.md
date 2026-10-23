@@ -206,6 +206,12 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
   **Bilder** beim Schreiben mit `Ctrl+V` einfügen oder hineinziehen – sie werden in der Map gespeichert. Doppelklick bearbeitet den Text, `Ctrl+Enter` oder `Esc` beendet.
 - **Kopfzeile:** Zeigt ein Pfeil von einer anderen Note **auf** den Eintrag, erscheint diese Note im Tagebuch über dem Eintrag (Titel, Status, Fortschritt, Deadline, Tags), mehrere nebeneinander. Hängt sie über weitere Pfeile an einer Task, wird die oberste Task als **⤴ Haupttask** genannt. Liegt eine Note ohne eigenen Pfeil lose in einer Gruppe, geht die Suche über die Gruppe weiter (z. B. Subaufgabe → Gruppe → Note → Eintrag). Eine Task, die nur *in* derselben Gruppe liegt, ohne Pfeil auf die Gruppe, zählt nicht.
 - **Lesen:** Klick auf das Tagebuch in der Seitenleiste, oder **↗** / `Ctrl+Klick` am Eintrag (öffnet direkt dessen Seite). Eine Seite pro Tag, leere Tage fehlen. **←/→** blättern, Mausrad scrollt, die Auswahl oben springt zu einem Tag. **↗ Map** am Eintrag zeigt ihn in seiner Map.
+- **📅 Kalender** in der Leseansicht: Tage mit Einträgen sind anklickbar, abgeschlossene tragen 🔒.
+- **🎨 Gestaltung** pro Tagebuch: Schrift (Liste oder beliebiger installierter Name), Größe, Text-, Akzent- und Papierfarbe, Linierung (keine, Linien, Karos, Punkte). Wird sofort angezeigt und im Tagebuch gespeichert – die Maps bleiben unverändert.
+- **🔒 Seite abschließen** (z. B. fürs Laborbuch): Einträge, Kopfzeilen und Bilder des Tages werden ins Tagebuch kopiert, die Seite zeigt ab dann diesen Stand.
+  - Wird eine Notiz danach geändert, gelöscht oder auf einen anderen Tag gelegt, steht das als ✎-Hinweis über dem Eintrag. Später hinzugekommene Einträge erscheinen unter **Nach dem Abschluss hinzugekommen**.
+  - Auf der Map trägt die Notiz 🔒 im Kopf, nach einer Änderung zusätzlich **✎ geändert**.
+  - **Wieder öffnen** (mit Rückfrage) verwirft die abgeschlossene Fassung.
 - Tagebucheinträge erscheinen nicht in Overview und Auslastung und werden beim Carry-over nicht übertragen.
 
 ## 16. Emoji

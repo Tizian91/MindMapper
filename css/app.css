@@ -1222,3 +1222,36 @@ span.ov-caret { cursor: default; }
 .dy-m-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
 .dy-goto { flex: none; font-size: 12px; padding: 1px 7px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dy-body img { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); }
+
+/* diary stage 2: calendar, design, closed pages */
+#diary-dialog { position: fixed; }
+.dy-pop { position: absolute; top: 46px; z-index: 5; background: var(--panel); color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 8px 24px var(--shadow); padding: 10px 12px; }
+.dy-pop[hidden] { display: none; }
+.dy-cal { left: 50%; transform: translateX(-50%); width: 260px; }
+.dy-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-weight: 600; }
+.dy-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.dy-cal-wd { font-size: 11px; color: var(--muted); }
+.dy-cal-day { padding: 3px 0; border-radius: 5px; font-size: 13px; line-height: 1.6; }
+.dy-cal-day.empty { color: var(--muted); opacity: 0.5; }
+button.dy-cal-day { padding: 3px 0; font-weight: 700; background: var(--accent-soft); border-color: transparent; }
+.dy-cal-day.today { box-shadow: inset 0 0 0 1px var(--accent); }
+button.dy-cal-day.current { background: var(--accent); color: #fff; }
+.dy-cal-day.closed::after { content: "🔒"; font-size: 8px; vertical-align: top; }
+.dy-design { right: 12px; width: 360px; }
+.dy-design-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.dy-design-row label { min-width: 50px; font-size: 12px; color: var(--label); }
+.dy-design-row input[type="text"] { flex: 1; min-width: 0; }
+.dy-design-row input[type="number"] { width: 70px; }
+.dy-design-row input[type="color"] { width: 34px; height: 26px; padding: 1px; }
+.dy-design-foot { justify-content: space-between; margin: 4px 0 0; }
+.dy-design-foot .hint { margin: 0; font-size: 11px; }
+.dy-day-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 2px solid var(--dy-accent); margin-bottom: 18px; padding-bottom: 4px; }
+.dy-day-row .dy-day { border: none; margin: 0; padding: 0; flex: 1; }
+.dy-closed-info { font-family: system-ui, sans-serif; font-size: 12px; color: var(--muted); }
+.dy-page-btn { font-family: system-ui, sans-serif; font-size: 12px; padding: 2px 9px; color: var(--dy-accent); }
+.dy-mark { font-family: system-ui, sans-serif; font-size: 12px; color: #9c4221; background: rgba(221, 107, 32, 0.1); border-radius: 4px; padding: 2px 8px; margin: 0 0 6px; }
+.dy-added-head { font-family: system-ui, sans-serif; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.05em; border-top: 1px dashed rgba(0, 0, 0, 0.25); padding-top: 10px; margin: 10px 0 14px; }
+.dy-entry.dy-added { opacity: 0.85; }
+.diary-changed { font-weight: 400; font-size: 0.9em; color: #c05621; }

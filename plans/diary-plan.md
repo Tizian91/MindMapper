@@ -65,7 +65,7 @@ Overlay-Positionen relativ zur Seite (x in Prozent der Seitenbreite, y in px ab 
 - Leseansicht `js/diary.js`: großes Fenster (wie Overview), Seiten pro Tag aus allen Maps (über `MM.load.docs()`), Kopfzeilen (Mütter + Master-Task), ←/→, Scrollen, Sprung aus der Note (↗).
 - Ausnahmen: Overview, Auslastung, Carry-over ignorieren `diary`.
 
-### Stufe 2 – schön und archivfest
+### Stufe 2 – schön und archivfest ✅ (23.10.2026)
 - Gestaltung pro Tagebuch (Einstellungsdialog in der Leseansicht).
 - Kalender zum Springen.
 - „Seite abschließen“ / „Wieder öffnen“ (mit Rückfrage), Hinweis „nach Abschluss geändert“ an der Note.
