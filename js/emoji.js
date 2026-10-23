@@ -256,6 +256,7 @@
     const at = state.at;
     const range = savedRange;
     close(char);
+    if (mode === 'pick') return; // the caller only wanted the character (diary stickers)
     // apply outside the promise so the caller can stay simple
     if (mode === 'note' || !target) {
       if (mode === 'note' || !MM.editing) E.insertNote(char, at);
@@ -269,16 +270,20 @@
 
   /**
    * Open the picker.
-   * opts.mode:        'text' (append / caret) or 'note'
+   * opts.mode:        'text' (append / caret), 'note', or 'pick' (insert nothing, only resolve)
    * opts.target:      node to insert into (enables the Into text / As note switch)
    * opts.at:          world point for a new emoji note
    * opts.anchorRect:  screen rect the popover should stick to
+   * opts.container:   element to show the picker in (a modal dialog), default body
    * Resolves with the chosen character (the insertion already happened) or null.
    */
   E.pick = function (opts) {
     if (!pop) build();
     if (!pop.hidden) close(null); // a second Ctrl+. just re-targets the open picker
     const o = opts || {};
+    // inside a modal dialog (the diary) the picker must live in that dialog, or it cannot be used
+    const host = o.container || document.body;
+    if (pop.parentNode !== host) host.appendChild(pop);
     savedRange = null;
     if (MM.editing) {
       const sel = window.getSelection();

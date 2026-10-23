@@ -57,7 +57,7 @@ Den Typ änderst du per Rechtsklick → **Change type** oder im Panel.
 
 ## 4. Details: Status, Priorität, Deadline, Termin, Schätzung, Tags
 
-- Im Panel unter **Details**: **Deadline**, **Scheduled** (Termin), **Estimate** (z. B. `1h 30m`, `90m`, `2h`, `1d` = 8 h), **Progress** (nur Tasks), **Status**, **Priority**, **Tags**, **Link**.
+- Im Panel unter **Details**: **Deadline**, **Scheduled** (Termin), **Estimate** (z. B. `1h 30m`, `90m`, `2h`, `1d` = ein Arbeitstag, also so viele Stunden wie unter *Hours / work day* eingestellt; gespeichert wird beim Eintippen der Stundenwert), **Progress** (nur Tasks), **Status**, **Priority**, **Tags**, **Link**.
 - **Deadline oder Termin – nie beides:**
   - **Deadline** = bis wann es fertig sein muss. Die Zeit wird auf die Tage bis dahin verteilt (Projektarbeit).
   - **Scheduled / Termin** = an welchem Tag (optional mit Uhrzeit) es stattfindet, z. B. ein einmaliger Workshop. Die geschätzte Zeit wird wie bei einer Routine von der **Kapazität dieses Tages** abgezogen (📌-Chip).
@@ -212,6 +212,8 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
   - Wird eine Notiz danach geändert, gelöscht oder auf einen anderen Tag gelegt, steht das als ✎-Hinweis über dem Eintrag. Später hinzugekommene Einträge erscheinen unter **Nach dem Abschluss hinzugekommen**.
   - Auf der Map trägt die Notiz 🔒 im Kopf, nach einer Änderung zusätzlich **✎ geändert**.
   - **Wieder öffnen** (mit Rückfrage) verwirft die abgeschlossene Fassung.
+- **🖼 Sticker** (Leseansicht oben rechts) schaltet die Seite in den Gestaltungsmodus: **😀 Sticker** (Emoji), **🖼 Bild** und Zeichnungen (▭ ◯ ╱ ➚, Farbe daneben) frei auf die Seite setzen. Ziehen verschiebt, die Ecke ändert die Größe, `Entf` oder 🗑 löscht. **✓ Fertig** beendet den Modus. Sticker & Co. gehören zur Seite (nicht zu einer Notiz), bleiben auch auf abgeschlossenen Seiten und werden mitgedruckt.
+- **🖨 Drucken / PDF:** diese Seite, das ganze Tagebuch oder ein Zeitraum. Für ein PDF im Druckdialog „Als PDF speichern“ wählen. Jede Tagebuchseite beginnt auf einem neuen Blatt.
 - Tagebucheinträge erscheinen nicht in Overview und Auslastung und werden beim Carry-over nicht übertragen.
 
 ## 16. Emoji

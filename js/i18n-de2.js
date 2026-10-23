@@ -191,6 +191,22 @@
     'Page closed – this note was changed afterwards': 'Seite abgeschlossen – diese Notiz wurde danach geändert',
     'Page closed in the diary': 'Seite im Tagebuch abgeschlossen',
     'changed': 'geändert',
+    // ---- diary.js stage 3 (overlays, printing) ----
+    'Stickers': 'Sticker',
+    'Sticker': 'Sticker',
+    'Done editing': 'Fertig',
+    'Put stickers, images and drawings on this page': 'Sticker, Bilder und Zeichnungen auf diese Seite setzen',
+    'Colour of drawings': 'Farbe der Zeichnungen',
+    'Delete (Del)': 'Löschen (Entf)',
+    'Drag on the page to draw': 'Auf der Seite ziehen zum Zeichnen',
+    'Drag to move, the corner to resize': 'Ziehen verschiebt, die Ecke ändert die Größe',
+    'This page': 'Diese Seite',
+    'Whole diary ({n} pages)': 'Ganzes Tagebuch ({n} Seiten)',
+    'From': 'Von',
+    'to': 'bis',
+    'Print / PDF': 'Drucken / PDF',
+    'For a PDF choose "Save as PDF" as the printer.': 'Für ein PDF als Drucker „Als PDF speichern“ wählen.',
+    'No pages in this period.': 'In diesem Zeitraum gibt es keine Seiten.',
     // ---- transfer.js (bundles) ----
     'Moved {n} note(s) to {map} (with {m} sub-note(s) / group)': '{n} Notiz(en) nach {map} verschoben (mit {m} Unter-Notiz(en) / Gruppe)',
   };

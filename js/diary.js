@@ -76,7 +76,7 @@
     const pages = {};
     for (const [day, p] of Object.entries(r.pages && typeof r.pages === 'object' ? r.pages : {})) {
       if (!DATE.test(day) || !p || typeof p !== 'object') continue;
-      const page = { overlays: Array.isArray(p.overlays) ? p.overlays : [] }; // overlays: stage 3
+      const page = { overlays: (Array.isArray(p.overlays) ? p.overlays : []).map(cleanOverlay).filter(Boolean) };
       if (p.closed && typeof p.closed === 'object') {
         page.closed = { at: str(p.closed.at).slice(0, 40), entries: (Array.isArray(p.closed.entries) ? p.closed.entries : []).map(cleanEntry) };
       }
@@ -196,7 +196,8 @@
   // ---- Reader ----------------------------------------------------------------------
 
   let dialog = null;
-  const view = { book: '', diary: null, entries: [], days: [], day: '', month: null };
+  // edit: overlays can be placed; tool: drawing shape being drawn; sel: selected overlay id
+  const view = { book: '', diary: null, entries: [], days: [], day: '', month: null, edit: false, tool: null, sel: null };
 
   function build() {
     dialog = document.createElement('dialog');
@@ -209,20 +210,35 @@
         <button type="button" class="dy-next" data-dy="next">▶</button>
         <button type="button" data-dy="calendar">📅</button>
         <span class="dy-spacer"></span>
+        <button type="button" data-dy="editOverlays" class="dy-ov-toggle"></button>
         <button type="button" data-dy="design">🎨</button>
+        <button type="button" data-dy="print">🖨</button>
         <button type="button" class="dy-close" data-dy="close">✕</button>
       </div>
+      <div class="dy-ov-tools" hidden></div>
       <div class="dy-pop dy-cal" hidden></div>
       <div class="dy-pop dy-design" hidden></div>
+      <div class="dy-pop dy-print" hidden></div>
       <div class="dy-scroll"><article class="dy-page"></article></div>`;
     document.body.appendChild(dialog);
     dialog.addEventListener('click', onClick);
     dialog.querySelector('.dy-days').addEventListener('change', (e) => show(e.target.value));
     dialog.querySelector('.dy-design').addEventListener('input', onDesign);
     dialog.querySelector('.dy-design').addEventListener('change', onDesign);
+    dialog.querySelector('.dy-ov-tools').addEventListener('input', onToolColor);
+    const page = dialog.querySelector('.dy-page');
+    page.addEventListener('pointerdown', onPagePointerDown);
+    page.addEventListener('pointermove', onPagePointerMove);
+    page.addEventListener('pointerup', onPagePointerUp);
+    page.addEventListener('pointercancel', onPagePointerUp);
     dialog.addEventListener('keydown', (e) => {
       e.stopPropagation(); // the canvas must not move notes meanwhile
       if (/^(SELECT|INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+      if (view.edit && view.sel && (e.key === 'Delete' || e.key === 'Backspace')) {
+        e.preventDefault();
+        deleteOverlay();
+        return;
+      }
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         turn(-1);
@@ -241,7 +257,7 @@
     if (e.target === dialog) return dialog.close(); // backdrop
     const b = e.target.closest('[data-dy]');
     // a click outside an open pop-up closes it
-    if (!e.target.closest('.dy-pop') && !(b && /^(calendar|design)$/.test(b.dataset.dy))) popup(null);
+    if (!e.target.closest('.dy-pop') && !(b && /^(calendar|design|print)$/.test(b.dataset.dy))) popup(null);
     if (b) {
       const a = b.dataset.dy;
       if (a === 'prev') turn(-1);
@@ -249,6 +265,13 @@
       else if (a === 'close') dialog.close();
       else if (a === 'calendar') popup('cal');
       else if (a === 'design') popup('design');
+      else if (a === 'print') popup('print');
+      else if (a === 'doPrint') doPrint();
+      else if (a === 'editOverlays') setEdit(!view.edit);
+      else if (a === 'tool') setTool(view.tool === b.dataset.kind ? null : b.dataset.kind);
+      else if (a === 'sticker') addSticker(b);
+      else if (a === 'image') addImage();
+      else if (a === 'deleteOverlay') deleteOverlay();
       else if (a === 'month') {
         view.month = new Date(view.month.getFullYear(), view.month.getMonth() + Number(b.dataset.step), 1);
         renderCalendar();
@@ -269,22 +292,20 @@
     if (go) showInMap(go.dataset.path, go.dataset.goto);
   }
 
-  /** Show pop-up 'cal' | 'design', or close them (null / the open one again). */
+  /** Show pop-up 'cal' | 'design' | 'print', or close them (null / the open one again). */
   function popup(which) {
     if (!dialog) return;
-    const cal = dialog.querySelector('.dy-cal'), des = dialog.querySelector('.dy-design');
-    const open = !cal.hidden ? 'cal' : !des.hidden ? 'design' : null;
-    cal.hidden = des.hidden = true;
+    const pops = { cal: dialog.querySelector('.dy-cal'), design: dialog.querySelector('.dy-design'), print: dialog.querySelector('.dy-print') };
+    const open = Object.keys(pops).find((k) => !pops[k].hidden) || null;
+    Object.values(pops).forEach((p) => (p.hidden = true));
     if (!which || which === open) return;
     if (which === 'cal') {
       const d = parse(view.day) || new Date();
       view.month = new Date(d.getFullYear(), d.getMonth(), 1);
       renderCalendar();
-      cal.hidden = false;
-    } else {
-      renderDesign();
-      des.hidden = false;
-    }
+    } else if (which === 'design') renderDesign();
+    else renderPrint();
+    pops[which].hidden = false;
   }
 
   /**
@@ -308,6 +329,7 @@
     dialog.querySelector('.dy-page').innerHTML = `<p class="hint">${esc(tr('Reading the maps…'))}</p>`;
     if (!dialog.open) dialog.showModal();
     popup(null);
+    setEdit(false);
     if (P.status === 'ready') await MM.load.refresh(); // every map, fresh from disk
     view.entries = DY.entries(book);
     collectDays();
@@ -322,14 +344,17 @@
     view.days = [...new Set(view.entries.map((e) => e.date).concat(closed))].sort();
   }
 
+  /** CSS variables of the diary's look (values are checked in cleanStyle: no quotes or brackets). */
+  function styleVars() {
+    const st = view.diary.style;
+    return `--dy-font:"${st.font}", Georgia, serif; --dy-size:${st.fontSize}px; --dy-text:${st.text}; ` +
+      `--dy-accent:${st.accent}; --dy-paper:${st.paper};`;
+  }
+
   function applyStyle() {
-    const st = view.diary.style, page = dialog.querySelector('.dy-page');
-    page.style.setProperty('--dy-font', `"${st.font}", Georgia, serif`);
-    page.style.setProperty('--dy-size', st.fontSize + 'px');
-    page.style.setProperty('--dy-text', st.text);
-    page.style.setProperty('--dy-accent', st.accent);
-    page.style.setProperty('--dy-paper', st.paper);
-    page.dataset.ruling = st.ruling;
+    const page = dialog.querySelector('.dy-page');
+    page.setAttribute('style', styleVars());
+    page.dataset.ruling = view.diary.style.ruling;
   }
 
   function turn(step) {
@@ -367,7 +392,8 @@
       page.innerHTML = `<p class="dy-none">${esc(tr('No entries yet. Add a note of the type "Diary entry" to a map and choose this diary in its panel.'))}</p>`;
       return;
     }
-    page.innerHTML = pageHTML(day);
+    page.innerHTML = overlaySpaceHTML(day) + pageHTML(day) + overlayLayerHTML(day);
+    view.sel = null;
     dialog.querySelector('.dy-scroll').scrollTop = 0;
     const target = entryId && page.querySelector(`[data-entry="${CSS.escape(entryId)}"]`);
     if (target) {
@@ -460,10 +486,7 @@
     const day = view.day;
     if (!confirm(tr('Reopen the page of {day}?\n\nIt shows the notes as they are now again; the closed version is discarded.', { day: longDate(day) }))) return;
     delete view.diary.pages[day].closed;
-    // images only the closed copy used are dropped
-    const used = new Set();
-    for (const p of Object.values(view.diary.pages)) if (p.closed) p.closed.entries.forEach((en) => MM.md.assetIds(en.markdown).forEach((id) => used.add(id)));
-    for (const id of Object.keys(view.diary.assets)) if (!used.has(id)) delete view.diary.assets[id];
+    pruneAssets(); // images only the closed copy used
     if (await save(true)) {
       collectDays();
       show(view.days.includes(day) ? day : view.days[view.days.length - 1] || '');
@@ -496,6 +519,322 @@
 
   function flushSave() {
     if (saveTimer) save(true);
+  }
+
+  // ---- Page overlays: stickers, images, drawings ----------------------------------------
+  //
+  // page.overlays = [{ id, kind: 'sticker'|'image'|'draw', x, y, w, h, ... }]
+  // Position and size are in page widths (x 0.5 = middle), so they sit at the same
+  // place of the page on screen and on paper; the CSS uses container units (cqw).
+  //   sticker: char        image: asset (id in diary.assets)
+  //   draw:    shape (MM.DRAW_KINDS), line (end points as fractions), color, width (px), fill
+
+  const REF_WIDTH = 720; // page width the stroke widths are meant for
+
+  function getPage(day) {
+    return view.diary.pages[day] || (view.diary.pages[day] = { overlays: [] });
+  }
+  const overlaysOf = (day) => (view.diary.pages[day] && view.diary.pages[day].overlays) || [];
+
+  function overlayHTML(o) {
+    const pos = `left:calc(${o.x} * 100cqw);top:calc(${o.y} * 100cqw);width:calc(${o.w} * 100cqw);height:calc(${o.h} * 100cqw)`;
+    const cls = `dy-ov dy-ov-${o.kind}${o.id === view.sel ? ' sel' : ''}`;
+    const handle = '<span class="dy-ov-handle"></span>';
+    if (o.kind === 'sticker') {
+      return `<div class="${cls}" data-ov="${esc(o.id)}" style="${pos};font-size:calc(${o.h} * 82cqw)">${esc(o.char)}${handle}</div>`;
+    }
+    if (o.kind === 'image') {
+      const url = view.diary.assets[o.asset];
+      return `<div class="${cls}" data-ov="${esc(o.id)}" style="${pos}">` +
+        (url ? `<img src="${esc(url)}" alt="" draggable="false">` : '') + `${handle}</div>`;
+    }
+    // drawing: the shape of draw.js in a box of 1000 units width, line width in px
+    const W = 1000, H = Math.max(1, (W * o.h) / o.w);
+    const d = MM.draw.path({ draw: o.shape, line: o.line, w: W, h: H, style: { strokeWidth: (o.width * W) / (o.w * REF_WIDTH) } });
+    const line = o.shape === 'line' || o.shape === 'arrow';
+    return `<div class="${cls}" data-ov="${esc(o.id)}" style="${pos}">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="${d}" fill="${line || o.fill === 'none' ? 'none' : esc(o.fill)}"
+        stroke="${esc(o.color)}" stroke-width="${o.width}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg>${handle}</div>`;
+  }
+
+  function overlayLayerHTML(day) {
+    return `<div class="dy-ov-layer">${overlaysOf(day).map(overlayHTML).join('')}</div>`;
+  }
+
+  /**
+   * Overlays lie on top of the page and do not make it longer by themselves -
+   * a big image below the text would be cut off (on screen and on paper).
+   * This empty float at the start of the page reaches down to the lowest
+   * overlay, so the page grows with it (--dy-pad = top padding of the page).
+   */
+  function overlaySpaceHTML(day) {
+    const bottom = overlaysOf(day).reduce((m, o) => Math.max(m, o.y + o.h), 0);
+    return `<div class="dy-ov-space" style="height:${bottom ? `max(0px, calc(${bottom} * 100cqw - var(--dy-pad)))` : '0'}"></div>`;
+  }
+
+  /** Redraw the overlays of the shown page (and the page length they need). */
+  function refreshOverlays() {
+    const page = dialog.querySelector('.dy-page');
+    const layer = page.querySelector('.dy-ov-layer'), space = page.querySelector('.dy-ov-space');
+    if (layer) layer.outerHTML = overlayLayerHTML(view.day);
+    if (space) space.outerHTML = overlaySpaceHTML(view.day);
+  }
+
+  function renderLayer() {
+    refreshOverlays();
+    renderTools();
+  }
+
+  /** Overlay from a file (untrusted) -> clean object, or null. */
+  function cleanOverlay(o) {
+    if (!o || typeof o !== 'object' || !['sticker', 'image', 'draw'].includes(o.kind)) return null;
+    const num = (v, lo, hi, d) => {
+      const x = Number(v);
+      return isFinite(x) ? Math.max(lo, Math.min(hi, x)) : d;
+    };
+    const color = (v, d) => (typeof v === 'string' && /^#[0-9a-f]{3,8}$/i.test(v) ? v : d);
+    const c = {
+      id: str(o.id) || MM.uid('o'), kind: o.kind,
+      x: num(o.x, -1, 2, 0), y: num(o.y, -1, 1000, 0), w: num(o.w, 0.005, 3, 0.1), h: num(o.h, 0.005, 3, 0.1),
+    };
+    if (o.kind === 'sticker') c.char = str(o.char).slice(0, 16);
+    if (o.kind === 'image') c.asset = str(o.asset);
+    if (o.kind === 'draw') {
+      const l = o.line && typeof o.line === 'object' ? o.line : {};
+      c.shape = Object.hasOwn(MM.DRAW_KINDS, o.shape) ? o.shape : 'rect';
+      c.line = { x1: num(l.x1, 0, 1, 0), y1: num(l.y1, 0, 1, 0), x2: num(l.x2, 0, 1, 1), y2: num(l.y2, 0, 1, 1) };
+      c.color = color(o.color, '#e53e3e');
+      c.width = num(o.width, 0.5, 24, 3);
+      c.fill = o.fill === 'none' ? 'none' : color(o.fill, 'none');
+    }
+    return c;
+  }
+  DY.cleanOverlay = cleanOverlay;
+
+  /** Edit mode: overlays can be added, moved, resized and deleted. */
+  function setEdit(on) {
+    if (on && MM.project.status !== 'ready') {
+      alert(tr('Diaries live in a project folder.\nOpen a folder in the "Project" sidebar first.'));
+      on = false;
+    }
+    view.edit = !!on && !!view.day;
+    view.tool = null;
+    view.sel = null;
+    view.color = view.color || (view.diary ? view.diary.style.accent : '#e53e3e');
+    dialog.querySelector('.dy-page').classList.toggle('dy-editing', view.edit);
+    const btn = dialog.querySelector('.dy-ov-toggle');
+    btn.textContent = view.edit ? '✓ ' + tr('Done editing') : '🖼 ' + tr('Stickers');
+    btn.title = tr('Put stickers, images and drawings on this page');
+    btn.classList.toggle('active', view.edit);
+    if (view.day) renderLayer();
+    else renderTools();
+  }
+
+  const KIND_ICONS = { rect: '▭', ellipse: '◯', line: '╱', arrow: '➚' };
+
+  function renderTools() {
+    const box = dialog.querySelector('.dy-ov-tools');
+    box.hidden = !view.edit;
+    if (!view.edit) return;
+    box.innerHTML = `
+      <button type="button" data-dy="sticker">😀 ${esc(tr('Sticker'))}</button>
+      <button type="button" data-dy="image">🖼 ${esc(tr('Image'))}</button>
+      <span class="dy-tools-sep"></span>
+      ${Object.keys(MM.DRAW_KINDS).map((k) => `<button type="button" data-dy="tool" data-kind="${k}" class="${view.tool === k ? 'active' : ''}"
+        title="${esc(tr(MM.DRAW_KINDS[k]))}">${KIND_ICONS[k]}</button>`).join('')}
+      <input type="color" class="dy-ov-color" value="${esc(view.color)}" title="${esc(tr('Colour of drawings'))}">
+      <button type="button" data-dy="deleteOverlay" ${view.sel ? '' : 'disabled'} title="${esc(tr('Delete (Del)'))}">🗑</button>
+      <span class="dy-tools-hint">${esc(view.tool ? tr('Drag on the page to draw') : tr('Drag to move, the corner to resize'))}</span>`;
+  }
+
+  function setTool(kind) {
+    view.tool = kind;
+    dialog.querySelector('.dy-page').classList.toggle('dy-drawing', !!kind);
+    renderTools();
+  }
+
+  /** Page geometry: origin (screen) of the page box and its width unit in px (= 100cqw). */
+  function pageUnit() {
+    const page = dialog.querySelector('.dy-page');
+    const r = page.getBoundingClientRect(), cs = getComputedStyle(page);
+    const unit = page.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    return { left: r.left + page.clientLeft, top: r.top + page.clientTop, unit: unit || 1 };
+  }
+
+  /** Where new stickers / images go: centred in the visible part of the page. */
+  function visibleCenter(w, h) {
+    const g = pageUnit(), sr = dialog.querySelector('.dy-scroll').getBoundingClientRect();
+    const cy = (sr.top + sr.height / 2 - g.top) / g.unit;
+    return { x: 0.5 - w / 2, y: Math.max(0, cy - h / 2) };
+  }
+
+  function addOverlay(o) {
+    getPage(view.day).overlays.push(o);
+    view.sel = o.id;
+    renderLayer();
+    save();
+  }
+
+  async function addSticker(btn) {
+    const char = await MM.emoji.pick({ mode: 'pick', container: dialog, anchorRect: btn.getBoundingClientRect() });
+    if (!char || !view.edit) return;
+    const s = 0.09;
+    addOverlay(Object.assign({ id: MM.uid('o'), kind: 'sticker', char, w: s, h: s }, visibleCenter(s, s)));
+  }
+
+  async function addImage() {
+    const files = await MM.images.pick(false);
+    if (!files.length || !view.edit) return;
+    try {
+      const img = await MM.images.prepare(files[0]);
+      const id = MM.uid('a');
+      view.diary.assets[id] = img.url;
+      const w = 0.4, h = (w * img.h) / (img.w || 1);
+      addOverlay(Object.assign({ id: MM.uid('o'), kind: 'image', asset: id, w, h }, visibleCenter(w, h)));
+    } catch (err) {
+      MM.ui.flash(tr('Could not read the image'));
+    }
+  }
+
+  function deleteOverlay() {
+    const page = view.diary.pages[view.day];
+    if (!page || !view.sel) return;
+    page.overlays = page.overlays.filter((o) => o.id !== view.sel);
+    view.sel = null;
+    pruneAssets();
+    renderLayer();
+    save();
+  }
+
+  function onToolColor(e) {
+    if (!e.target.classList.contains('dy-ov-color')) return;
+    view.color = e.target.value;
+    const o = overlaysOf(view.day).find((x) => x.id === view.sel);
+    if (o && o.kind === 'draw') {
+      o.color = view.color;
+      refreshOverlays(); // keep the colour input (no renderTools)
+      save();
+    }
+  }
+
+  /** Images still used: by closed entries and by overlays. The rest is removed from the diary. */
+  function pruneAssets() {
+    const used = new Set();
+    for (const p of Object.values(view.diary.pages)) {
+      if (p.closed) p.closed.entries.forEach((en) => MM.md.assetIds(en.markdown).forEach((id) => used.add(id)));
+      (p.overlays || []).forEach((o) => o.asset && used.add(o.asset));
+    }
+    for (const id of Object.keys(view.diary.assets)) if (!used.has(id)) delete view.diary.assets[id];
+  }
+
+  // dragging on the page (edit mode only)
+  let ovDrag = null;
+
+  function onPagePointerDown(e) {
+    if (!view.edit || e.button !== 0) return;
+    const g = pageUnit();
+    const p = { x: (e.clientX - g.left) / g.unit, y: (e.clientY - g.top) / g.unit };
+    const el = e.target.closest('.dy-ov');
+    if (el) {
+      const o = overlaysOf(view.day).find((x) => x.id === el.dataset.ov);
+      if (!o) return;
+      view.sel = o.id;
+      ovDrag = { mode: e.target.classList.contains('dy-ov-handle') ? 'resize' : 'move', o, start: p, orig: { x: o.x, y: o.y, w: o.w, h: o.h }, unit: g.unit, moved: false };
+    } else if (view.tool) {
+      ovDrag = { mode: 'draw', start: p, o: null, unit: g.unit, moved: false };
+    } else {
+      if (view.sel) {
+        view.sel = null;
+        renderLayer();
+      }
+      return;
+    }
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    renderLayer();
+  }
+
+  function onPagePointerMove(e) {
+    if (!ovDrag) return;
+    const g = pageUnit();
+    const p = { x: (e.clientX - g.left) / g.unit, y: (e.clientY - g.top) / g.unit };
+    const dx = p.x - ovDrag.start.x, dy = p.y - ovDrag.start.y;
+    if (!ovDrag.moved && Math.hypot(dx, dy) * g.unit < 3) return;
+    ovDrag.moved = true;
+    const o = ovDrag.o, k = ovDrag.orig;
+    if (ovDrag.mode === 'move') {
+      o.x = k.x + dx;
+      o.y = Math.max(0, k.y + dy);
+    } else if (ovDrag.mode === 'resize') {
+      o.w = Math.max(0.01, k.w + dx);
+      // stickers and images keep their proportions, drawings are free
+      o.h = o.kind === 'draw' ? Math.max(0.01, k.h + dy) : (o.w * k.h) / k.w;
+    } else {
+      // draw: the same geometry as drawings on the map (in px, then in page widths)
+      const u = g.unit, px = (q) => ({ x: q.x * u, y: q.y * u });
+      const b = MM.draw.boxFor(view.tool, px(ovDrag.start), px(p), e.shiftKey);
+      if (!ovDrag.o) {
+        ovDrag.o = { id: MM.uid('o'), kind: 'draw', shape: view.tool, color: view.color, width: 3, fill: 'none' };
+        getPage(view.day).overlays.push(ovDrag.o);
+        view.sel = ovDrag.o.id;
+      }
+      Object.assign(ovDrag.o, { x: b.x / u, y: b.y / u, w: b.w / u, h: b.h / u, line: b.line });
+    }
+    refreshOverlays();
+  }
+
+  function onPagePointerUp(e) {
+    if (!ovDrag) return;
+    const d = ovDrag;
+    ovDrag = null;
+    if (e.currentTarget.hasPointerCapture && e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    if (d.mode === 'draw') setTool(null);
+    renderLayer();
+    if (d.moved) save();
+  }
+
+  // ---- Printing / PDF --------------------------------------------------------------------
+
+  function renderPrint() {
+    const first = view.days[0] || '', last = view.days[view.days.length - 1] || '';
+    dialog.querySelector('.dy-print').innerHTML = `
+      <label class="dy-print-row"><input type="radio" name="dy-pr" value="page" checked> ${esc(tr('This page'))}</label>
+      <label class="dy-print-row"><input type="radio" name="dy-pr" value="all"> ${esc(tr('Whole diary ({n} pages)', { n: view.days.length }))}</label>
+      <label class="dy-print-row"><input type="radio" name="dy-pr" value="range"> ${esc(tr('From'))}
+        <input type="date" class="dy-pr-from" value="${esc(first)}"> ${esc(tr('to'))} <input type="date" class="dy-pr-to" value="${esc(last)}"></label>
+      <div class="dy-print-row"><button type="button" class="primary" data-dy="doPrint">🖨 ${esc(tr('Print / PDF'))}</button></div>
+      <p class="hint">${esc(tr('For a PDF choose "Save as PDF" as the printer.'))}</p>`;
+  }
+
+  function doPrint() {
+    const box = dialog.querySelector('.dy-print');
+    const how = (box.querySelector('input[name="dy-pr"]:checked') || {}).value;
+    let days = how === 'all' ? view.days.slice() : view.day ? [view.day] : [];
+    if (how === 'range') {
+      const from = box.querySelector('.dy-pr-from').value || '0000', to = box.querySelector('.dy-pr-to').value || '9999';
+      days = view.days.filter((d) => d >= from && d <= to);
+    }
+    if (!days.length) {
+      alert(tr('No pages in this period.'));
+      return;
+    }
+    popup(null);
+    flushSave();
+    let out = document.getElementById('diary-print');
+    if (!out) {
+      out = document.createElement('div');
+      out.id = 'diary-print';
+      document.body.appendChild(out);
+    }
+    const ruling = view.diary.style.ruling;
+    out.innerHTML = days.map((d) => `<article class="dy-page" style="${esc(styleVars())}" data-ruling="${esc(ruling)}">` +
+      `${overlaySpaceHTML(d)}<div class="dy-print-book">${esc(view.book)}</div>${pageHTML(d)}${overlayLayerHTML(d)}</article>`).join('');
+    const cleanup = () => {
+      window.removeEventListener('afterprint', cleanup);
+      out.innerHTML = '';
+    };
+    window.addEventListener('afterprint', cleanup);
+    window.print();
   }
 
   // ---- Calendar ------------------------------------------------------------------------

@@ -70,7 +70,7 @@ Overlay-Positionen relativ zur Seite (x in Prozent der Seitenbreite, y in px ab 
 - Kalender zum Springen.
 - „Seite abschließen“ / „Wieder öffnen“ (mit Rückfrage), Hinweis „nach Abschluss geändert“ an der Note.
 
-### Stufe 3 – komplett
+### Stufe 3 – komplett ✅ (23.10.2026)
 - Seiten-Overlays: Sticker (Emoji-Picker), Bilder, Zeichnungen (Wiederverwendung von `draw.js`-Geometrie).
 - Druck / PDF: Druck-Stylesheet, Auswahl Seite / Zeitraum / alles.
 

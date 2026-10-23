@@ -15,20 +15,24 @@
   // ---- Estimated time --------------------------------------------------------
 
   /**
-   * Parse "1h 30m", "90m", "1.5h", "2" (= hours), "1d" (= 8h) into minutes.
+   * Parse "1h 30m", "90m", "1.5h", "2" (= hours), "1d" into minutes.
+   * A day is one work day of the planning capacity (hours per work day of the
+   * project folder, see workload.js), converted when typed: estimates are stored
+   * in minutes, so changing the capacity later does not change them.
    * Returns null for an empty string and undefined if nothing could be read.
    */
   META.parseDuration = function (str) {
     str = String(str || '').trim().toLowerCase().replace(/,/g, '.');
     if (!str) return null;
     const re = /(\d+(?:\.\d+)?)\s*(d|h|min|m)?/g;
+    const day = (MM.load ? MM.load.capacity().hours : 8) * 60;
     let total = 0, found = false, lastUnit = null, m;
     while ((m = re.exec(str))) {
       found = true;
       const v = parseFloat(m[1]);
       // a bare number after hours means minutes ("1h30"), otherwise hours
       const unit = m[2] || (lastUnit === 'h' ? 'm' : 'h');
-      total += unit === 'd' ? v * 480 : unit === 'h' ? v * 60 : v;
+      total += unit === 'd' ? v * day : unit === 'h' ? v * 60 : v;
       lastUnit = unit;
     }
     return found ? Math.round(total) : undefined;

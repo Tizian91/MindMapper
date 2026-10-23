@@ -1193,8 +1193,10 @@ span.ov-caret { cursor: default; }
 .dy-spacer { flex: 1; }
 .dy-scroll { flex: 1; overflow: auto; background: var(--bg); padding: 22px 16px; }
 .dy-page {
+  position: relative; container-type: inline-size; /* overlays are placed in page widths (cqw) */
   --dy-font: Georgia, serif; --dy-size: 16px; --dy-text: #2d2a26; --dy-accent: #b7791f; --dy-paper: #fdf8ec;
-  max-width: 720px; margin: 0 auto; min-height: 100%; box-sizing: border-box; padding: 34px 44px 48px;
+  --dy-pad: 34px; display: flow-root; /* flow-root: the overlay space float (diary.js) counts for the height */
+  max-width: 720px; margin: 0 auto; min-height: 100%; box-sizing: border-box; padding: var(--dy-pad) 44px 48px;
   background: var(--dy-paper); color: var(--dy-text); font-family: var(--dy-font); font-size: var(--dy-size); line-height: 1.6;
   border-radius: 4px; box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
   /* the page is always paper: buttons and chips on it use the light theme, also in dark mode */
@@ -1255,3 +1257,41 @@ button.dy-cal-day.current { background: var(--accent); color: #fff; }
   letter-spacing: 0.05em; border-top: 1px dashed rgba(0, 0, 0, 0.25); padding-top: 10px; margin: 10px 0 14px; }
 .dy-entry.dy-added { opacity: 0.85; }
 .diary-changed { font-weight: 400; font-size: 0.9em; color: #c05621; }
+
+/* diary stage 3: page overlays, printing */
+.dy-ov-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 12px; border-bottom: 1px solid var(--border); background: var(--subtle-bg); }
+.dy-ov-tools[hidden] { display: none; }
+.dy-tools-sep { width: 1px; align-self: stretch; background: var(--border); margin: 0 4px; }
+.dy-ov-color { width: 34px; height: 26px; padding: 1px; }
+.dy-tools-hint { font-size: 12px; color: var(--muted); margin-left: 6px; }
+.dy-ov-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.dy-ov { position: absolute; box-sizing: border-box; pointer-events: none; }
+.dy-ov-sticker { display: flex; align-items: center; justify-content: center; line-height: 1; user-select: none; }
+.dy-ov-image img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.dy-ov svg { width: 100%; height: 100%; overflow: visible; display: block; }
+.dy-ov-handle { display: none; position: absolute; right: -6px; bottom: -6px; width: 11px; height: 11px;
+  background: #fff; border: 1.5px solid var(--accent); border-radius: 2px; cursor: nwse-resize; }
+.dy-editing .dy-ov { pointer-events: auto; cursor: move; outline: 1px dashed rgba(0, 0, 0, 0.25); }
+.dy-editing .dy-ov.sel { outline: 1.5px solid var(--accent); }
+.dy-editing .dy-ov.sel .dy-ov-handle { display: block; }
+.dy-drawing, .dy-drawing .dy-ov { cursor: crosshair; }
+.dy-print { right: 60px; width: 330px; }
+.dy-print-row { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; font-size: 13px; }
+.dy-print-row input[type="date"] { width: 125px; }
+#diary-print { display: none; }
+.dy-print-book { display: none; }
+
+@media print {
+  @page { margin: 12mm; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  body > *:not(#diary-print) { display: none !important; }
+  #diary-print { display: block !important; }
+  #diary-print .dy-page { max-width: none; min-height: 0; margin: 0; border-radius: 0; box-shadow: none;
+    break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  #diary-print .dy-page:last-child { break-after: auto; }
+  #diary-print .dy-page-btn, #diary-print .dy-goto { display: none; }
+  #diary-print .dy-print-book { display: block; font-family: system-ui, sans-serif; font-size: 10px; color: #7b6f60; text-align: right; margin-bottom: 4px; }
+  #diary-print .dy-ov { outline: none !important; }
+  #diary-print .dy-entry-head { break-after: avoid; }
+}
+.dy-ov-space { float: left; width: 0; }
