@@ -30,7 +30,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 | Zoomen | Mausrad; **Fit** bzw. `Shift+1` zeigt alles |
 | Kopieren / Einfügen / Duplizieren | `Ctrl+C` / `Ctrl+V` / `Ctrl+D` |
 | Rückgängig / Wiederholen | `Ctrl+Z` / `Ctrl+Y` |
-| Löschen | `Entf`; bei Tasks auch der Papierkorb oben rechts (beim Überfahren / Markieren) |
+| Löschen | `Entf`; bei Tasks auch der Papierkorb an der Unterkante rechts (beim Überfahren / Markieren) |
 
 - **Rechtsklick** auf eine Note, eine Verbindung oder die Fläche öffnet ein Menü mit allen passenden Befehlen.
 - Das **Panel rechts** zeigt die Eigenschaften der Markierung: Typ, Form, Farben, Details. Ist nichts markiert, stehen dort die Einstellungen.
@@ -196,6 +196,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 ### Tagebuch / Laborbuch
 
 - **Tagebuch anlegen:** Seitenleiste → Bereich **Diaries** → **+**. Jedes Tagebuch ist eine Datei im Ordner `Diaries/` des Projektordners.
+- **Tagebuch löschen** geht bewusst nicht in der App (Schutz, z. B. fürs Laborbuch). Wer eines loswerden will, löscht im Explorer die Datei `Diaries/<Name>.diary.json` im Projektordner und klickt danach in der Seitenleiste auf **⟳** (Ordner neu einlesen). Damit verschwinden Gestaltung, Sticker und abgeschlossene Seiten. Die Einträge selbst sind Notizen in den Maps und bleiben dort, bis du sie löschst. Legst du später ein Tagebuch mit demselben Namen an, erscheinen sie wieder darin.
 - **Eintrag schreiben:** Rechtsklick → **Diary entry** (oder **Insert → Diary entry**). Im Panel Tagebuch, Tag und Uhrzeit wählen – neue Einträge landen im zuletzt benutzten Tagebuch, mit heutigem Datum und aktueller Uhrzeit.
 - **Inhalt** ist Markdown: `# Überschrift`, `**fett**`, `*kursiv*`, `~~durchgestrichen~~`, `- Liste` (eingerückt = Unterpunkt), `1. nummeriert`, `- [ ] Kästchen`, `> Zitat`, `` `Code` ``, `[Link](https://…)` und Tabellen:
   ```
