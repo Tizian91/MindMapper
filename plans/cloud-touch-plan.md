@@ -1,6 +1,6 @@
-# MindMapper – Plan pCloud + Handy (Touch)
+# MindMapper – Plan Cloud (pCloud, später OneDrive / Google Drive) + Handy (Touch)
 
-Stand: 23.10.2026, mit dem Nutzer abgestimmt, **noch nicht umgesetzt**. Grundregeln des Projekts gelten weiter: Modell in `MM.state.doc` ändern → `MM.commit()`, keine Build-Tools, keine ES-Module, alles über `window.MM`, UI-Texte englisch mit deutscher Übersetzung. Keine fremden Bibliotheken (das pCloud-SDK wird nicht gebraucht, die REST-API reicht).
+Stand: 23.10.2026, ergänzt 24.10.2026 (mehrere Cloud-Anbieter), mit dem Nutzer abgestimmt, **noch nicht umgesetzt**. Grundregeln des Projekts gelten weiter: Modell in `MM.state.doc` ändern → `MM.commit()`, keine Build-Tools, keine ES-Module, alles über `window.MM`, UI-Texte englisch mit deutscher Übersetzung. Keine fremden Bibliotheken (das pCloud-SDK wird nicht gebraucht, die REST-API reicht).
 
 ## Ziel
 
@@ -15,6 +15,26 @@ Private Maps (z. B. Übungsplan Band) am **Android-Handy** im Browser ansehen un
 - Die App läuft über **GitHub Pages** (`https://tizian91.github.io/MindMapper/`, Adresse beim Umsetzen prüfen) und ist am PC als App installiert (PWA, `manifest.webmanifest`, `sw.js`).
 - Projektordner nutzen `showDirectoryPicker` (File System Access API) – **gibt es auf Android nicht**. Deshalb ist auf dem Handy heute nur „einzelne Datei“ möglich.
 - Direkte Dateizugriffe stecken fast nur in `project.js` (27 Stellen) und `storage.js` (17, davon Einzeldatei-Öffnen/Speichern), dazu je 1–2 in `files.js`, `transfer.js`, `actions.js`.
+
+## Mehrere Cloud-Anbieter (keine Entweder-oder-Entscheidung)
+
+Die Speicher-Schnittstelle (Architektur, Abschnitt 1) ist für **mehrere Anbieter** gebaut: jeder Dienst ist ein eigenes Modul mit denselben Funktionen und eigener Anmeldung. Seitenleiste ohne Ordner z. B.: *Open folder… · Connect pCloud… · Connect OneDrive… · Connect Google Drive…* (nur die eingebauten Anbieter). Jeder Nutzer verbindet sein eigenes Konto; die Daten bleiben in seiner Cloud, kein Server dazwischen. Die App wird später auch an Freunde weitergegeben.
+
+**Reihenfolge (entschieden):**
+
+| # | Anbieter | Aufwand | Warum / Besonderheiten |
+|---|---|---|---|
+| 1 | **pCloud** | gering | Konto des Nutzers vorhanden. Token-Flow für Browser-Apps, lang gültiger Token, Pfade wie im lokalen Ordner, keine App-Prüfung. |
+| 2 | **OneDrive** (Microsoft Graph) | mittel | Für Freunde naheliegend. App-Registrierung (kostenlos, private Microsoft-Konten). Pfadbasiert (`/me/drive/root:/MindMapper/…`), eTag als Version für den Konfliktschutz. Anmeldung im Browser per Auth-Code + PKCE; Tokens laufen ab und werden erneuert (meist unsichtbar). Unverifizierte App: nur Hinweis „nicht verifiziert“. |
+| 3 | **Google Drive** | höher | Auf jedem Android-Handy vorhanden, aber aufwendiger: |
+
+**Google Drive – warum aufwendiger, vor der Umsetzung klären:**
+- **Keine echten Pfade:** Dateien haben IDs, Ordner sind „Eltern“, gleiche Namen im selben Ordner sind erlaubt. Es braucht eine Übersetzung Pfad ↔ ID (Cache, beim Umbenennen / Verschieben pflegen, doppelte Namen behandeln).
+- **Rechte:** Zugriff aufs ganze Drive gilt als „restricted“ → für öffentliche Apps teure Sicherheitsprüfung, kommt nicht in Frage. Möglich ist `drive.file`: die App sieht nur Dateien, die sie selbst angelegt hat oder die der Nutzer per Google-Auswahl (Picker) freigibt. **Folge:** Dateien, die das Google-Drive-Programm am PC hochgeladen hat (lokaler, synchronisierter Ordner), sieht die App am Handy nicht – Nutzer müssten auch am PC „Connect Google Drive“ verwenden oder die Dateien freigeben. Prüfen: Gibt eine Ordner-Freigabe per Picker auch den Inhalt frei?
+- **Weitergabe:** ohne Verifizierung Warnbildschirm „App nicht überprüft“; Testmodus max. 100 eingetragene Testnutzer, Anmeldung läuft dort nach 7 Tagen ab. Verifizierung braucht Datenschutzerklärung und bestätigte Webadresse.
+- Anmeldung im Browser (Google Identity Services) liefert Tokens für ~1 Stunde ohne Refresh-Token → regelmäßig erneuern.
+
+Konfliktschutz, Touch-Bedienung und die verkleinerte Tagebuchseite gelten für alle Anbieter gleich und werden nur einmal gebaut.
 
 ## pCloud – was geklärt ist
 
@@ -82,6 +102,8 @@ backend = {
 | **3** | pCloud-Anbieter: Anmeldung, Ordnerwahl, alle Dateioperationen, Konfliktschutz | privater Ordner am PC über pCloud nutzbar |
 | **4** | Touch-Bedienung + schmale Ansicht | am Android-Handy bedienbar |
 | 5 (optional) | Offline am Handy: Änderungen ohne Netz merken und beim nächsten Netz hochladen | Bandraum ohne Empfang |
+| 6 | OneDrive-Anbieter (App-Registrierung bei Microsoft, Client-ID) | Freunde mit Microsoft-Konto |
+| 7 | Google Drive-Anbieter – vorher Rechte-Frage (`drive.file`, Picker, Verifizierung) klären | Freunde mit Google-Konto |
 
 ## Aufgaben für den Nutzer (vor Etappe 3)
 
