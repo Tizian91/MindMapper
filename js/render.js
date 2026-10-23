@@ -91,7 +91,8 @@
         R.nodeEls.set(n.id, div);
       }
       // groups lie behind connections and notes, image overlays above everything
-      const layer = n.overlay ? els.overlayNodes : n.type === 'group' ? els.groups : els.nodes;
+      // (drawings as well: they mark something on the notes below)
+      const layer = n.overlay || n.type === 'draw' ? els.overlayNodes : n.type === 'group' ? els.groups : els.nodes;
       const i = index.get(layer);
       if (layer.children[i] !== div) layer.insertBefore(div, layer.children[i] || null);
       index.set(layer, i + 1);
@@ -125,7 +126,7 @@
       div._contentKey = contentKey;
     }
     R.updateFrame(div, n);
-    if (n.type !== 'image') {
+    if (n.type !== 'image' && n.type !== 'draw') {
       const measureKey = contentKey + '|' + n.w + '|' + n.h + '|' + n.shape;
       if (div._measureKey !== measureKey) {
         if (R.autoGrow(div, n)) R.updateFrame(div, n);
@@ -141,8 +142,8 @@
       div._badges.innerHTML = show ? MM.meta.chipsHTML(n, false) : '';
     }
 
-    // small ↗ button for notes with a link or an attached file
-    const target = n.file && n.file.path ? n.file.path : n.link;
+    // small ↗ button for notes with a link or an attached file (not on drawings)
+    const target = n.type === 'draw' ? '' : n.file && n.file.path ? n.file.path : n.link;
     if (div._link !== target) {
       div._link = target;
       div._linkBtn.hidden = !target;
@@ -177,6 +178,7 @@
     div.style.top = n.y + 'px';
     div.style.width = n.w + 'px';
     div.style.height = n.h + 'px';
+    if (n.type === 'draw') return drawFrame(div, n);
     const isImage = n.type === 'image';
     const ins = isImage ? { x: 0, y: 0 } : MM.geo.contentInset(n.shape, n.w, n.h);
     const content = div._content;
@@ -206,6 +208,41 @@
     if (isImage) content.style.opacity = st.opacity === undefined ? 1 : st.opacity;
   };
 
+  /**
+   * Drawing (draw.js): the shape in the note's SVG, plus a wide invisible copy
+   * of its line that takes the clicks (the note itself lets clicks through).
+   */
+  function drawFrame(div, n) {
+    const st = n.style;
+    const key = [n.draw, JSON.stringify(n.line), n.w, n.h, st.fill, st.stroke, st.strokeWidth, st.strokeStyle, st.opacity].join('|');
+    if (div._shapeKey === key) return;
+    div._shapeKey = key;
+    const svg = div._shape, path = svg.firstElementChild;
+    if (!div._hit) {
+      div._hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      div._hit.setAttribute('class', 'draw-hit');
+      svg.append(div._hit);
+    }
+    svg.setAttribute('width', n.w);
+    svg.setAttribute('height', n.h);
+    const d = MM.draw.path(n), sw = Number(st.strokeWidth) || 0;
+    const line = n.draw === 'line' || n.draw === 'arrow';
+    const filled = !line && st.fill && st.fill !== 'none';
+    path.setAttribute('d', d);
+    path.setAttribute('fill', filled ? st.fill : 'none');
+    path.setAttribute('stroke', sw ? st.stroke : 'none');
+    path.setAttribute('stroke-width', sw);
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    const dash = st.strokeStyle === 'solid' ? '' : MM.geo.dashArray(st.strokeStyle, sw);
+    if (dash) path.setAttribute('stroke-dasharray', dash);
+    else path.removeAttribute('stroke-dasharray');
+    div._hit.setAttribute('d', d);
+    div._hit.setAttribute('stroke-width', Math.max(12, sw + 8));
+    div.classList.toggle('filled', !!filled);
+    svg.style.opacity = st.opacity === undefined ? 1 : st.opacity;
+  }
+
   /** Outline-style nested list (outline and task notes). */
   function blockList(n) {
     const list = el('ul', 'outline-list');
@@ -232,6 +269,7 @@
     c.style.fontWeight = st.bold ? '700' : '400';
     c.style.textAlign = st.align;
     c.innerHTML = '';
+    if (n.type === 'draw') return; // a drawing has no text
 
     if (n.type === 'todo') {
       const wrap = el('div', 'todo');

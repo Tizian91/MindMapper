@@ -341,6 +341,8 @@
         '-',
         { label: 'Delete', shortcut: 'Del', action: A.deleteSelection },
       ];
+      // drawings only: their own short menu (anchor, clipboard, order, delete)
+      if (nodes.every((n) => n.type === 'draw')) list = MM.draw.menuItems(nodes);
     } else if (edgeEl) {
       const id = edgeEl.dataset.id;
       if (!S.selection.has(id)) MM.select([id]);

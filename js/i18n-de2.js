@@ -115,6 +115,28 @@
     'Folder (empty = top level)': 'Ordner (leer = oberste Ebene)',
     'No maps found. Create one with "New map…".': 'Keine Maps gefunden. Mit „Neue Map…“ eine anlegen.',
     'Average progress of {n} task(s)': 'Durchschnittlicher Fortschritt von {n} Aufgabe(n)',
+    // ---- draw.js (drawings) ----
+    'Drawing': 'Zeichnung',
+    'Shape': 'Form',
+    'Rectangle': 'Rechteck',
+    'Ellipse': 'Ellipse',
+    'Line': 'Linie',
+    'Arrow': 'Pfeil',
+    'Anchor': 'Verankerung',
+    'Anchored to "{note}" – moves and scales with it': 'Verankert an „{note}“ – wird mit ihr verschoben und skaliert',
+    'Not anchored – moves only when selected': 'Nicht verankert – bewegt sich nur, wenn sie ausgewählt ist',
+    'Anchor to the note below': 'An der Note darunter verankern',
+    'Anchored to the note below': 'An der Note darunter verankert',
+    'No note below the drawing': 'Unter der Zeichnung liegt keine Note',
+    'Detach': 'Lösen',
+    'Detach (not anchored)': 'Lösen (nicht verankert)',
+    'No fill': 'Keine Füllung',
+    'Select a drawing (and the note to anchor it to) first': 'Erst eine Zeichnung (und die Note, an der sie hängen soll) auswählen',
+    'Anchored {n} drawing(s) to "{note}"': '{n} Zeichnung(en) an „{note}“ verankert',
+    'Detached {n} drawing(s)': '{n} Zeichnung(en) gelöst',
+    'Nothing anchored here': 'Hier ist nichts verankert',
+    'Drag to draw – over a note or image it is anchored to it (Alt: not anchored). Esc cancels.':
+      'Ziehen zum Zeichnen – über einer Note oder einem Bild wird daran verankert (Alt: nicht verankert). Esc bricht ab.',
     // ---- transfer.js (bundles) ----
     'Moved {n} note(s) to {map} (with {m} sub-note(s) / group)': '{n} Notiz(en) nach {map} verschoben (mit {m} Unter-Notiz(en) / Gruppe)',
   };

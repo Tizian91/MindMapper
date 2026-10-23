@@ -431,6 +431,13 @@
     for (const n of Object.values(S.doc.nodes)) {
       if (n.parent && map[n.parent] && newIds.includes(n.id)) n.parent = map[n.parent];
     }
+    // a pasted drawing stays anchored only if its note was copied too
+    for (const id of newIds) {
+      const n = S.doc.nodes[id];
+      if (!n || !n.anchor) continue;
+      const a = S.doc.nodes[map[n.anchor.node]];
+      n.anchor = a ? { node: a.id, box: { x: a.x, y: a.y, w: a.w, h: a.h } } : null;
+    }
     MM.select(newIds);
     MM.commit();
   }

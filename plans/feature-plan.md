@@ -23,6 +23,7 @@ Alle neun Features sind im Code vorhanden. Die Tabelle nennt, was gegenüber dem
 | 12 | Auslastung (verplante Stunden, Puffer) | ✅ fertig (21.10.2026) | Siehe Abschnitt „Feature 12“. |
 | 13 | Routinen (regelmäßige Aufgaben) | ✅ fertig (21.10.2026) | Siehe Abschnitt „Feature 13“. |
 | 14 | Move to map / Carry-over mit Untertasks und Gruppe | ✅ fertig (23.10.2026) | `MM.transfer.bundles` (alles unter einer Note + innerste Gruppe, keine Verbindungen von außen) und `copyBundles` (Anordnung, Pfeile, Bilder) – genutzt von `T.move` und `templates.addCarryOver`. Gemeinsam verschobene Notes tragen `movedBatch`, „Undo move“ nimmt das ganze Paket zurück. |
+| 15 | Zeichentools | ✅ fertig (23.10.2026) | Neuer Note-Typ `draw` (Rechteck, Ellipse, Linie, Pfeil) in `js/draw.js`, Overlay-Ebene, nur die Linie nimmt Klicks. Verankerung als Eigenschaft `anchor = { node, box }` (wie Word): `MM.draw.follow` beim Ziehen, `MM.draw.sync` in `MM.commit` (Vergleich mit dem Undo-Schnappschuss: direkt geänderte Zeichnungen behalten ihren Platz). Freie Zeichnungen sind keine Gruppenmitglieder. Löschen der Note löscht verankerte Zeichnungen; Kopieren, Move to map und Carry-over verankern an der Kopie. |
 | – | Querschnitt (`normalizeDoc`, `index.html`, README) | ✅ fertig | Manueller Gesamttest (siehe Abschluss) noch offen. |
 
 ## Review-Befunde (Schwachstellen)

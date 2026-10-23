@@ -439,6 +439,13 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 }
 .node-content > * { width: 100%; margin-block: auto; }
 .node.selected { outline: 1.5px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+/* drawings (draw.js): clicks pass through, only the line (or a fill) takes them */
+.node[data-type="draw"] { pointer-events: none; }
+.node[data-type="draw"] .draw-hit { fill: none; stroke: transparent; pointer-events: stroke; cursor: move; }
+.node[data-type="draw"].filled .node-shape path:first-child { pointer-events: fill; cursor: move; }
+.node[data-type="draw"].selected { outline-style: dashed; }
+#viewport.drawing, #viewport.drawing .node, #viewport.drawing .draw-hit { cursor: crosshair; }
 .node.editing { cursor: text; }
 
 .node-text { white-space: pre-wrap; min-height: 1.35em; }

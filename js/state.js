@@ -28,11 +28,14 @@ window.MM = window.MM || {};
 
   MM.NODE_TYPES = {
     text: 'Note', heading: 'Heading', todo: 'To-Do', outline: 'Outline', task: 'Task',
-    link: 'Link', code: 'Code', group: 'Group', image: 'Image', file: 'File',
+    link: 'Link', code: 'Code', group: 'Group', image: 'Image', file: 'File', draw: 'Drawing',
   };
 
-  /** Types that can be created from an empty note (images and files need a file). */
-  MM.TEXT_TYPES = Object.keys(MM.NODE_TYPES).filter((t) => t !== 'image' && t !== 'file');
+  /** Types that can be created from an empty note (images and files need a file, drawings are drawn). */
+  MM.TEXT_TYPES = Object.keys(MM.NODE_TYPES).filter((t) => t !== 'image' && t !== 'file' && t !== 'draw');
+
+  /** Shapes of drawings (see draw.js). */
+  MM.DRAW_KINDS = { rect: 'Rectangle', ellipse: 'Ellipse', line: 'Line', arrow: 'Arrow' };
 
   /** Outline and task notes share the nested bullet list. */
   MM.hasBlocks = (n) => n.type === 'outline' || n.type === 'task';
@@ -140,6 +143,7 @@ window.MM = window.MM || {};
       w: 320, h: 120, shape: 'rect', text: '',
       style: { fill: '#1e293b', stroke: '#0f172a', textColor: '#e2e8f0', fontSize: 13, align: 'left' },
     },
+    draw: { w: 120, h: 80, shape: 'none', text: '', style: { stroke: '#e53e3e', strokeWidth: 3, fill: 'none', opacity: 1 } },
     group: {
       w: 440, h: 300, shape: 'rounded', text: 'Group',
       style: { fill: '#f1f5f9', stroke: '#94a3b8', strokeStyle: 'dashed', align: 'left', bold: true },
@@ -215,6 +219,7 @@ window.MM = window.MM || {};
     if (MM.hasBlocks(node)) node.blocks = [MM.createBlock('', 0)];
     if (node.type === 'image') Object.assign(node, { imageId: null, overlay: false });
     if (node.type === 'file') Object.assign(node, { file: { path: '', name: '', size: 0, mime: '' } });
+    if (node.type === 'draw') Object.assign(node, { draw: 'rect', line: { x1: 0, y1: 0, x2: 1, y2: 1 }, anchor: null });
     return Object.assign(node, overrides || {});
   };
 
@@ -392,6 +397,20 @@ window.MM = window.MM || {};
       node.movedFrom = node.movedFrom ? str(node.movedFrom) : null;
       node.movedCopyId = node.movedCopyId ? str(node.movedCopyId) : null;
       node.movedBatch = node.movedBatch ? str(node.movedBatch) : null; // notes moved together
+      if (type === 'draw') {
+        // drawing: shape, line end points (fractions of the box) and anchor note (see draw.js)
+        const frac = (v, d) => Math.max(0, Math.min(1, num(v, d)));
+        const l = n.line && typeof n.line === 'object' ? n.line : {};
+        node.draw = oneOf(n.draw, MM.DRAW_KINDS, 'rect');
+        node.line = { x1: frac(l.x1, 0), y1: frac(l.y1, 0), x2: frac(l.x2, 1), y2: frac(l.y2, 1) };
+        const a = n.anchor && typeof n.anchor === 'object' && n.anchor.node ? n.anchor : null;
+        const b = (a && a.box && typeof a.box === 'object') ? a.box : {};
+        node.anchor = a ? { node: str(a.node), box: { x: num(b.x, 0), y: num(b.y, 0), w: num(b.w, 0), h: num(b.h, 0) } } : null;
+      } else {
+        delete node.draw;
+        delete node.line;
+        delete node.anchor;
+      }
       node.repeat = MM.normalizeRepeat(n.repeat);
       for (const it of node.items) if (it.routine !== undefined) it.routine = str(it.routine); // entry created from a routine
       if (node.type === 'file') {
@@ -401,6 +420,10 @@ window.MM = window.MM || {};
         delete node.file;
       }
       doc.nodes[node.id] = node;
+    }
+    // a drawing anchored to a note that is not there is free (it would be deleted with its note otherwise)
+    for (const n of Object.values(doc.nodes)) {
+      if (n.anchor && (!doc.nodes[n.anchor.node] || doc.nodes[n.anchor.node].type === 'draw')) n.anchor = null;
     }
     // a connection end is either attached to a note or a free point
     const end = (x) => (typeof x.node === 'string'
@@ -542,6 +565,8 @@ window.MM = window.MM || {};
     if (limited && MM.ui) MM.ui.flash(MM.tr('Sub-task deadline moved back to the main task\'s deadline ({n})', { n: limited }));
     // a meeting / appointment checked off here is checked off in the other plans as well
     if (MM.routines) MM.routines.track('commit');
+    // anchored drawings follow their note (draw.js)
+    if (MM.draw) MM.draw.sync();
     MM.state.rev++;
     if (MM.history.commit()) {
       MM.state.dirty = true;

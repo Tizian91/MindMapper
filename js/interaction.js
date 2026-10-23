@@ -24,14 +24,17 @@
     return { x: (clientX - r.left - v.x) / v.zoom, y: (clientY - r.top - v.y) / v.zoom };
   };
 
-  /** Topmost visible note at a world point (optionally with padding; optionally ignoring overlays). */
+  /**
+   * Topmost visible note at a world point (optionally with padding; optionally ignoring overlays).
+   * Drawings never count: they are only hit on their line (in the DOM).
+   */
   I.nodeAt = function (p, pad = 0, noOverlay = false) {
     const nodes = Object.values(S.doc.nodes);
     // groups lie behind the other notes, so they only count if no note is hit
     for (const groups of [false, true]) {
       for (let i = nodes.length - 1; i >= 0; i--) {
         const n = nodes[i];
-        if ((n.type === 'group') !== groups) continue;
+        if ((n.type === 'group') !== groups || n.type === 'draw') continue;
         if (MM.meta.isHidden(n) || (noOverlay && n.overlay)) continue;
         if (MM.geo.contains(n, p, pad)) return n;
       }
@@ -39,9 +42,12 @@
     return null;
   };
 
-  /** Notes lying completely inside a group note. */
+  /**
+   * Notes lying completely inside a group note. Drawings are no members: an
+   * anchored one follows its note anyway, a free one only moves when selected.
+   */
   I.groupMembers = function (g) {
-    return Object.values(S.doc.nodes).filter((n) => n.id !== g.id && !n.overlay &&
+    return Object.values(S.doc.nodes).filter((n) => n.id !== g.id && !n.overlay && n.type !== 'draw' &&
       n.x >= g.x && n.y >= g.y && n.x + n.w <= g.x + g.w && n.y + n.h <= g.y + g.h);
   };
 
@@ -160,6 +166,12 @@
       return;
     }
     if (e.button !== 0) return;
+
+    // drawing tool chosen: the drag draws a shape, also across notes and images
+    if (S.tool && !t.classList.contains('handle-resize')) {
+      startDrag(e, { mode: 'draw', kind: S.tool, start: p, id: null, free: e.altKey });
+      return;
+    }
 
     // resize handle
     if (t.classList.contains('handle-resize')) {
@@ -342,6 +354,16 @@
       }
       case 'move': doMove(e, p); break;
       case 'resize': doResize(e, p); break;
+      case 'draw': {
+        if (!drag.id) {
+          if (MM.geo.dist(p, drag.start) * S.doc.view.zoom < 4) return;
+          drag.id = MM.draw.create(drag.kind, drag.start, p, e.shiftKey).id;
+        } else {
+          MM.draw.resizeTo(MM.node(drag.id), drag.start, p, e.shiftKey);
+        }
+        MM.render.nodes();
+        break;
+      }
       case 'connect': {
         drag.point = p;
         if (!drag.moved && MM.geo.dist(p, drag.start) * S.doc.view.zoom < 4) return;
@@ -385,8 +407,8 @@
       if (n && !(t.closest && (t.closest('.edge') || t.closest('.handle-resize')))) id = n.id;
       if (t.classList && (t.classList.contains('handle-resize') || t.classList.contains('handle-endpoint'))) id = null;
     }
-    // overlays (images on top of everything) have no anchor points
-    if (id && MM.node(id) && MM.node(id).overlay) id = null;
+    // overlays (images on top of everything) and drawings have no anchor points
+    if (id && MM.node(id) && (MM.node(id).overlay || MM.node(id).type === 'draw')) id = null;
     if (id !== S.hover) {
       S.hover = id;
       MM.render.overlay();
@@ -421,6 +443,8 @@
       f.end.x = f.x + dx;
       f.end.y = f.y + dy;
     }
+    // drawings anchored to a moved note go along (the dragged ones keep their place on it)
+    MM.draw.follow(S.doc, ids);
     MM.render.nodes();
     MM.render.edges();
     MM.render.overlay();
@@ -469,6 +493,8 @@
       b.h = MIN_H;
     }
     Object.assign(n, { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.w), h: Math.round(b.h) });
+    // drawings anchored to this note are scaled along
+    MM.draw.follow(S.doc, new Set([n.id]));
     MM.render.nodes();
     MM.render.edges();
     MM.render.overlay();
@@ -501,6 +527,19 @@
       case 'resize':
         MM.commit();
         break;
+      case 'draw': {
+        MM.draw.setTool(null);
+        const n = drag.id && MM.node(drag.id);
+        if (!n) {
+          MM.refresh();
+          break;
+        }
+        // anchored to the note / image where the drag began (Alt: free)
+        MM.draw.setAnchor(n, drag.free ? null : I.nodeAt(drag.start));
+        MM.select([n.id]);
+        MM.commit();
+        break;
+      }
       case 'connect':
         finishConnect(e, drag);
         break;
@@ -666,8 +705,11 @@
     else if (ctrl && key === 'x') A.cut();
     else if (ctrl && key === 'v') handled = false; // handled by the 'paste' event (images or notes)
     else if (ctrl && key === 'd') A.duplicate();
+    // anchor / detach drawings - feels like grouping in Inkscape
+    else if (ctrl && key === 'g') e.shiftKey ? A.drawDetach() : A.drawAnchor();
     else if (ctrl) handled = false;
     else if (key === 'Delete' || key === 'Backspace') A.deleteSelection();
+    else if (key === 'Escape' && S.tool) MM.draw.setTool(null);
     else if (key === 'Escape') A.deselect();
     else if (key === 'Enter' || key === 'F2') A.editSelected();
     else if (key === 'Tab') A.addChild();

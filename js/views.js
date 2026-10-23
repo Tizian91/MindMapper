@@ -34,7 +34,7 @@
   V.hierarchy = function (rootId, opts) {
     const o = Object.assign({ groups: true, skip: () => false }, opts);
     const nodes = S.doc.nodes;
-    const usable = (n) => !!n && !n.overlay && !o.skip(n);
+    const usable = (n) => !!n && !n.overlay && n.type !== 'draw' && !o.skip(n);
     const parent = new Map(), children = new Map();
     const below = (id, anc) => {
       for (let k = id; k; k = parent.get(k)) if (k === anc) return true;

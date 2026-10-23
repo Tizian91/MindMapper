@@ -68,7 +68,54 @@
       `<option value="${v}"${v === current ? ' selected' : ''}>${esc(l)}</option>`).join('') + '</select>';
   }
 
+  /** Small icon of a drawing shape. */
+  function drawIcon(kind) {
+    const d = { rect: 'M4,4H28V18H4Z', ellipse: 'M4,11A12,7 0 1,0 28,11A12,7 0 1,0 4,11Z', line: 'M4,18L28,4', arrow: 'M4,18L28,4M20,4H28V10' }[kind];
+    return `<svg viewBox="0 0 32 22" width="32" height="22"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`;
+  }
+
+  /** Panel of selected drawings (draw.js): shape, anchor, line and fill. */
+  function drawPanel(nodes) {
+    const n = nodes[0], st = n.style;
+    const count = nodes.length > 1 ? ` <span class="muted">(${nodes.length})</span>` : '';
+    const kinds = {};
+    Object.entries(MM.DRAW_KINDS).forEach(([k, label]) => (kinds[k] = MM.tr(label)));
+    const line = n.draw === 'line' || n.draw === 'arrow';
+    const filled = st.fill && st.fill !== 'none';
+    const label = MM.draw.anchorLabel(n);
+    const op = st.opacity === undefined ? 1 : st.opacity;
+    return `<section>${head(esc(MM.tr('Drawing')) + count)}
+      <div class="row"><label>${esc(MM.tr('Shape'))}</label>${seg('data-node-prop="draw" data-value', n.draw, kinds, drawIcon)}</div>
+      <div class="row"><label>${esc(MM.tr('Anchor'))}</label><span class="file-sub">${label
+        ? esc(MM.tr('Anchored to "{note}" – moves and scales with it', { note: label }))
+        : esc(MM.tr('Not anchored – moves only when selected'))}</span></div>
+      <div class="btn-row">
+        <button data-action="drawAnchor" title="Ctrl+G">${esc(MM.tr('Anchor to the note below'))}</button>
+        ${n.anchor ? `<button data-action="drawDetach" title="Ctrl+Shift+G">${esc(MM.tr('Detach'))}</button>` : ''}
+      </div>
+    </section>
+    <section><h3>${t('style')}</h3>
+      <div class="row"><label>${esc(MM.tr('Line'))}</label><input type="color" data-node-style="stroke" value="${esc(st.stroke)}">
+        <input type="number" data-node-style="strokeWidth" value="${esc(st.strokeWidth)}" min="0.5" max="24" step="0.5" title="${t('borderWidth')}"></div>
+      <div class="row"><label>${t('borderLine')}</label>${seg('data-node-style="strokeStyle" data-value', st.strokeStyle,
+        { solid: t('solid'), dashed: t('dashed'), dotted: t('dotted') }, lineIcon)}</div>` +
+      (line ? '' : `
+      <div class="row"><label>${t('fill')}</label><input type="color" data-node-style="fill" value="${esc(filled ? st.fill : '#ffffff')}">
+        <button data-node-style="fill" data-value="none" class="${filled ? '' : 'active'}">${esc(MM.tr('No fill'))}</button></div>`) + `
+      <div class="row"><label>${t('opacity')}</label><input type="range" data-node-style="opacity" min="0.1" max="1" step="0.05" value="${esc(op)}"></div>
+    </section>
+    <section><h3>${t('arrange')}</h3>
+      <div class="btn-row">
+        <button data-action="toFront">${t('toFront')}</button>
+        <button data-action="toBack">${t('toBack')}</button>
+        <button data-action="duplicate">${t('duplicate')}</button>
+        <button data-action="deleteSelection" class="danger">${t('delete')}</button>
+      </div>
+    </section>`;
+  }
+
   function nodePanel(nodes) {
+    if (nodes.every((x) => x.type === 'draw')) return drawPanel(nodes);
     const n = nodes[0], st = n.style;
     const count = nodes.length > 1 ? ` <span class="muted">(${nodes.length})</span>` : '';
     const allImages = nodes.every((x) => x.type === 'image');
@@ -430,7 +477,7 @@
     const nodes = MM.selectedNodes(), edges = MM.selectedEdges();
     // Rebuild only if the relevant data changed, so focused inputs survive.
     const key = JSON.stringify([
-      nodes.map((n) => [n.id, n.type, n.shape, n.style, n.meta, n.tags, n.overlay, n.imageId, n.link, n.file, MM.tasks.info(n), n.repeat]),
+      nodes.map((n) => [n.id, n.type, n.shape, n.style, n.meta, n.tags, n.overlay, n.imageId, n.link, n.file, MM.tasks.info(n), n.repeat, n.draw, n.anchor && n.anchor.node]),
       nodes.length ? MM.load.previewHTML(nodes) : null,
       edges.map((e) => [e.id, e.style, e.label]),
       nodes.length || edges.length ? null : [S.settings, S.edgeStyle],
@@ -478,6 +525,8 @@
     }
     if (ds.nodeStyle) {
       for (const n of MM.selectedNodes()) n.style[ds.nodeStyle] = value;
+      // the next drawing gets the same line / fill (until the page is reloaded)
+      if (MM.selectedNodes().some((n) => n.type === 'draw')) S.drawStyle = Object.assign({}, S.drawStyle, { [ds.nodeStyle]: value });
       return true;
     }
     if (ds.edgeStyle) {

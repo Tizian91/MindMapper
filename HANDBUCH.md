@@ -183,6 +183,15 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
   - Öffnen per Klick auf das Symbol, ↗ oder `Ctrl+Klick`. PDF, Text, Bilder usw. öffnen im Browser, alles andere wird heruntergeladen.
   - Rechtsklick: **Open file ↗**, **Replace file…**, **Show file path**. Löschen der Note löscht die Datei nicht.
 
+### Zeichnen auf Bildern und Notes
+
+- Toolbar **✎ Draw** → **Rectangle**, **Ellipse**, **Line** oder **Arrow**, dann auf der Fläche ziehen. `Shift` beim Ziehen: Quadrat / Kreis, Linien in 45°-Schritten. `Esc` bricht ab.
+- Zeichnungen liegen über allen Notes. Anklicken kann man sie nur auf ihrer Linie (oder ihrer Füllung) – das Bild darunter bleibt klickbar.
+- **Verankert** (wie ein Bild „mit Text verschieben“ in Word – eine Einstellung, kein Pfeil): Wer über einer Note oder einem Bild zu zeichnen beginnt, verankert die Zeichnung daran. Wird die Note verschoben oder vergrößert, wandert und skaliert die Zeichnung mit. Verschiebst du die Zeichnung selbst, bleibt sie verankert und hat nur einen neuen Platz auf der Note. Wird die Note gelöscht oder in eine andere Map verschoben, geht die Zeichnung mit.
+- **`Ctrl+G`** verankert wie Gruppieren in Inkscape: Zeichnung(en) und genau eine Note / ein Bild auswählen → die Zeichnungen hängen an dieser Note. Sind nur Zeichnungen ausgewählt, hängen sie an der Note darunter. **`Ctrl+Shift+G`** löst sie wieder (bei ausgewählten Notes: alle Zeichnungen, die an ihnen hängen).
+- **Nicht verankert** (beim Zeichnen `Alt` halten, oder **Detach**): Die Zeichnung bewegt sich nur, wenn sie selbst ausgewählt ist – auch eine Gruppe nimmt sie nicht mit.
+- Panel bzw. Rechtsklick: Form, **Anchor to the note below** / **Detach**, Linienfarbe und -stärke, Strichart, Füllung (Rechteck / Ellipse), Deckkraft. Die nächste Zeichnung übernimmt die zuletzt eingestellte Farbe und Stärke.
+
 ## 16. Emoji
 
 `Ctrl+.` oder `Ctrl+Shift+E` (auch beim Schreiben), Knopf **☺** in der Toolbar, Rechtsklick → **Emoji…** oder **Insert → Emoji…**: ins Textfeld einfügen oder als eigene, große Note.

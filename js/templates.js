@@ -269,7 +269,7 @@
     for (const n of Object.values(doc.nodes || {})) {
       if (noteIds.has(n.id)) {
         n.movedTo = newPath;
-        if (!n.link) n.link = newPath;
+        if (!n.link && n.type !== 'draw') n.link = newPath;
       }
       for (const it of n.items || []) {
         if (carry.items.some((c) => c.itemId === it.id && c.nodeId === n.id)) it.moved = newName;

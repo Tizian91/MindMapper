@@ -236,7 +236,7 @@
   // ---- What travels together ---------------------------------------------------
 
   /** Is note n completely inside group g (like MM.interaction.groupMembers, for any doc)? */
-  const inside = (n, g) => n.id !== g.id && !n.overlay &&
+  const inside = (n, g) => n.id !== g.id && !n.overlay && n.type !== 'draw' &&
     n.x >= g.x && n.y >= g.y && n.x + n.w <= g.x + g.w && n.y + n.h <= g.y + g.h;
 
   /**
@@ -261,6 +261,8 @@
       if (a && b && a !== b) add(a, b);
     }
     for (const g of groups) for (const n of Object.values(nodes)) if (inside(n, g)) add(g.id, n.id);
+    // drawings anchored to a note travel with it
+    for (const n of Object.values(nodes)) if (n.type === 'draw' && n.anchor) add(n.anchor.node, n.id);
 
     let out = [];
     for (const id of ids) {
@@ -312,6 +314,12 @@
         }
       }
       x += maxX - minX + 40;
+    }
+    // anchored drawings: anchored to the copy of their note (or free if it stayed behind)
+    for (const { copy: n } of copies) {
+      if (!n.anchor) continue;
+      const a = doc.nodes[idMap.get(n.anchor.node)];
+      n.anchor = a ? { node: a.id, box: { x: a.x, y: a.y, w: a.w, h: a.h } } : null;
     }
     for (const e of Object.values(src.edges || {})) {
       const a = idMap.get(e.source && e.source.node), b = idMap.get(e.target && e.target.node);
@@ -385,7 +393,7 @@
       c.src.movedTo = targetPath;
       c.src.movedCopyId = c.copy.id;
       c.src.movedBatch = batch;
-      if (!c.src.link) c.src.link = targetPath;
+      if (!c.src.link && c.src.type !== 'draw') c.src.link = targetPath;
     }
     MM.commit();
     if (S.file.handle) await MM.storage.writeFile();
