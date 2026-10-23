@@ -219,6 +219,11 @@
         MM.files.open(n);
         return;
       }
+      // diary entry: ↗ or Ctrl+click opens its page in the diary
+      if (n.type === 'diary' && n.diary.book && (t.closest('.node-linkbtn') || e.ctrlKey)) {
+        MM.diary.open(n.diary.book, { date: n.diary.date, entry: n.id });
+        return;
+      }
       // ↗ button or Ctrl+click: follow the note's link
       if (n.link && (t.closest('.node-linkbtn') || e.ctrlKey)) {
         MM.links.open(n.link);

@@ -183,7 +183,7 @@
     for (const [path, doc] of docs) {
       for (const n of Object.values(doc.nodes || {})) {
         const m = n.meta || {};
-        if (!m.scheduled || n.movedTo || n.repeat || m.status === 'done') continue;
+        if (!m.scheduled || n.movedTo || n.repeat || m.status === 'done' || n.type === 'diary') continue;
         out.push({
           path, id: n.id, title: (n.text || '').split('\n')[0] || MM.tr('Appointment'), date: m.scheduled,
           rule: { time: m.scheduledTime || '' }, minutes: Number(m.estimate) || 0,

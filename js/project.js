@@ -117,6 +117,7 @@
   P.scan = async function () {
     if (!P.dir) return;
     P.entries = await list(P.dir, '', 0);
+    P.diaries = await listDiaries();
     P.render();
     MM.load.scheduleRefresh(); // workload of all maps (read in the background)
   };
@@ -129,6 +130,9 @@
       if (depth === 0 && h.kind === 'file' && name === MM.storage.PROJECT_SETTINGS_FILE) continue;
       // Assets/ holds the files of data notes - never list it as maps
       if (depth === 0 && h.kind === 'directory' && MM.files && name === MM.files.ASSET_FOLDER) continue;
+      // Diaries/ holds the diaries (own sidebar section), and a diary file is no map anywhere
+      if (depth === 0 && h.kind === 'directory' && name === P.DIARY_FOLDER) continue;
+      if (h.kind === 'file' && DIARY_EXT.test(name)) continue;
       if (h.kind === 'directory' && depth < 4) {
         out.push({ kind: 'dir', name, path: prefix + name, handle: h, children: await list(h, prefix + name + '/', depth + 1) });
       } else if (h.kind === 'file' && /\.json$/i.test(name)) {
@@ -138,6 +142,65 @@
     const coll = new Intl.Collator(undefined, { numeric: true });
     return out.sort((a, b) => (a.kind === b.kind ? coll.compare(a.name, b.name) : a.kind === 'dir' ? -1 : 1));
   }
+
+  // ---- Diaries (see diary.js) --------------------------------------------------
+  // One file per diary: Diaries/<name>.diary.json with its look, page overlays and
+  // closed pages. The entries themselves are diary notes in the maps.
+
+  P.DIARY_FOLDER = 'Diaries';
+  const DIARY_EXT = /\.diary\.json$/i;
+  P.diaries = []; // [{ name, path }]
+
+  async function listDiaries() {
+    const out = [];
+    try {
+      const dir = await P.dir.getDirectoryHandle(P.DIARY_FOLDER);
+      for await (const [name, h] of dir.entries()) {
+        if (h.kind === 'file' && DIARY_EXT.test(name)) {
+          out.push({ name: name.replace(DIARY_EXT, ''), path: P.DIARY_FOLDER + '/' + name });
+        }
+      }
+    } catch (e) { /* no diaries yet */ }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  P.diaryPath = (name) => `${P.DIARY_FOLDER}/${P.sanitizeName(name)}.diary.json`;
+
+  /** A diary file (normalized), or a fresh one if it does not exist yet. */
+  P.readDiary = async function (name) {
+    let raw = null;
+    try {
+      const fh = await P.getHandle(P.diaryPath(name));
+      if (fh) raw = JSON.parse(await (await fh.getFile()).text());
+    } catch (e) { /* missing or broken: start fresh */ }
+    return MM.diary.normalize(raw, name);
+  };
+
+  P.writeDiary = async function (data) {
+    if (!(await P.ensureWriteAccess())) throw new Error(tr('no write access to the project folder'));
+    await P.ensureDir(P.DIARY_FOLDER, true);
+    await P.writeText(P.diaryPath(data.name), JSON.stringify(data, null, 2));
+  };
+
+  /** Ask for a name and create a new diary. Returns its name or null. */
+  P.newDiary = async function () {
+    if (P.status !== 'ready') {
+      alert(tr('Diaries live in a project folder.\nOpen a folder in the "Project" sidebar first.'));
+      return null;
+    }
+    const raw = prompt(tr('Name of the new diary (e.g. "Lab book" or "Journal"):'), '');
+    const name = P.sanitizeName(raw || '');
+    if (!name) return null;
+    if (P.diaries.some((d) => d.name.toLowerCase() === name.toLowerCase())) {
+      alert(tr('A diary "{name}" exists already.', { name }));
+      return null;
+    }
+    await P.writeDiary(MM.diary.normalize(null, name));
+    P.diaries = await listDiaries();
+    lastKey = '';
+    P.render();
+    return name;
+  };
 
   // ---- Low level file helpers (used by rename, transfer, files, derive-map) ----
 
@@ -663,7 +726,7 @@
     if (!root) return;
     document.getElementById('main').classList.toggle('with-sidebar', !!S.settings.showProject);
     // rebuild only when something visible changed (keeps clicks from getting lost)
-    const key = JSON.stringify([P.status, P.dir && P.dir.name, paths(P.entries), S.file.path, S.file.name, [...collapsed], P.history, MM.getLang()]);
+    const key = JSON.stringify([P.status, P.dir && P.dir.name, paths(P.entries), S.file.path, S.file.name, [...collapsed], P.history, MM.getLang(), P.diaries.map((d) => d.name)]);
     if (key === lastKey) return;
     lastKey = key;
     const back = P.history.length ? P.history[P.history.length - 1] : null;
@@ -685,7 +748,13 @@
           <button data-p="choose" title="${esc(tr('Open another folder'))}">…</button></div>
         <button class="sb-wide primary" data-p="new">${tr('+ New map')}</button>
         ${back ? `<button class="sb-wide sb-back" data-p="back" title="${esc(back)}">${tr('← Back to {name}', { name: esc(displayName(back.split('/').pop())) })}</button>` : ''}
-        <div class="sb-tree">${tree(P.entries, 0) || `<p class="hint">${tr('No maps yet.')}</p>`}</div>`;
+        <div class="sb-tree">${tree(P.entries, 0) || `<p class="hint">${tr('No maps yet.')}</p>`}</div>
+        <div class="sb-diaries">
+          <div class="sb-subhead"><span>${tr('Diaries')}</span>
+            <button data-p="newDiary" title="${esc(tr('New diary…'))}">+</button></div>
+          ${P.diaries.map((d) => `<div class="sb-diary" data-diary="${esc(d.name)}" title="${esc(tr('Open the diary'))}">📖 ${esc(d.name)}</div>`).join('') ||
+            `<p class="hint">${tr('No diary yet. Diary entries are notes of the type "Diary entry".')}</p>`}
+        </div>`;
       if (!S.file.path) {
         h += `<p class="hint sb-outside">${tr('The open map ({name}) is not part of this folder. Use <b>Save as</b> to store it here.', { name: esc(displayName(S.file.name)) })}</p>`;
       }
@@ -772,6 +841,12 @@
       else if (a === 'back') P.back();
       else if (a === 'overview') MM.overview.open();
       else if (a === 'hide') MM.actions.toggleProject();
+      else if (a === 'newDiary') P.newDiary().then((name) => name && MM.diary.open(name));
+      return;
+    }
+    const diary = t.closest('[data-diary]');
+    if (diary) {
+      MM.diary.open(diary.dataset.diary);
       return;
     }
     const dir = t.closest('[data-dir]');

@@ -29,6 +29,7 @@ window.MM = window.MM || {};
   MM.NODE_TYPES = {
     text: 'Note', heading: 'Heading', todo: 'To-Do', outline: 'Outline', task: 'Task',
     link: 'Link', code: 'Code', group: 'Group', image: 'Image', file: 'File', draw: 'Drawing',
+    diary: 'Diary entry',
   };
 
   /** Types that can be created from an empty note (images and files need a file, drawings are drawn). */
@@ -144,6 +145,8 @@ window.MM = window.MM || {};
       style: { fill: '#1e293b', stroke: '#0f172a', textColor: '#e2e8f0', fontSize: 13, align: 'left' },
     },
     draw: { w: 120, h: 80, shape: 'none', text: '', style: { stroke: '#e53e3e', strokeWidth: 3, fill: 'none', opacity: 1 } },
+    // diary entry (diary.js): head like a to-do list, warm paper colour
+    diary: { w: 320, h: 220, shape: 'rect', text: '', style: { align: 'left', fill: '#fdf8ec', stroke: '#b7791f' } },
     group: {
       w: 440, h: 300, shape: 'rounded', text: 'Group',
       style: { fill: '#f1f5f9', stroke: '#94a3b8', strokeStyle: 'dashed', align: 'left', bold: true },
@@ -220,7 +223,28 @@ window.MM = window.MM || {};
     if (node.type === 'image') Object.assign(node, { imageId: null, overlay: false });
     if (node.type === 'file') Object.assign(node, { file: { path: '', name: '', size: 0, mime: '' } });
     if (node.type === 'draw') Object.assign(node, { draw: 'rect', line: { x1: 0, y1: 0, x2: 1, y2: 1 }, anchor: null });
+    if (node.type === 'diary') node.diary = MM.newDiaryMeta();
     return Object.assign(node, overrides || {});
+  };
+
+  /**
+   * Diary data of a new entry: { book, date 'YYYY-MM-DD', time 'HH:MM' } - now,
+   * in the diary used last.
+   */
+  MM.newDiaryMeta = function () {
+    const d = new Date(), p = (v) => String(v).padStart(2, '0');
+    return {
+      book: (MM.state && MM.state.settings && MM.state.settings.lastDiary) || '',
+      date: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`,
+      time: `${p(d.getHours())}:${p(d.getMinutes())}`,
+    };
+  };
+
+  /** Asset ids a note uses: its image, and images in the text of a diary entry. */
+  MM.assetRefs = function (n) {
+    const ids = n.imageId ? [n.imageId] : [];
+    if (n.type === 'diary' && MM.md) ids.push(...MM.md.assetIds(n.text));
+    return ids;
   };
 
   /** A note that only shows one big character (emoji, symbol, letter). */
@@ -246,6 +270,8 @@ window.MM = window.MM || {};
   MM.setNodeType = function (n, type) {
     if (n.type === type || !MM.NODE_TYPES[type]) return;
     if (type === 'image' || n.type === 'image' || type === 'file' || n.type === 'file') return;
+    if (type === 'draw' || n.type === 'draw') return;
+    if (type === 'diary' && !n.diary) n.diary = MM.newDiaryMeta();
     if (type === 'todo' && !n.items.length) {
       n.items = n.blocks.length
         ? n.blocks.filter((b) => b.text).map((b) => MM.createTodoItem(b.text))
@@ -411,6 +437,18 @@ window.MM = window.MM || {};
         delete node.line;
         delete node.anchor;
       }
+      if (type === 'diary') {
+        // diary entry: which diary, day and time (see diary.js)
+        const dm = n.diary && typeof n.diary === 'object' ? n.diary : {};
+        const def = MM.newDiaryMeta();
+        node.diary = {
+          book: str(dm.book).slice(0, 120),
+          date: /^\d{4}-\d{2}-\d{2}$/.test(dm.date) ? dm.date : def.date,
+          time: /^\d{2}:\d{2}$/.test(dm.time) ? dm.time : '',
+        };
+      } else {
+        delete node.diary;
+      }
       node.repeat = MM.normalizeRepeat(n.repeat);
       for (const it of node.items) if (it.routine !== undefined) it.routine = str(it.routine); // entry created from a routine
       if (node.type === 'file') {
@@ -472,6 +510,7 @@ window.MM = window.MM || {};
       hoursPerDay: 8,      // workload capacity for work days (see workload.js)
       hoursPerWeekendDay: 0, // capacity for non-work days
       workDays: [1, 2, 3, 4, 5], // 0 = Sunday
+      lastDiary: '',       // diary of the last diary entry (new entries go there)
       prioSystem: 'levels', // 'levels' | 'eisenhower' (per project folder, see storage.js)
     },
     // view filter (not saved, not part of undo); see meta.js

@@ -56,7 +56,7 @@ Overlay-Positionen relativ zur Seite (x in Prozent der Seitenbreite, y in px ab 
 
 ## Stufen
 
-### Stufe 1 – benutzbar
+### Stufe 1 – benutzbar ✅ (23.10.2026)
 - Note-Typ `diary` (`state.js`: Katalog, Preset, normalize; `render.js`: Kopf wie To-do + Markdown-Vorschau; `panel.js`: Tagebuch-Auswahl, Datum, Uhrzeit).
 - Markdown-Renderer `js/markdown.js` (Überschriften, Absätze, Listen, fett/kursiv, Links, Tabellen, Bilder `asset:`, Code). Alles escaped, Links nur `http(s):`/`mailto:`.
 - Bilder beim Bearbeiten einfügen (`Ctrl+V`, Drag & Drop) → Asset + Markdown-Verweis an der Cursorposition.

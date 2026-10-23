@@ -138,6 +138,32 @@
     'Moving with {n} sub-note(s)': 'Verschieben mit {n} Unter-Notiz(en)',
     'Drag to draw – over a note or image it is anchored to it (Alt: not anchored). Esc cancels.':
       'Ziehen zum Zeichnen – über einer Note oder einem Bild wird daran verankert (Alt: nicht verankert). Esc bricht ab.',
+    // ---- diary.js / markdown.js ----
+    'Diary entry': 'Tagebucheintrag',
+    'Diary': 'Tagebuch',
+    'Diaries': 'Tagebücher',
+    'Day': 'Tag',
+    'New diary…': 'Neues Tagebuch…',
+    'Open the diary': 'Tagebuch öffnen',
+    'Open in diary': 'Im Tagebuch öffnen',
+    '– choose –': '– auswählen –',
+    'no diary chosen': 'kein Tagebuch gewählt',
+    'Double-click to write (Markdown)': 'Doppelklick zum Schreiben (Markdown)',
+    'Open this page of the diary (or Ctrl+click the note)': 'Diese Seite im Tagebuch öffnen (oder Strg+Klick auf die Notiz)',
+    'No diary yet. Diary entries are notes of the type "Diary entry".': 'Noch kein Tagebuch. Einträge sind Notizen vom Typ „Tagebucheintrag“.',
+    'Diaries live in a project folder.\nOpen a folder in the "Project" sidebar first.': 'Tagebücher liegen in einem Projektordner.\nZuerst in der Seitenleiste „Projekt“ einen Ordner öffnen.',
+    'Name of the new diary (e.g. "Lab book" or "Journal"):': 'Name des neuen Tagebuchs (z. B. „Laborbuch“ oder „Journal“):',
+    'A diary "{name}" exists already.': 'Ein Tagebuch „{name}“ gibt es schon.',
+    'Reading the maps…': 'Maps werden gelesen…',
+    'No entries yet. Add a note of the type "Diary entry" to a map and choose this diary in its panel.':
+      'Noch keine Einträge. Eine Notiz vom Typ „Tagebucheintrag“ in eine Map setzen und im Panel dieses Tagebuch wählen.',
+    'Master task': 'Haupttask',
+    '(empty entry)': '(leerer Eintrag)',
+    'Show the entry in its map ({map})': 'Eintrag in seiner Map zeigen ({map})',
+    'Choose a diary for this entry first.': 'Zuerst ein Tagebuch für diesen Eintrag wählen.',
+    'Could not read the image': 'Das Bild konnte nicht gelesen werden',
+    'Markdown: # heading, **bold**, *italic*, - list, | table |. Paste or drop images while writing. Arrows pointing at the entry show their note in its head.':
+      'Markdown: # Überschrift, **fett**, *kursiv*, - Liste, | Tabelle |. Bilder beim Schreiben einfügen oder hineinziehen. Pfeile auf den Eintrag zeigen ihre Notiz im Kopf.',
     // ---- transfer.js (bundles) ----
     'Moved {n} note(s) to {map} (with {m} sub-note(s) / group)': '{n} Notiz(en) nach {map} verschoben (mit {m} Unter-Notiz(en) / Gruppe)',
   };

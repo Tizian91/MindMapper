@@ -53,6 +53,7 @@
       let status = m.status, detail = '';
       if (n.movedTo) continue; // carried over into another map, listed there
       if (n.repeat) continue;  // routine definition: listed on the workload page
+      if (n.type === 'diary') continue; // diary entries live in their diary
       if (n.type === 'todo') {
         if (!MM.meta.isTaskTodo(n)) continue; // a plain check list, not a task
         const filled = (n.items || []).filter((i) => i.text.trim() && !i.moved);

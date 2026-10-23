@@ -73,6 +73,10 @@
       ? div.querySelector(`li[data-${L.attr}="${CSS.escape(itemId)}"] ${L.textSel}`)
       : div.querySelector('[data-field="text"]');
     if (!target) return;
+    // a diary entry shows rendered Markdown - it is edited as the plain Markdown text
+    const node = MM.node(nodeId);
+    const markdown = field === 'text' && node && node.type === 'diary';
+    if (markdown) target.textContent = node.text;
 
     MM.editing = { nodeId, field, itemId, el: target };
     target.contentEditable = 'plaintext-only';
@@ -80,11 +84,14 @@
     target.classList.add('editing');
     div.classList.add('editing');
     target.focus();
-    setCaret(target, (opts && opts.caret !== undefined) ? opts.caret : 'all');
+    // a long entry is continued at its end, not selected (typing would replace it)
+    setCaret(target, (opts && opts.caret !== undefined) ? opts.caret : markdown ? 'end' : 'all');
 
     target.addEventListener('keydown', onKey);
     target.addEventListener('input', onInput);
     target.addEventListener('blur', onBlur);
+    target.addEventListener('paste', onPaste);
+    target.addEventListener('drop', onPaste);
     MM.render.overlay();
   };
 
@@ -119,6 +126,8 @@
     target.removeEventListener('keydown', onKey);
     target.removeEventListener('input', onInput);
     target.removeEventListener('blur', onBlur);
+    target.removeEventListener('paste', onPaste);
+    target.removeEventListener('drop', onPaste);
     target.contentEditable = 'false';
     target.classList.remove('editing');
 
@@ -153,6 +162,45 @@
     ED.finish();
   }
 
+  /**
+   * Images pasted or dropped into a diary entry: stored in the map (doc.assets)
+   * and inserted at the caret as ![image](asset:<id>). Text is pasted as usual.
+   */
+  async function onPaste(e) {
+    const ed = MM.editing;
+    const n = ed && MM.node(ed.nodeId);
+    if (!n || n.type !== 'diary' || ed.field !== 'text') return;
+    const dt = e.clipboardData || e.dataTransfer;
+    const files = MM.images.filesFrom(dt);
+    if (!files.length) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const sel = window.getSelection();
+    // dropped: insert where the mouse is
+    const at = e.type === 'drop' && document.caretRangeFromPoint ? document.caretRangeFromPoint(e.clientX, e.clientY) : null;
+    if (at && ed.el.contains(at.startContainer)) {
+      sel.removeAllRanges();
+      sel.addRange(at);
+    }
+    const range = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+    let md = '';
+    for (const f of files) {
+      try {
+        const img = await MM.images.prepare(f);
+        md += `\n![${(f.name || 'image').replace(/[[\]()]/g, '')}](asset:${MM.images.addAsset(img.url)})\n`;
+      } catch (err) {
+        MM.ui.flash(MM.tr('Could not read the image'));
+      }
+    }
+    if (!md || MM.editing !== ed) return;
+    ed.el.focus();
+    if (range) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    document.execCommand('insertText', false, md);
+  }
+
   function onKey(e) {
     const ed = MM.editing;
     if (!ed) return;
@@ -178,8 +226,8 @@
       if (blockKey(e, ed, n)) e.preventDefault();
       return;
     }
-    // code: Enter = new line, Tab = indent, Ctrl+Enter = finish
-    if (n.type === 'code') {
+    // code and diary entries: Enter = new line, Tab = indent, Ctrl+Enter = finish
+    if (n.type === 'code' || (n.type === 'diary' && ed.field === 'text')) {
       if (e.key === 'Tab') {
         e.preventDefault();
         document.execCommand('insertText', false, '  ');

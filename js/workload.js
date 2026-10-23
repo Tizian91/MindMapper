@@ -89,6 +89,7 @@
       const parents = MM.tasks.compute(doc, (p) => (p !== path ? rootsOf(p) : null)).info;
       for (const n of Object.values(doc.nodes || {})) {
         if (n.movedTo || n.repeat || (isOpen && skip && skip.has(n.id))) continue; // routines reduce the capacity instead
+        if (n.type === 'diary') continue; // a diary entry is no planned work
         const m = n.meta || {};
         if (m.scheduled) {
           // appointment: a fixed block of time on its day - it stays reserved when ticked off

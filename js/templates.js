@@ -236,6 +236,7 @@
     for (const n of Object.values(doc.nodes || {})) {
       const status = (n.meta && n.meta.status) || 'none';
       if (n.movedTo || n.repeat) continue; // already carried over earlier / a routine definition
+      if (n.type === 'diary') continue; // diary entries stay on their day
       if (n.type === 'todo') {
         if (!MM.meta.isTaskTodo(n)) continue; // a plain check list stays where it is
       } else if ((status !== 'none' && status !== 'done') || (n.type === 'task' && status !== 'done')) {

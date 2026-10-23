@@ -23,6 +23,7 @@ const FILES = [
   'js/i18n.js',
   'js/i18n-de.js',
   'js/i18n-de2.js',
+  'js/markdown.js',
   'js/geometry.js',
   'js/snapping.js',
   'js/render.js',
@@ -47,6 +48,7 @@ const FILES = [
   'js/views.js',
   'js/workload.js',
   'js/routines.js',
+  'js/diary.js',
   'js/main.js',
 ];
 

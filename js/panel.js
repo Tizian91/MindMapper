@@ -114,6 +114,23 @@
     </section>`;
   }
 
+  /** Diary entry (diary.js): which diary, day and time, open the page. */
+  function diarySection(nodes) {
+    const d = nodes[0].diary || {};
+    const books = MM.project.diaries.map((x) => x.name);
+    if (d.book && !books.includes(d.book)) books.unshift(d.book);
+    const opts = [`<option value=""${d.book ? '' : ' selected'}>${esc(MM.tr('– choose –'))}</option>`]
+      .concat(books.map((b) => `<option value="${esc(b)}"${b === d.book ? ' selected' : ''}>${esc(b)}</option>`),
+        [`<option value="__new">${esc(MM.tr('New diary…'))}</option>`]);
+    return `<section><h3>${esc(MM.tr('Diary'))}</h3>
+      <div class="row"><label>${esc(MM.tr('Diary'))}</label><select data-diary-field="book">${opts.join('')}</select></div>
+      <div class="row"><label>${esc(MM.tr('Day'))}</label><input type="date" data-diary-field="date" value="${esc(d.date || '')}">
+        <input type="time" data-diary-field="time" value="${esc(d.time || '')}"></div>
+      <div class="btn-row"><button data-action="openDiary" ${d.book ? '' : 'disabled'}>📖 ${esc(MM.tr('Open in diary'))}</button></div>
+      <p class="hint">${esc(MM.tr('Markdown: # heading, **bold**, *italic*, - list, | table |. Paste or drop images while writing. Arrows pointing at the entry show their note in its head.'))}</p>
+    </section>`;
+  }
+
   function nodePanel(nodes) {
     if (nodes.every((x) => x.type === 'draw')) return drawPanel(nodes);
     const n = nodes[0], st = n.style;
@@ -143,7 +160,9 @@
       <p class="hint">${t('imageHint')}</p>`;
     }
     h += '</section>';
-    h += detailsSection(nodes);
+    // diary entries have their own section instead of deadline / status / estimate
+    if (nodes.every((x) => x.type === 'diary')) h += diarySection(nodes);
+    else h += detailsSection(nodes);
     h += `<section><h3>${t('shape')}</h3>
       <div class="shape-grid">` + Object.keys(MM.SHAPES).map((s) => {
         const label = esc(t('shape_' + s, MM.SHAPES[s]));
@@ -477,7 +496,7 @@
     const nodes = MM.selectedNodes(), edges = MM.selectedEdges();
     // Rebuild only if the relevant data changed, so focused inputs survive.
     const key = JSON.stringify([
-      nodes.map((n) => [n.id, n.type, n.shape, n.style, n.meta, n.tags, n.overlay, n.imageId, n.link, n.file, MM.tasks.info(n), n.repeat, n.draw, n.anchor && n.anchor.node]),
+      nodes.map((n) => [n.id, n.type, n.shape, n.style, n.meta, n.tags, n.overlay, n.imageId, n.link, n.file, MM.tasks.info(n), n.repeat, n.draw, n.anchor && n.anchor.node, n.diary]),
       nodes.length ? MM.load.previewHTML(nodes) : null,
       edges.map((e) => [e.id, e.style, e.label]),
       nodes.length || edges.length ? null : [S.settings, S.edgeStyle],
@@ -520,6 +539,30 @@
       for (const n of MM.selectedNodes()) {
         if (ds.nodeProp === 'type') MM.setNodeType(n, value);
         else n[ds.nodeProp] = value;
+      }
+      return true;
+    }
+    if (ds.diaryField) {
+      const entries = MM.selectedNodes().filter((n) => n.type === 'diary');
+      if (ds.diaryField === 'book' && raw === '__new') {
+        // create the diary first, then choose it
+        MM.project.newDiary().then((name) => {
+          if (name) {
+            entries.forEach((n) => (n.diary.book = name));
+            S.settings.lastDiary = name;
+            MM.saveSettings();
+            MM.commit();
+          }
+          P.update(true);
+        });
+        return false;
+      }
+      if (ds.diaryField === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return false;
+      if (ds.diaryField === 'time' && raw && !/^\d{2}:\d{2}$/.test(raw)) return false;
+      entries.forEach((n) => (n.diary[ds.diaryField] = raw));
+      if (ds.diaryField === 'book' && raw) {
+        S.settings.lastDiary = raw; // new entries go to the same diary
+        MM.saveSettings();
       }
       return true;
     }
@@ -651,7 +694,8 @@
     const el = e.target;
     if (el.type === 'checkbox' || el.tagName === 'SELECT') return;
     if (['estimate', 'deadline', 'scheduled', 'scheduledTime'].includes(el.dataset.meta) ||
-      el.dataset.tagInput !== undefined || el.dataset.linkInput !== undefined) return; // applied on change (deadline / appointment exclude each other)
+      el.dataset.tagInput !== undefined || el.dataset.linkInput !== undefined ||
+      el.dataset.diaryField !== undefined) return; // applied on change (deadline / appointment exclude each other)
     if (apply(el, el.value)) {
       MM.render.all();
     }

@@ -378,7 +378,7 @@
     });
     // image data travels along, so pasting into another map works too
     const assets = {};
-    for (const n of nodes) if (n.imageId && S.doc.assets[n.imageId]) assets[n.imageId] = S.doc.assets[n.imageId];
+    for (const n of nodes) for (const id of MM.assetRefs(n)) if (S.doc.assets[id]) assets[id] = S.doc.assets[id];
     clipboard = Object.assign(MM.clone({ nodes, edges }), { assets });
     pasteCount = 0;
   };

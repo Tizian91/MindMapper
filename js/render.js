@@ -120,7 +120,8 @@
       n.type === 'link' ? n.link : 0,
       n.type === 'task' ? [n.meta, n.tags, new Date().toDateString(), MM.tasks.info(n), n.repeat, MM.getLang(), MM.prioKey()] : 0,
       n.type === 'image' ? [n.imageId, !!S.doc.assets[n.imageId], st.fit] : 0,
-      n.type === 'file' ? [n.file && n.file.path, n.file && n.file.size] : 0]);
+      n.type === 'file' ? [n.file && n.file.path, n.file && n.file.size] : 0,
+      n.type === 'diary' ? [n.diary, MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id])] : 0]);
     if (div._contentKey !== contentKey && !editing) {
       R.buildContent(div, n);
       div._contentKey = contentKey;
@@ -143,11 +144,14 @@
     }
 
     // small ↗ button for notes with a link or an attached file (not on drawings)
-    const target = n.type === 'draw' ? '' : n.file && n.file.path ? n.file.path : n.link;
+    const target = n.type === 'draw' ? '' : n.type === 'diary' ? (n.diary && n.diary.book ? 'diary:' + n.diary.book : '')
+      : n.file && n.file.path ? n.file.path : n.link;
     if (div._link !== target) {
       div._link = target;
       div._linkBtn.hidden = !target;
-      div._linkBtn.title = target ? 'Open ' + target + ' (or Ctrl+click the note)' : '';
+      div._linkBtn.title = !target ? ''
+        : n.type === 'diary' ? MM.tr('Open this page of the diary (or Ctrl+click the note)')
+          : 'Open ' + target + ' (or Ctrl+click the note)';
     }
     // map badge: a map was derived from this note, or the note was moved away
     const badge = n.derivedMap ? 'derivedMap' : n.movedTo ? 'movedTo' : '';
@@ -271,6 +275,23 @@
     c.innerHTML = '';
     if (n.type === 'draw') return; // a drawing has no text
 
+    if (n.type === 'diary') {
+      // diary entry: head like a to-do list (day, time, diary), below a preview of the Markdown
+      const wrap = el('div', 'diary-note');
+      const head = el('div', 'todo-head diary-head');
+      const dm = n.diary || {};
+      head.append(el('span', 'diary-date', MM.meta.formatDate(dm.date) + (dm.time ? ' · ' + dm.time : '')),
+        el('span', 'diary-book', dm.book || MM.tr('no diary chosen')));
+      const body = el('div', 'diary-body md');
+      body.dataset.field = 'text';
+      body.innerHTML = n.text.trim()
+        ? MM.md.render(n.text, (id) => S.doc.assets[id])
+        : `<p class="diary-empty">${R.esc(MM.tr('Double-click to write (Markdown)'))}</p>`;
+      wrap.append(head, body);
+      c.append(wrap);
+      return;
+    }
+
     if (n.type === 'todo') {
       const wrap = el('div', 'todo');
       const head = el('div', 'todo-head');
@@ -372,7 +393,7 @@
   /** Grow the node height until its content fits. Returns true if it grew. */
   R.autoGrow = function (div, n) {
     const c = div._content, inner = c.firstElementChild;
-    if (!inner || n.type === 'image') return false;
+    if (!inner || n.type === 'image' || n.type === 'diary') return false; // a diary entry keeps its size, the preview is cut off
     let grew = false;
     for (let i = 0; i < 8; i++) {
       const over = inner.offsetHeight - c.clientHeight;

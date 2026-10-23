@@ -1141,3 +1141,84 @@ dl.keys dd { margin: 0; color: var(--label); }
 .ov-caret.closed { transform: rotate(-90deg); }
 span.ov-caret { cursor: default; }
 .ov-row.ov-context { opacity: 0.5; }
+
+/* ---- Diary (diary.js, markdown.js) ------------------------------------------ */
+
+/* diary entry on the map: head like a to-do list, preview of the Markdown below */
+.diary-note { display: flex; flex-direction: column; height: 100%; margin-block: 0 !important; }
+.diary-head { font-size: 0.85em; color: #8a5a1c; }
+.diary-date { flex: 1; }
+.diary-book { font-weight: 400; font-style: italic; color: #a07a46; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+.diary-body { flex: 1; min-height: 0; overflow: hidden; font-weight: 400;
+  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent); mask-image: linear-gradient(to bottom, #000 80%, transparent); }
+.diary-body.editing { overflow: auto; white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 12px;
+  -webkit-mask-image: none; mask-image: none; cursor: text; }
+.diary-body a { pointer-events: none; } /* on the map a click selects the note */
+.diary-empty, .dy-empty { color: var(--muted); font-style: italic; }
+
+/* rendered Markdown (map preview and reader) */
+.md > :first-child { margin-top: 0; }
+.md p, .md ul, .md ol, .md table, .md pre, .md blockquote { margin: 0 0 0.6em; }
+.md h1, .md h2, .md h3, .md h4, .md h5, .md h6 { margin: 0.4em 0 0.3em; line-height: 1.25; }
+.md h1 { font-size: 1.5em; } .md h2 { font-size: 1.3em; } .md h3 { font-size: 1.15em; } .md h4, .md h5, .md h6 { font-size: 1em; }
+.md ul, .md ol { padding-left: 1.4em; }
+.md li.md-task { list-style: none; margin-left: -1.2em; }
+.md img { max-width: 100%; height: auto; border-radius: 4px; display: inline-block; vertical-align: top; }
+.md table { border-collapse: collapse; font-size: 0.92em; }
+.md th, .md td { border: 1px solid rgba(0, 0, 0, 0.2); padding: 3px 7px; }
+.md th { background: rgba(0, 0, 0, 0.05); }
+.md code { font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; background: rgba(0, 0, 0, 0.06); padding: 0 3px; border-radius: 3px; }
+.md pre { background: rgba(0, 0, 0, 0.06); padding: 6px 8px; border-radius: 4px; overflow: auto; }
+.md pre code { background: none; padding: 0; }
+.md blockquote { border-left: 3px solid rgba(0, 0, 0, 0.2); padding-left: 0.7em; color: inherit; opacity: 0.85; }
+.md hr { border: none; border-top: 1px solid rgba(0, 0, 0, 0.2); }
+.md a { color: inherit; text-decoration: underline; }
+.md-missing { color: var(--danger); font-style: italic; }
+
+/* sidebar */
+.sb-diaries { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 6px; }
+.sb-subhead { display: flex; align-items: center; padding: 2px 10px 4px 14px; font-weight: 600; color: var(--label); }
+.sb-subhead span { flex: 1; }
+.sb-subhead button { padding: 0 7px; }
+.sb-diary { padding: 4px 10px 4px 28px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-diary:hover { background: var(--accent-soft); }
+
+/* reader */
+#diary-dialog { width: min(900px, 94vw); height: min(860px, 92vh); max-width: none; max-height: none; overflow: hidden;
+  display: none; flex-direction: column; }
+#diary-dialog[open] { display: flex; }
+.dy-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.dy-title { font-weight: 700; margin-right: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 30%; }
+.dy-days { min-width: 0; max-width: 260px; }
+.dy-spacer { flex: 1; }
+.dy-scroll { flex: 1; overflow: auto; background: var(--bg); padding: 22px 16px; }
+.dy-page {
+  --dy-font: Georgia, serif; --dy-size: 16px; --dy-text: #2d2a26; --dy-accent: #b7791f; --dy-paper: #fdf8ec;
+  max-width: 720px; margin: 0 auto; min-height: 100%; box-sizing: border-box; padding: 34px 44px 48px;
+  background: var(--dy-paper); color: var(--dy-text); font-family: var(--dy-font); font-size: var(--dy-size); line-height: 1.6;
+  border-radius: 4px; box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
+  /* the page is always paper: buttons and chips on it use the light theme, also in dark mode */
+  --btn-bg: rgba(255, 255, 255, 0.7); --border: rgba(0, 0, 0, 0.18); --accent-soft: rgba(183, 121, 31, 0.14);
+  --accent-border: rgba(183, 121, 31, 0.45); --muted: #7b6f60; --label: #52606d;
+  --chip-bg: rgba(255, 255, 255, 0.8); --chip-text: #4a5568; --chip-border: rgba(0, 0, 0, 0.15);
+  --mix-base: white; --mix-ink: black; --track: #e2d9c8;
+}
+.dy-goto { color: var(--dy-accent); }
+.dy-page[data-ruling="lines"] { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.6em - 1px), rgba(0, 0, 0, 0.09) calc(1.6em - 1px), rgba(0, 0, 0, 0.09) 1.6em); }
+.dy-page[data-ruling="grid"] { background-image: linear-gradient(rgba(0, 0, 0, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.07) 1px, transparent 1px); background-size: 1.2em 1.2em; }
+.dy-page[data-ruling="dots"] { background-image: radial-gradient(rgba(0, 0, 0, 0.18) 1px, transparent 1.2px); background-size: 1.2em 1.2em; }
+.dy-day { margin: 0 0 18px; font-size: 1.5em; color: var(--dy-accent); border-bottom: 2px solid var(--dy-accent); padding-bottom: 4px; }
+.dy-none { color: #7b8794; font-style: italic; }
+.dy-entry { margin: 0 0 26px; padding: 2px 0 0; border-radius: 6px; }
+.dy-entry.dy-focus { animation: dy-focus 2s ease-out; }
+@keyframes dy-focus { from { box-shadow: 0 0 0 6px rgba(183, 121, 31, 0.35); } to { box-shadow: 0 0 0 6px transparent; } }
+.dy-entry-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; font-family: system-ui, sans-serif; font-size: 13px; line-height: 1.35; }
+.dy-time { font-weight: 700; color: var(--dy-accent); min-width: 3em; padding-top: 2px; }
+.dy-mothers { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+.dy-mother { border: 1px solid rgba(0, 0, 0, 0.15); border-left: 3px solid var(--dy-accent); background: rgba(255, 255, 255, 0.55);
+  border-radius: 5px; padding: 4px 8px; max-width: 320px; }
+.dy-master { font-size: 11px; color: #6b5a44; }
+.dy-m-title { font-weight: 600; }
+.dy-m-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.dy-goto { flex: none; font-size: 12px; padding: 1px 7px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dy-body img { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); }

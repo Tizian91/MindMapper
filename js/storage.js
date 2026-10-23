@@ -94,7 +94,7 @@
 
   /** The document without images that no note uses any more. */
   ST.prunedDoc = function () {
-    const used = new Set(Object.values(S.doc.nodes).map((n) => n.imageId).filter(Boolean));
+    const used = new Set(Object.values(S.doc.nodes).flatMap(MM.assetRefs)); // image notes, images in diary text
     const assets = {};
     for (const id of used) if (S.doc.assets[id]) assets[id] = S.doc.assets[id];
     return Object.assign({}, S.doc, { assets });

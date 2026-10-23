@@ -310,9 +310,10 @@
         idMap.set(s.id, n.id);
         copies.push({ src: s, copy: n });
         // image data travels along (like A.copy), the target map is self-contained
-        if (n.imageId && src.assets && src.assets[n.imageId]) {
+        for (const id of MM.assetRefs(n)) {
+          if (!src.assets || !src.assets[id]) continue;
           doc.assets = doc.assets || {};
-          doc.assets[n.imageId] = src.assets[n.imageId];
+          doc.assets[id] = src.assets[id];
         }
       }
       x += maxX - minX + 40;
