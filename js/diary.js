@@ -77,6 +77,14 @@
     for (const [day, p] of Object.entries(r.pages && typeof r.pages === 'object' ? r.pages : {})) {
       if (!DATE.test(day) || !p || typeof p !== 'object') continue;
       const page = { overlays: (Array.isArray(p.overlays) ? p.overlays : []).map(cleanOverlay).filter(Boolean) };
+      // empty lines above entries: { entry id: number of lines }
+      if (p.gaps && typeof p.gaps === 'object') {
+        page.gaps = {};
+        for (const [id, n] of Object.entries(p.gaps)) {
+          const lines = Math.round(Number(n));
+          if (lines > 0 && lines <= 200) page.gaps[str(id).slice(0, 80)] = lines;
+        }
+      }
       if (p.closed && typeof p.closed === 'object') {
         page.closed = { at: str(p.closed.at).slice(0, 40), entries: (Array.isArray(p.closed.entries) ? p.closed.entries : []).map(cleanEntry) };
       }
@@ -247,6 +255,10 @@
         turn(1);
       }
     });
+    // a narrower window wraps the text differently: put the entries on the lines again
+    window.addEventListener('resize', () => {
+      if (dialog.open && view.day) layoutPage(dialog.querySelector('.dy-page'));
+    });
     dialog.addEventListener('close', () => {
       popup(null);
       flushSave();
@@ -355,6 +367,7 @@
     const page = dialog.querySelector('.dy-page');
     page.setAttribute('style', styleVars());
     page.dataset.ruling = view.diary.style.ruling;
+    layoutPage(page); // another font size = another line height
   }
 
   function turn(step) {
@@ -392,8 +405,10 @@
       page.innerHTML = `<p class="dy-none">${esc(tr('No entries yet. Add a note of the type "Diary entry" to a map and choose this diary in its panel.'))}</p>`;
       return;
     }
-    page.innerHTML = overlaySpaceHTML(day) + pageHTML(day) + overlayLayerHTML(day);
+    page.innerHTML = pageHTML(day);
     view.sel = null;
+    layoutPage(page);
+    watchHeights(page);
     dialog.querySelector('.dy-scroll').scrollTop = 0;
     const target = entryId && page.querySelector(`[data-entry="${CSS.escape(entryId)}"]`);
     if (target) {
@@ -414,21 +429,31 @@
       h += `<button type="button" class="dy-page-btn" data-dy="closePage" title="${esc(tr('Freeze this page: later changes to the notes no longer change it'))}">🔒 ${esc(tr('Close page'))}</button>`;
     }
     h += '</div>';
-    if (!closed) return h + live.map((e) => entryHTML(entryData(e), (id) => (e.doc.assets || {})[id])).join('');
-    // closed: the frozen copy; what happened to the notes since is marked
-    const assetUrl = (id) => view.diary.assets[id];
-    for (const en of closed.entries) {
-      const now = view.entries.find((e) => e.n.id === en.id);
-      const mark = !now ? tr('the note was deleted or moved to another diary / day')
-        : now.n.text !== en.markdown || now.date !== day ? tr('the note was changed after closing – this is the closed version') : '';
-      h += entryHTML(en, assetUrl, mark);
+    const ids = [];
+    const entry = (d, assetUrl, mark, added) => {
+      ids.push(d.id);
+      return entryHTML(day, d, assetUrl, mark, added);
+    };
+    if (!closed) {
+      h += live.map((e) => entry(entryData(e), (id) => (e.doc.assets || {})[id])).join('');
+    } else {
+      // closed: the frozen copy; what happened to the notes since is marked
+      const assetUrl = (id) => view.diary.assets[id];
+      for (const en of closed.entries) {
+        const now = view.entries.find((e) => e.n.id === en.id);
+        const mark = !now ? tr('the note was deleted or moved to another diary / day')
+          : now.n.text !== en.markdown || now.date !== day ? tr('the note was changed after closing – this is the closed version') : '';
+        h += entry(en, assetUrl, mark);
+      }
+      const added = live.filter((e) => !closed.entries.some((en) => en.id === e.n.id));
+      if (added.length) {
+        h += `<div class="dy-added-head">${esc(tr('Added after closing'))}</div>` +
+          added.map((e) => entry(entryData(e), (id) => (e.doc.assets || {})[id], '', true)).join('');
+      }
     }
-    const added = live.filter((e) => !closed.entries.some((en) => en.id === e.n.id));
-    if (added.length) {
-      h += `<div class="dy-added-head">${esc(tr('Added after closing'))}</div>` +
-        added.map((e) => entryHTML(entryData(e), (id) => (e.doc.assets || {})[id], '', true)).join('');
-    }
-    return h;
+    // stickers of the page itself (above the first entry, or whose entry is no longer on the page)
+    const loose = overlaysOf(day).filter((o) => !o.entry || !ids.includes(o.entry));
+    return h + `<div class="dy-ov-layer" data-owner="">${loose.map(overlayHTML).join('')}</div>`;
   }
 
   /** Small card of a mother note: master task, title, status / progress / deadline / tags. */
@@ -441,10 +466,18 @@
     </div>`;
   }
 
-  /** One entry (live data or a frozen one). mark: note about later changes; added: written after closing. */
-  function entryHTML(d, assetUrl, mark, added) {
+  /**
+   * One entry (live data or a frozen one) on the page of `day`: the empty lines
+   * pushed in above it (dragging its head), the entry, and the stickers stuck to it.
+   * mark: note about later changes; added: written after closing.
+   */
+  function entryHTML(day, d, assetUrl, mark, added) {
     const body = d.markdown.trim() ? MM.md.render(d.markdown, assetUrl) : `<p class="dy-empty">${esc(tr('(empty entry)'))}</p>`;
-    return `<section class="dy-entry${added ? ' dy-added' : ''}" data-entry="${esc(d.id)}">
+    const gap = gapOf(day, d.id);
+    const stuck = overlaysOf(day).filter((o) => o.entry === d.id);
+    return `<div class="dy-gap" data-gap="${esc(d.id)}" style="height:calc(${gap} * var(--dy-line))"></div>
+    <section class="dy-entry${added ? ' dy-added' : ''}" data-entry="${esc(d.id)}">
+      <div class="dy-ov-layer" data-owner="${esc(d.id)}">${stuck.map(overlayHTML).join('')}</div>
       <div class="dy-entry-head">
         <span class="dy-time">${esc(d.time || '')}</span>
         <div class="dy-mothers">${d.head.map(motherHTML).join('')}</div>
@@ -557,27 +590,105 @@
         stroke="${esc(o.color)}" stroke-width="${o.width}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg>${handle}</div>`;
   }
 
-  function overlayLayerHTML(day) {
-    return `<div class="dy-ov-layer">${overlaysOf(day).map(overlayHTML).join('')}</div>`;
+  /** Empty lines pushed in above an entry (dragging its head in edit mode). */
+  const gapOf = (day, id) => (view.diary.pages[day] && view.diary.pages[day].gaps && view.diary.pages[day].gaps[id]) || 0;
+
+  /**
+   * Layout after rendering a page (screen, and the copy for printing):
+   *   - every entry starts on a line of the ruling: its text is moved down to
+   *     the next multiple of the line height (measured from the top of the page)
+   *   - the page is at least as long as its lowest sticker / image, so nothing is cut off
+   * print: the page has no minimum height of the screen (100 %).
+   */
+  function layoutPage(page, print) {
+    const L = parseFloat(getComputedStyle(page).lineHeight) || 25.6;
+    const top0 = page.getBoundingClientRect().top + page.clientTop;
+    page.style.minHeight = '';
+    const entries = [...page.querySelectorAll('.dy-entry')];
+    entries.forEach((s) => (s.style.marginTop = '0px'));
+    for (const s of entries) {
+      const body = s.querySelector('.dy-body');
+      const rest = (body.getBoundingClientRect().top - top0) % L;
+      if (rest > 0.5 && L - rest > 0.5) s.style.marginTop = (L - rest) + 'px';
+    }
+    let bottom = 0;
+    page.querySelectorAll('.dy-ov').forEach((el) => (bottom = Math.max(bottom, el.getBoundingClientRect().bottom - top0)));
+    if (bottom) {
+      const need = Math.ceil(bottom + parseFloat(getComputedStyle(page).paddingBottom));
+      page.style.minHeight = print ? need + 'px' : `max(100%, ${need}px)`;
+    }
   }
 
   /**
-   * Overlays lie on top of the page and do not make it longer by themselves -
-   * a big image below the text would be cut off (on screen and on paper).
-   * This empty float at the start of the page reaches down to the lowest
-   * overlay, so the page grows with it (--dy-pad = top padding of the page).
+   * Whenever the text of an entry changes its height (images or fonts loaded
+   * late, …), the entries are put on the lines again. Only the text blocks are
+   * watched - layoutPage changes the gaps between them, not their size, so
+   * this cannot run in circles.
    */
-  function overlaySpaceHTML(day) {
-    const bottom = overlaysOf(day).reduce((m, o) => Math.max(m, o.y + o.h), 0);
-    return `<div class="dy-ov-space" style="height:${bottom ? `max(0px, calc(${bottom} * 100cqw - var(--dy-pad)))` : '0'}"></div>`;
+  let heightWatch = null, layoutQueued = false;
+  function watchHeights(page) {
+    if (heightWatch) heightWatch.disconnect();
+    if (!window.ResizeObserver) return;
+    heightWatch = new ResizeObserver(() => {
+      if (layoutQueued) return;
+      layoutQueued = true;
+      requestAnimationFrame(() => {
+        layoutQueued = false;
+        if (dialog.open && view.day) layoutPage(page);
+      });
+    });
+    page.querySelectorAll('.dy-body, .dy-entry-head').forEach((el) => heightWatch.observe(el));
   }
 
-  /** Redraw the overlays of the shown page (and the page length they need). */
+  /** Resolves when the images in `root` and the fonts are loaded. */
+  function whenLoaded(root) {
+    const imgs = [...root.querySelectorAll('img')].filter((i) => !i.complete);
+    return Promise.all(imgs.map((i) => new Promise((ok) => {
+      i.addEventListener('load', ok, { once: true });
+      i.addEventListener('error', ok, { once: true });
+    })).concat(document.fonts ? [document.fonts.ready] : []));
+  }
+
+  /** Redraw the stickers of the shown page (each layer: the page's own, and one per entry). */
   function refreshOverlays() {
     const page = dialog.querySelector('.dy-page');
-    const layer = page.querySelector('.dy-ov-layer'), space = page.querySelector('.dy-ov-space');
-    if (layer) layer.outerHTML = overlayLayerHTML(view.day);
-    if (space) space.outerHTML = overlaySpaceHTML(view.day);
+    const ids = [...page.querySelectorAll('.dy-entry')].map((s) => s.dataset.entry);
+    for (const layer of page.querySelectorAll('.dy-ov-layer')) {
+      const owner = layer.dataset.owner;
+      const list = overlaysOf(view.day).filter((o) => (owner ? o.entry === owner : !o.entry || !ids.includes(o.entry)));
+      layer.innerHTML = list.map(overlayHTML).join('');
+    }
+    layoutPage(page);
+  }
+
+  /** Origin of a sticker layer (page or entry) in page widths, relative to the page. */
+  function originOf(owner, g) {
+    const page = dialog.querySelector('.dy-page');
+    const layer = owner && page.querySelector(`.dy-ov-layer[data-owner="${CSS.escape(owner)}"]`);
+    if (!layer) return { x: 0, y: 0 };
+    const r = layer.getBoundingClientRect();
+    return { x: (r.left - g.left) / g.unit, y: (r.top - g.top) / g.unit };
+  }
+
+  /**
+   * Stick a sticker to the entry it lies on (like into an exercise book): the
+   * entry whose area contains its middle - between two entries the upper one,
+   * above the first entry the page itself. Its position is converted, so it
+   * does not move; from then on it moves with its entry.
+   */
+  function anchorOverlay(o) {
+    const g = pageUnit(), page = dialog.querySelector('.dy-page');
+    const sections = [...page.querySelectorAll('.dy-entry')];
+    const present = o.entry && sections.some((s) => s.dataset.entry === o.entry);
+    const from = originOf(present ? o.entry : '', g);
+    const abs = { x: from.x + o.x, y: from.y + o.y };
+    const mid = abs.y + o.h / 2;
+    let owner = '';
+    for (const s of sections) if (mid >= (s.getBoundingClientRect().top - g.top) / g.unit) owner = s.dataset.entry;
+    const to = originOf(owner, g);
+    o.entry = owner;
+    o.x = abs.x - to.x;
+    o.y = abs.y - to.y;
   }
 
   function renderLayer() {
@@ -595,7 +706,8 @@
     const color = (v, d) => (typeof v === 'string' && /^#[0-9a-f]{3,8}$/i.test(v) ? v : d);
     const c = {
       id: str(o.id) || MM.uid('o'), kind: o.kind,
-      x: num(o.x, -1, 2, 0), y: num(o.y, -1, 1000, 0), w: num(o.w, 0.005, 3, 0.1), h: num(o.h, 0.005, 3, 0.1),
+      entry: str(o.entry).slice(0, 80), // entry it is stuck to ('' = the page)
+      x: num(o.x, -1, 2, 0), y: num(o.y, -1000, 1000, 0), w: num(o.w, 0.005, 3, 0.1), h: num(o.h, 0.005, 3, 0.1),
     };
     if (o.kind === 'sticker') c.char = str(o.char).slice(0, 16);
     if (o.kind === 'image') c.asset = str(o.asset);
@@ -644,7 +756,7 @@
         title="${esc(tr(MM.DRAW_KINDS[k]))}">${KIND_ICONS[k]}</button>`).join('')}
       <input type="color" class="dy-ov-color" value="${esc(view.color)}" title="${esc(tr('Colour of drawings'))}">
       <button type="button" data-dy="deleteOverlay" ${view.sel ? '' : 'disabled'} title="${esc(tr('Delete (Del)'))}">🗑</button>
-      <span class="dy-tools-hint">${esc(view.tool ? tr('Drag on the page to draw') : tr('Drag to move, the corner to resize'))}</span>`;
+      <span class="dy-tools-hint">${esc(view.tool ? tr('Drag on the page to draw') : tr('Drag to move, the corner to resize. Drag the head of an entry down to make room above it.'))}</span>`;
   }
 
   function setTool(kind) {
@@ -668,9 +780,13 @@
     return { x: 0.5 - w / 2, y: Math.max(0, cy - h / 2) };
   }
 
+  /** New sticker at page coordinates: shown, then stuck to the entry it lies on. */
   function addOverlay(o) {
+    o.entry = '';
     getPage(view.day).overlays.push(o);
     view.sel = o.id;
+    refreshOverlays();
+    anchorOverlay(o);
     renderLayer();
     save();
   }
@@ -735,11 +851,17 @@
     const g = pageUnit();
     const p = { x: (e.clientX - g.left) / g.unit, y: (e.clientY - g.top) / g.unit };
     const el = e.target.closest('.dy-ov');
+    const head = !el && !view.tool && !e.target.closest('button') && e.target.closest('.dy-entry-head');
     if (el) {
       const o = overlaysOf(view.day).find((x) => x.id === el.dataset.ov);
       if (!o) return;
       view.sel = o.id;
       ovDrag = { mode: e.target.classList.contains('dy-ov-handle') ? 'resize' : 'move', o, start: p, orig: { x: o.x, y: o.y, w: o.w, h: o.h }, unit: g.unit, moved: false };
+    } else if (head) {
+      // head of an entry: dragging down pushes empty lines in above it (whole lines, so the text stays on the ruling)
+      const id = head.closest('.dy-entry').dataset.entry;
+      const L = parseFloat(getComputedStyle(dialog.querySelector('.dy-page')).lineHeight) || 25.6;
+      ovDrag = { mode: 'gap', id, startY: e.clientY, orig: gapOf(view.day, id), line: L, moved: false };
     } else if (view.tool) {
       ovDrag = { mode: 'draw', start: p, o: null, unit: g.unit, moved: false };
     } else {
@@ -756,6 +878,19 @@
 
   function onPagePointerMove(e) {
     if (!ovDrag) return;
+    if (ovDrag.mode === 'gap') {
+      const lines = Math.max(0, Math.min(200, ovDrag.orig + Math.round((e.clientY - ovDrag.startY) / ovDrag.line)));
+      if (lines === gapOf(view.day, ovDrag.id)) return;
+      ovDrag.moved = true;
+      const page = getPage(view.day);
+      page.gaps = page.gaps || {};
+      if (lines) page.gaps[ovDrag.id] = lines;
+      else delete page.gaps[ovDrag.id];
+      const spacer = dialog.querySelector(`.dy-gap[data-gap="${CSS.escape(ovDrag.id)}"]`);
+      if (spacer) spacer.style.height = `calc(${lines} * var(--dy-line))`;
+      layoutPage(dialog.querySelector('.dy-page'));
+      return;
+    }
     const g = pageUnit();
     const p = { x: (e.clientX - g.left) / g.unit, y: (e.clientY - g.top) / g.unit };
     const dx = p.x - ovDrag.start.x, dy = p.y - ovDrag.start.y;
@@ -764,7 +899,7 @@
     const o = ovDrag.o, k = ovDrag.orig;
     if (ovDrag.mode === 'move') {
       o.x = k.x + dx;
-      o.y = Math.max(0, k.y + dy);
+      o.y = o.entry ? k.y + dy : Math.max(0, k.y + dy); // above the page top only via an entry
     } else if (ovDrag.mode === 'resize') {
       o.w = Math.max(0.01, k.w + dx);
       // stickers and images keep their proportions, drawings are free
@@ -774,7 +909,7 @@
       const u = g.unit, px = (q) => ({ x: q.x * u, y: q.y * u });
       const b = MM.draw.boxFor(view.tool, px(ovDrag.start), px(p), e.shiftKey);
       if (!ovDrag.o) {
-        ovDrag.o = { id: MM.uid('o'), kind: 'draw', shape: view.tool, color: view.color, width: 3, fill: 'none' };
+        ovDrag.o = { id: MM.uid('o'), kind: 'draw', entry: '', shape: view.tool, color: view.color, width: 3, fill: 'none' };
         getPage(view.day).overlays.push(ovDrag.o);
         view.sel = ovDrag.o.id;
       }
@@ -788,7 +923,13 @@
     const d = ovDrag;
     ovDrag = null;
     if (e.currentTarget.hasPointerCapture && e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    if (d.mode === 'gap') {
+      if (d.moved) save();
+      return;
+    }
     if (d.mode === 'draw') setTool(null);
+    // moved, resized or drawn: stuck to the entry it now lies on
+    if (d.moved && d.o) anchorOverlay(d.o);
     renderLayer();
     if (d.moved) save();
   }
@@ -806,7 +947,7 @@
       <p class="hint">${esc(tr('For a PDF choose "Save as PDF" as the printer.'))}</p>`;
   }
 
-  function doPrint() {
+  async function doPrint() {
     const box = dialog.querySelector('.dy-print');
     const how = (box.querySelector('input[name="dy-pr"]:checked') || {}).value;
     let days = how === 'all' ? view.days.slice() : view.day ? [view.day] : [];
@@ -827,8 +968,16 @@
       document.body.appendChild(out);
     }
     const ruling = view.diary.style.ruling;
+    const sel = view.sel;
+    view.sel = null; // no selection frame on paper
     out.innerHTML = days.map((d) => `<article class="dy-page" style="${esc(styleVars())}" data-ruling="${esc(ruling)}">` +
-      `${overlaySpaceHTML(d)}<div class="dy-print-book">${esc(view.book)}</div>${pageHTML(d)}${overlayLayerHTML(d)}</article>`).join('');
+      `<div class="dy-print-book">${esc(view.book)}</div>${pageHTML(d)}</article>`).join('');
+    view.sel = sel;
+    // laid out off screen at the width of the paper (A4), so lines and page lengths fit the print
+    out.classList.add('dy-measure');
+    await whenLoaded(out);
+    out.querySelectorAll('.dy-page').forEach((p) => layoutPage(p, true));
+    out.classList.remove('dy-measure');
     const cleanup = () => {
       window.removeEventListener('afterprint', cleanup);
       out.innerHTML = '';

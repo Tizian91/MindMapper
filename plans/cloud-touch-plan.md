@@ -71,6 +71,7 @@ backend = {
 - **Doppeltippen:** Text bearbeiten (Bildschirmtastatur).
 - **Schmale Leiste:** auf kleinen Bildschirmen nur das Nötigste (Projekt, Overview, Rückgängig, Zoom/Einpassen), Rest in einem „⋯“-Menü; Panel als Blatt von unten statt Seitenleiste.
 - Ziehen von Notes per Finger nur nach kurzem Halten, damit Scrollen/Verschieben nicht versehentlich Notes bewegt.
+- **Tagebuch auf dem Handy:** Die Tagebuchseite hat seit 24.10.2026 eine feste Breite wie auf A4 (186 mm), damit Bildschirm und Druck gleich umbrechen und Sticker an ihrem Platz bleiben. Auf schmalen Bildschirmen die Seite deshalb **als Ganzes verkleinern** (wie ein PDF, z. B. `transform: scale()` auf einer Hülle, Höhe der Hülle mitskalieren), nicht umbrechen. Achtung: `layoutPage`, `pageUnit` und das Ziehen von Stickern rechnen mit Bildschirm-Pixeln (`getBoundingClientRect`) – bei Skalierung durch den Faktor teilen. Zwei-Finger-Zoom zum Vergrößern.
 
 ## Etappen
 

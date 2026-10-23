@@ -1195,9 +1195,10 @@ span.ov-caret { cursor: default; }
 .dy-page {
   position: relative; container-type: inline-size; /* overlays are placed in page widths (cqw) */
   --dy-font: Georgia, serif; --dy-size: 16px; --dy-text: #2d2a26; --dy-accent: #b7791f; --dy-paper: #fdf8ec;
-  --dy-pad: 34px; display: flow-root; /* flow-root: the overlay space float (diary.js) counts for the height */
-  max-width: 720px; margin: 0 auto; min-height: 100%; box-sizing: border-box; padding: var(--dy-pad) 44px 48px;
-  background: var(--dy-paper); color: var(--dy-text); font-family: var(--dy-font); font-size: var(--dy-size); line-height: 1.6;
+  --dy-pad: 34px; --dy-line: calc(var(--dy-size) * 1.6); /* one line of the ruling: entries snap to it (diary.js) */
+  width: 186mm; max-width: none; margin: 0 auto; min-height: 100%; box-sizing: border-box; padding: var(--dy-pad) 44px 48px;
+  /* always as wide as on A4 paper: the text wraps the same on screen and in print, so stickers stay where they are */
+  background: var(--dy-paper); color: var(--dy-text); font-family: var(--dy-font); font-size: var(--dy-size); line-height: var(--dy-line);
   border-radius: 4px; box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
   /* the page is always paper: buttons and chips on it use the light theme, also in dark mode */
   --btn-bg: rgba(255, 255, 255, 0.7); --border: rgba(0, 0, 0, 0.18); --accent-soft: rgba(183, 121, 31, 0.14);
@@ -1206,12 +1207,12 @@ span.ov-caret { cursor: default; }
   --mix-base: white; --mix-ink: black; --track: #e2d9c8;
 }
 .dy-goto { color: var(--dy-accent); }
-.dy-page[data-ruling="lines"] { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.6em - 1px), rgba(0, 0, 0, 0.09) calc(1.6em - 1px), rgba(0, 0, 0, 0.09) 1.6em); }
-.dy-page[data-ruling="grid"] { background-image: linear-gradient(rgba(0, 0, 0, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.07) 1px, transparent 1px); background-size: 1.2em 1.2em; }
-.dy-page[data-ruling="dots"] { background-image: radial-gradient(rgba(0, 0, 0, 0.18) 1px, transparent 1.2px); background-size: 1.2em 1.2em; }
+.dy-page[data-ruling="lines"] { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--dy-line) - 1px), rgba(0, 0, 0, 0.09) calc(var(--dy-line) - 1px), rgba(0, 0, 0, 0.09) var(--dy-line)); }
+.dy-page[data-ruling="grid"] { background-image: linear-gradient(rgba(0, 0, 0, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.07) 1px, transparent 1px); background-size: var(--dy-line) var(--dy-line); }
+.dy-page[data-ruling="dots"] { background-image: radial-gradient(rgba(0, 0, 0, 0.18) 1px, transparent 1.2px); background-size: var(--dy-line) var(--dy-line); }
 .dy-day { margin: 0 0 18px; font-size: 1.5em; color: var(--dy-accent); border-bottom: 2px solid var(--dy-accent); padding-bottom: 4px; }
 .dy-none { color: #7b8794; font-style: italic; }
-.dy-entry { margin: 0 0 26px; padding: 2px 0 0; border-radius: 6px; }
+.dy-entry { position: relative; margin: 0 0 var(--dy-line); padding: 0; border-radius: 6px; }
 .dy-entry.dy-focus { animation: dy-focus 2s ease-out; }
 @keyframes dy-focus { from { box-shadow: 0 0 0 6px rgba(183, 121, 31, 0.35); } to { box-shadow: 0 0 0 6px transparent; } }
 .dy-entry-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; font-family: system-ui, sans-serif; font-size: 13px; line-height: 1.35; }
@@ -1264,7 +1265,8 @@ button.dy-cal-day.current { background: var(--accent); color: #fff; }
 .dy-tools-sep { width: 1px; align-self: stretch; background: var(--border); margin: 0 4px; }
 .dy-ov-color { width: 34px; height: 26px; padding: 1px; }
 .dy-tools-hint { font-size: 12px; color: var(--muted); margin-left: 6px; }
-.dy-ov-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.dy-ov-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.dy-entry > .dy-ov-layer { overflow: visible; } /* stickers of an entry may reach into the space around it */
 .dy-ov { position: absolute; box-sizing: border-box; pointer-events: none; }
 .dy-ov-sticker { display: flex; align-items: center; justify-content: center; line-height: 1; user-select: none; }
 .dy-ov-image img { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -1290,8 +1292,20 @@ button.dy-cal-day.current { background: var(--accent); color: #fff; }
     break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   #diary-print .dy-page:last-child { break-after: auto; }
   #diary-print .dy-page-btn, #diary-print .dy-goto { display: none; }
-  #diary-print .dy-print-book { display: block; font-family: system-ui, sans-serif; font-size: 10px; color: #7b6f60; text-align: right; margin-bottom: 4px; }
+  #diary-print .dy-print-book { display: block; position: absolute; top: 12px; right: 44px; font-family: system-ui, sans-serif; font-size: 10px; line-height: 1; color: #7b6f60; }
   #diary-print .dy-ov { outline: none !important; }
   #diary-print .dy-entry-head { break-after: avoid; }
 }
-.dy-ov-space { float: left; width: 0; }
+
+/* diary: entries on the lines of the ruling (paragraph gaps in whole lines), dragging heads, print measuring */
+.dy-page .dy-body > * { margin: 0 0 var(--dy-line); }
+.dy-page .dy-body > :last-child { margin-bottom: 0; }
+.dy-page .dy-body h1, .dy-page .dy-body h2 { line-height: calc(2 * var(--dy-line)); margin: 0; }
+.dy-page .dy-body h3, .dy-page .dy-body h4, .dy-page .dy-body h5, .dy-page .dy-body h6 { line-height: var(--dy-line); margin: 0; }
+.dy-page .dy-body li { line-height: var(--dy-line); }
+.dy-editing .dy-entry-head { cursor: ns-resize; }
+.dy-editing .dy-entry-head button { cursor: pointer; }
+.dy-gap { pointer-events: none; }
+#diary-print.dy-measure { display: block; position: absolute; left: -10000px; top: 0; visibility: hidden; }
+#diary-print .dy-page { margin: 0; }
+@media print { @page { size: A4; margin: 12mm; } }

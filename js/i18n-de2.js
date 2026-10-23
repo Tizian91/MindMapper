@@ -200,6 +200,8 @@
     'Delete (Del)': 'Löschen (Entf)',
     'Drag on the page to draw': 'Auf der Seite ziehen zum Zeichnen',
     'Drag to move, the corner to resize': 'Ziehen verschiebt, die Ecke ändert die Größe',
+    'Drag to move, the corner to resize. Drag the head of an entry down to make room above it.':
+      'Ziehen verschiebt, die Ecke ändert die Größe. Den Kopf eines Eintrags nach unten ziehen schafft darüber Platz.',
     'This page': 'Diese Seite',
     'Whole diary ({n} pages)': 'Ganzes Tagebuch ({n} Seiten)',
     'From': 'Von',

@@ -213,7 +213,10 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
   - Wird eine Notiz danach geändert, gelöscht oder auf einen anderen Tag gelegt, steht das als ✎-Hinweis über dem Eintrag. Später hinzugekommene Einträge erscheinen unter **Nach dem Abschluss hinzugekommen**.
   - Auf der Map trägt die Notiz 🔒 im Kopf, nach einer Änderung zusätzlich **✎ geändert**.
   - **Wieder öffnen** (mit Rückfrage) verwirft die abgeschlossene Fassung.
-- **🖼 Sticker** (Leseansicht oben rechts) schaltet die Seite in den Gestaltungsmodus: **😀 Sticker** (Emoji), **🖼 Bild** und Zeichnungen (▭ ◯ ╱ ➚, Farbe daneben) frei auf die Seite setzen. Ziehen verschiebt, die Ecke ändert die Größe, `Entf` oder 🗑 löscht. **✓ Fertig** beendet den Modus. Sticker & Co. gehören zur Seite (nicht zu einer Notiz), bleiben auch auf abgeschlossenen Seiten und werden mitgedruckt.
+- **🖼 Sticker** (Leseansicht oben rechts) schaltet die Seite in den Gestaltungsmodus: **😀 Sticker** (Emoji), **🖼 Bild** und Zeichnungen (▭ ◯ ╱ ➚, Farbe daneben) frei auf die Seite setzen. Ziehen verschiebt, die Ecke ändert die Größe, `Entf` oder 🗑 löscht. **✓ Fertig** beendet den Modus. Sticker & Co. gehören zur Tagebuchseite (nicht zur Notiz in der Map), bleiben auch auf abgeschlossenen Seiten und werden mitgedruckt.
+  - **Wie eingeklebt:** Ein Sticker gehört zu dem Eintrag, auf dem er abgelegt wird (zwischen zwei Einträgen: zum oberen, über dem ersten: zur Seite). Rutscht der Eintrag später nach unten, z. B. weil darüber ein neuer Eintrag dazukommt, wandert der Sticker mit.
+  - **Platz schaffen:** Im Gestaltungsmodus den **Kopf eines Eintrags** nach unten ziehen – darüber entstehen Leerzeilen (in ganzen Zeilen, zurück bis zum ursprünglichen Platz), z. B. für ein Bild zwischen zwei Einträgen.
+  - **Auf der Linie:** Jeder Eintrag beginnt auf einer Linie der Linierung, Absätze und Überschriften haben Abstände in ganzen Zeilen. Die Seite ist mindestens so lang wie ihr tiefster Sticker, nichts wird abgeschnitten.
 - **🖨 Drucken / PDF:** diese Seite, das ganze Tagebuch oder ein Zeitraum. Für ein PDF im Druckdialog „Als PDF speichern“ wählen. Jede Tagebuchseite beginnt auf einem neuen Blatt.
 - Tagebucheinträge erscheinen nicht in Overview und Auslastung und werden beim Carry-over nicht übertragen.
 
