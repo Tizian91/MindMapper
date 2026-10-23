@@ -233,6 +233,98 @@
     return out;
   };
 
+  // ---- What travels together ---------------------------------------------------
+
+  /** Is note n completely inside group g (like MM.interaction.groupMembers, for any doc)? */
+  const inside = (n, g) => n.id !== g.id && !n.overlay &&
+    n.x >= g.x && n.y >= g.y && n.x + n.w <= g.x + g.w && n.y + n.h <= g.y + g.h;
+
+  /**
+   * Notes of doc that travel with the given ones (Move to map and carry over):
+   *   - a note inside a group takes its (innermost) group along
+   *   - everything below comes too, at any depth: notes an arrow points to
+   *     (a task's sub-tasks, done ones as well) and the notes inside a group
+   * Connections from outside into the bundle are no reason to come along, and
+   * notes moved before (movedTo) stay. Notes that are linked that way form one
+   * bundle, unrelated notes separate ones. Returns arrays of ids.
+   */
+  T.bundles = function (doc, ids) {
+    const nodes = doc.nodes || {};
+    const ok = (id) => !!nodes[id] && !nodes[id].movedTo;
+    // smallest first, so the first group containing a note is the innermost one
+    const groups = Object.values(nodes).filter((n) => n.type === 'group' && ok(n.id))
+      .sort((a, b) => a.w * a.h - b.w * b.h);
+    const below = new Map();
+    const add = (a, b) => (below.has(a) ? below.get(a).push(b) : below.set(a, [b]));
+    for (const e of Object.values(doc.edges || {})) {
+      const a = e.source && e.source.node, b = e.target && e.target.node;
+      if (a && b && a !== b) add(a, b);
+    }
+    for (const g of groups) for (const n of Object.values(nodes)) if (inside(n, g)) add(g.id, n.id);
+
+    let out = [];
+    for (const id of ids) {
+      if (!ok(id)) continue;
+      const set = new Set();
+      const walk = (k) => {
+        if (set.has(k) || !ok(k)) return;
+        set.add(k);
+        for (const c of below.get(k) || []) walk(c);
+      };
+      const g = groups.find((x) => inside(nodes[id], x));
+      walk(g ? g.id : id);
+      // bundles sharing a note become one
+      const overlap = out.filter((b) => b.some((k) => set.has(k)));
+      overlap.forEach((b) => b.forEach((k) => set.add(k)));
+      out = out.filter((b) => !overlap.includes(b)).concat([[...set]]);
+    }
+    return out;
+  };
+
+  /**
+   * Copy bundles of notes from src into doc: new ids, the connections inside
+   * the bundles and the image data come along. Every bundle keeps its own
+   * layout; the bundles lie side by side from x, their top edge at y.
+   * Returns [{ src, copy }].
+   */
+  T.copyBundles = function (src, bundles, doc, x, y) {
+    const copies = [], idMap = new Map();
+    for (const ids of bundles) {
+      const list = ids.map((id) => src.nodes[id]);
+      const minX = Math.min(...list.map((n) => n.x)), minY = Math.min(...list.map((n) => n.y));
+      const maxX = Math.max(...list.map((n) => n.x + n.w));
+      for (const s of list) {
+        const n = MM.clone(s);
+        n.id = MM.uid('n');
+        (n.items || []).forEach((i) => (i.id = MM.uid('i')));
+        (n.blocks || []).forEach((b) => (b.id = MM.uid('b')));
+        n.x = Math.round(x + s.x - minX);
+        n.y = Math.round(y + s.y - minY);
+        delete n.movedTo;
+        n.movedCopyId = null;
+        doc.nodes[n.id] = n;
+        idMap.set(s.id, n.id);
+        copies.push({ src: s, copy: n });
+        // image data travels along (like A.copy), the target map is self-contained
+        if (n.imageId && src.assets && src.assets[n.imageId]) {
+          doc.assets = doc.assets || {};
+          doc.assets[n.imageId] = src.assets[n.imageId];
+        }
+      }
+      x += maxX - minX + 40;
+    }
+    for (const e of Object.values(src.edges || {})) {
+      const a = idMap.get(e.source && e.source.node), b = idMap.get(e.target && e.target.node);
+      if (!a || !b) continue;
+      const ne = MM.clone(e);
+      ne.id = MM.uid('e');
+      ne.source = Object.assign({}, e.source, { node: a });
+      ne.target = Object.assign({}, e.target, { node: b });
+      doc.edges[ne.id] = ne;
+    }
+    return copies;
+  };
+
   // ---- Moving ----------------------------------------------------------------
 
   /**
@@ -264,46 +356,15 @@
     }
 
     const fromLabel = S.file.path ? MM.project.mapName(S.file.path) : S.file.name;
-    const bottom = MM.templates.bottomOf(doc); // measured before the copies are added
-    const copies = [];
-    for (const src of movable) {
-      const n = MM.clone(src);
-      n.id = MM.uid('n');
-      (n.items || []).forEach((i) => (i.id = MM.uid('i')));
-      (n.blocks || []).forEach((b) => (b.id = MM.uid('b')));
+    // sub-tasks, the group around a note and everything below come along
+    const bundles = T.bundles(S.doc, movable.map((n) => n.id));
+    // below everything else in the target (measured before the copies are added), hint above them
+    const y = Math.round(MM.templates.bottomOf(doc) + 120);
+    const copies = T.copyBundles(S.doc, bundles, doc, -560, y);
+    for (const { copy: n } of copies) {
       // the copy lives on its own: no back-reference to the old map in link
       n.movedFrom = S.file.path || null;
-      delete n.movedTo;
-      n.movedCopyId = null;
       if (n.link === S.file.path) n.link = '';
-      copies.push({ src, copy: n });
-      doc.nodes[n.id] = n;
-      // image data travels along (like A.copy), the target map is self-contained
-      if (n.imageId && S.doc.assets[n.imageId]) {
-        doc.assets = doc.assets || {};
-        doc.assets[n.imageId] = S.doc.assets[n.imageId];
-      }
-    }
-
-    // connections between notes that travel together
-    for (const e of Object.values(S.doc.edges)) {
-      const a = copies.find((c) => c.src.id === (e.source && e.source.node));
-      const b = copies.find((c) => c.src.id === (e.target && e.target.node));
-      if (!a || !b) continue;
-      const ne = MM.clone(e);
-      ne.id = MM.uid('e');
-      ne.source = Object.assign({}, e.source, { node: a.copy.id });
-      ne.target = Object.assign({}, e.target, { node: b.copy.id });
-      doc.edges[ne.id] = ne;
-    }
-
-    // lay the copies out in a row below everything else, hint above them
-    const y = Math.round(bottom + 120);
-    let x = -560;
-    for (const c of copies) {
-      c.copy.x = x;
-      c.copy.y = y;
-      x += c.copy.w + 30;
     }
     const hint = MM.createNode('text', -560, y - 40, {
       text: 'Moved from ' + fromLabel, w: 260, h: 32, shape: 'none',
@@ -317,10 +378,13 @@
 
     await MM.project.writeMap(targetPath, doc);
 
-    // mark the originals as moved (greyed out, no longer listed anywhere)
+    // mark the originals as moved (greyed out, no longer listed anywhere);
+    // movedBatch: "undo move" on one of them takes the whole move back
+    const batch = MM.uid('m');
     for (const c of copies) {
       c.src.movedTo = targetPath;
       c.src.movedCopyId = c.copy.id;
+      c.src.movedBatch = batch;
       if (!c.src.link) c.src.link = targetPath;
     }
     MM.commit();
@@ -328,7 +392,10 @@
 
     MM.tasks.refreshExternal(); // the target may be a derived map of a task here
     MM.load.scheduleRefresh();
-    MM.ui.flash(MM.tr('Moved {n} note(s) to {map}', { n: copies.length, map: MM.project.mapName(targetPath) }));
+    const extra = copies.length - movable.length;
+    MM.ui.flash(extra > 0
+      ? MM.tr('Moved {n} note(s) to {map} (with {m} sub-note(s) / group)', { n: movable.length, m: extra, map: MM.project.mapName(targetPath) })
+      : MM.tr('Moved {n} note(s) to {map}', { n: copies.length, map: MM.project.mapName(targetPath) }));
     MM.refresh();
     return copies.length;
   };
@@ -346,44 +413,54 @@
   };
 
   /**
-   * Undo a move: delete the copy in the target map and clear `movedTo`
-   * on the original.
+   * Undo a move: delete the copies in the target map and clear `movedTo` on
+   * the originals. Notes moved together (movedBatch: sub-tasks, a group) are
+   * taken back together.
    */
   T.undoMove = async function (node) {
     const n = node || MM.selectedNodes().find((x) => x.movedTo);
     if (!n || !n.movedTo) return;
     const targetPath = n.movedTo;
-    const copyId = n.movedCopyId;
+    const originals = n.movedBatch
+      ? Object.values(S.doc.nodes).filter((x) => x.movedBatch === n.movedBatch && x.movedTo === targetPath)
+      : [n];
 
     if (MM.project.find(targetPath)) {
       const doc = await MM.project.readMap(targetPath);
       if (doc) {
         let changed = false;
-        const hintId = copyId && doc.nodes[copyId] ? doc.nodes[copyId].movedHintId : null;
-        if (copyId && doc.nodes[copyId]) {
-          delete doc.nodes[copyId];
+        const hints = new Set();
+        for (const o of originals) {
+          const copy = o.movedCopyId && doc.nodes[o.movedCopyId];
+          if (!copy) continue;
+          if (copy.movedHintId) hints.add(copy.movedHintId);
+          delete doc.nodes[copy.id];
           changed = true;
-          // drop connections that pointed at the removed copy
-          // (free ends have no node and stay untouched)
-          for (const e of Object.values(doc.edges)) {
-            if ((e.source.node && !doc.nodes[e.source.node]) || (e.target.node && !doc.nodes[e.target.node])) {
-              delete doc.edges[e.id];
-            }
+        }
+        // drop connections that pointed at the removed copies
+        // (free ends have no node and stay untouched)
+        for (const e of Object.values(doc.edges)) {
+          if ((e.source.node && !doc.nodes[e.source.node]) || (e.target.node && !doc.nodes[e.target.node])) {
+            delete doc.edges[e.id];
           }
         }
         // the "Moved from …" hint goes too, unless another copy still uses it
-        if (hintId && doc.nodes[hintId] &&
-            !Object.values(doc.nodes).some((x) => x.movedHintId === hintId)) {
-          delete doc.nodes[hintId];
-          changed = true;
+        for (const hintId of hints) {
+          if (doc.nodes[hintId] && !Object.values(doc.nodes).some((x) => x.movedHintId === hintId)) {
+            delete doc.nodes[hintId];
+            changed = true;
+          }
         }
         if (changed) await MM.project.writeMap(targetPath, doc);
       }
     }
 
-    if (n.link === targetPath) n.link = '';
-    n.movedTo = null;
-    n.movedCopyId = null;
+    for (const o of originals) {
+      if (o.link === targetPath) o.link = '';
+      o.movedTo = null;
+      o.movedCopyId = null;
+      o.movedBatch = null;
+    }
     MM.commit();
     if (S.file.handle) await MM.storage.writeFile();
     MM.tasks.refreshExternal();

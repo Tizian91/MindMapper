@@ -223,28 +223,41 @@
 
   /**
    * Unfinished work in a map:
-   *   items: open to-do entries ({ text, from })
-   *   notes: notes with a status that is not "done" (copied as they are)
+   *   items:   open to-do entries ({ text, from }) of task lists that stay where they are
+   *   notes:   all notes that move, copied as they are: the unfinished notes (a status
+   *            that is not "done", open tasks) with everything that travels with them
+   *            (sub-tasks, done ones too, the group around them - see MM.transfer.bundles)
+   *   bundles: the notes as arrays of ids that keep their layout together
+   *   open:    number of unfinished notes (for the question "carry over n entries?")
+   *   edges, assets: connections and image data of the source map (copied along)
    */
   T.collectUnfinished = function (doc) {
-    const items = [], notes = [];
+    const items = [], seeds = [];
     for (const n of Object.values(doc.nodes || {})) {
       const status = (n.meta && n.meta.status) || 'none';
       if (n.movedTo || n.repeat) continue; // already carried over earlier / a routine definition
       if (n.type === 'todo') {
         if (!MM.meta.isTaskTodo(n)) continue; // a plain check list stays where it is
-        for (const it of n.items || []) {
-          // entries of routines (a meeting) are not carried along - the next plan gets its own
-          if (it.done || it.moved || it.routine || !it.text.trim()) continue;
-          items.push({ text: it.text, from: n.text === 'Carried over' ? null : n.text, nodeId: n.id, itemId: it.id });
-        }
-      } else if (status !== 'none' && status !== 'done') {
-        notes.push(n);
-      } else if (n.type === 'task' && status !== 'done') {
-        notes.push(n);
+      } else if ((status !== 'none' && status !== 'done') || (n.type === 'task' && status !== 'done')) {
+        seeds.push(n.id);
       }
     }
-    return { items, notes };
+    const bundles = MM.transfer.bundles(doc, seeds);
+    const moving = new Set(bundles.flat());
+    for (const n of Object.values(doc.nodes || {})) {
+      // a list moving as a whole (sub-note of a task, inside a group) keeps its entries
+      if (n.type !== 'todo' || n.movedTo || n.repeat || moving.has(n.id) || !MM.meta.isTaskTodo(n)) continue;
+      for (const it of n.items || []) {
+        // entries of routines (a meeting) are not carried along - the next plan gets its own
+        if (it.done || it.moved || it.routine || !it.text.trim()) continue;
+        items.push({ text: it.text, from: n.text === 'Carried over' ? null : n.text, nodeId: n.id, itemId: it.id });
+      }
+    }
+    return {
+      items, bundles, open: seeds.length,
+      notes: [...moving].map((id) => doc.nodes[id]),
+      edges: doc.edges || {}, assets: doc.assets || {},
+    };
   };
 
   /**
@@ -306,22 +319,13 @@
       doc.nodes[todo.id] = todo;
       count += carry.items.length;
     }
-    let x = carry.items.length ? -240 : -560;
-    for (const src of carry.notes) {
-      const n = MM.clone(src);
-      n.id = MM.uid('n');
-      (n.items || []).forEach((i) => (i.id = MM.uid('i')));
-      (n.blocks || []).forEach((b) => (b.id = MM.uid('b')));
-      n.x = x;
-      n.y = bottom + 110;
-      n.imageId = null;
-      if (n.type === 'image') continue;
-      n.tags = Array.from(new Set([...(n.tags || []), 'carried-over']));
-      delete n.movedTo;
-      doc.nodes[n.id] = n;
-      x += n.w + 30;
-      count++;
+    // tasks with their sub-tasks and groups keep their layout, side by side right of the list
+    const src = { nodes: Object.fromEntries(carry.notes.map((n) => [n.id, n])), edges: carry.edges, assets: carry.assets };
+    const copies = MM.transfer.copyBundles(src, carry.bundles || [], doc, carry.items.length ? -240 : -560, bottom + 110);
+    for (const { copy: n } of copies) {
+      if (n.type !== 'group' && n.type !== 'image') n.tags = Array.from(new Set([...(n.tags || []), 'carried-over']));
     }
+    count += copies.length;
     if (count) {
       const hint = MM.createNode('text', -560, bottom + 60, {
         text: `Carried over from ${fromName}`, w: 260, h: 36, shape: 'none',

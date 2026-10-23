@@ -115,6 +115,8 @@
     'Folder (empty = top level)': 'Ordner (leer = oberste Ebene)',
     'No maps found. Create one with "New map…".': 'Keine Maps gefunden. Mit „Neue Map…“ eine anlegen.',
     'Average progress of {n} task(s)': 'Durchschnittlicher Fortschritt von {n} Aufgabe(n)',
+    // ---- transfer.js (bundles) ----
+    'Moved {n} note(s) to {map} (with {m} sub-note(s) / group)': '{n} Notiz(en) nach {map} verschoben (mit {m} Unter-Notiz(en) / Gruppe)',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

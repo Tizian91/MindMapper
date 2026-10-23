@@ -22,6 +22,7 @@ Alle neun Features sind im Code vorhanden. Die Tabelle nennt, was gegenüber dem
 | 11 | Automatische Darstellungen + Auto-Layout | ✅ fertig (21.10.2026) | Siehe Abschnitt „Feature 11“. |
 | 12 | Auslastung (verplante Stunden, Puffer) | ✅ fertig (21.10.2026) | Siehe Abschnitt „Feature 12“. |
 | 13 | Routinen (regelmäßige Aufgaben) | ✅ fertig (21.10.2026) | Siehe Abschnitt „Feature 13“. |
+| 14 | Move to map / Carry-over mit Untertasks und Gruppe | ✅ fertig (23.10.2026) | `MM.transfer.bundles` (alles unter einer Note + innerste Gruppe, keine Verbindungen von außen) und `copyBundles` (Anordnung, Pfeile, Bilder) – genutzt von `T.move` und `templates.addCarryOver`. Gemeinsam verschobene Notes tragen `movedBatch`, „Undo move“ nimmt das ganze Paket zurück. |
 | – | Querschnitt (`normalizeDoc`, `index.html`, README) | ✅ fertig | Manueller Gesamttest (siehe Abschluss) noch offen. |
 
 ## Review-Befunde (Schwachstellen)

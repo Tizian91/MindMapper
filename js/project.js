@@ -370,7 +370,7 @@
     const carry = t.prevName ? await P.carryFrom(P.folderOf(path), t.prevName) : null;
     S.doc.carriedOver = true;
     if (carry) {
-      const count = carry.data.items.length + carry.data.notes.length;
+      const count = carry.data.items.length + carry.data.open; // unfinished entries (sub-tasks & groups come along)
       if (confirm(tr('"{map}" has started.\n\nCarry over {n} unfinished entries from {from}?', { map: P.mapName(path), n: count, from: carry.name }))) {
         MM.templates.addCarryOver(S.doc, carry.data, carry.name, path);
         MM.commit();

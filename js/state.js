@@ -391,6 +391,7 @@ window.MM = window.MM || {};
       node.movedTo = node.movedTo ? str(node.movedTo) : null;
       node.movedFrom = node.movedFrom ? str(node.movedFrom) : null;
       node.movedCopyId = node.movedCopyId ? str(node.movedCopyId) : null;
+      node.movedBatch = node.movedBatch ? str(node.movedBatch) : null; // notes moved together
       node.repeat = MM.normalizeRepeat(n.repeat);
       for (const it of node.items) if (it.routine !== undefined) it.routine = str(it.routine); // entry created from a routine
       if (node.type === 'file') {
