@@ -285,8 +285,12 @@ window.MM = window.MM || {};
     n.style.fontSize = 40;
     n.style.strokeWidth = 0;
     n.style.bold = false;
+    n.symbol = true; // its character grows with the box and it can be turned, like an image
     return n;
   };
+
+  /** Can the note be turned? Images and symbol notes (one big emoji / character). */
+  MM.canRotate = (n) => !!n && (n.type === 'image' || !!n.symbol);
 
   MM.createTodoItem = (text) => ({ id: MM.uid('i'), text: text || '', done: false });
 
@@ -480,8 +484,13 @@ window.MM = window.MM || {};
         delete node.diary;
       }
       node.repeat = MM.normalizeRepeat(n.repeat);
-      // image notes can be turned: degrees clockwise around their middle
-      if (type === 'image' && n.rotate) node.rotate = ((Math.round(num(n.rotate, 0)) % 360) + 360) % 360;
+      // symbol note: one big emoji / character (older maps: recognised by their look)
+      const one = typeof Intl !== 'undefined' && Intl.Segmenter
+        ? [...new Intl.Segmenter().segment(node.text.trim())].length === 1 : [...node.text.trim()].length <= 2;
+      if (type === 'text' && node.text.trim() && one && (n.symbol || (node.shape === 'none' && node.style.fontSize >= 28))) node.symbol = true;
+      else delete node.symbol;
+      // images and symbol notes can be turned: degrees clockwise around their middle
+      if (MM.canRotate(node) && n.rotate) node.rotate = ((Math.round(num(n.rotate, 0)) % 360) + 360) % 360;
       else delete node.rotate;
       // list of a week plan for the routines of one category ('' = without category), see routines.js
       if (node.routineList !== undefined) node.routineList = str(node.routineList).slice(0, 40);

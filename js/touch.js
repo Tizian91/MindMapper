@@ -221,7 +221,7 @@
   function imageAt(t) {
     const el = t && t.closest && t.closest('.node');
     const n = el && MM.node(el.dataset.id);
-    return n && n.type === 'image' && S.selection.size === 1 && S.selection.has(n.id) ? n : null;
+    return n && MM.canRotate(n) && S.selection.size === 1 && S.selection.has(n.id) ? n : null;
   }
 
   function doTwist() {

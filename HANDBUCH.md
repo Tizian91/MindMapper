@@ -51,7 +51,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
   | Doppeltippen | Text bearbeiten (Tastatur erscheint) |
   | Halten (kurzes Vibrieren) und loslassen | Kontextmenü – wie Rechtsklick |
   | Halten und dann ziehen | Note verschieben; auf der leeren Fläche: Auswahlrahmen |
-  | Zwei Finger auf einem markierten Bild | Bild drehen und vergrößern / verkleinern |
+  | Zwei Finger auf einem markierten Bild / Emoji | drehen und vergrößern / verkleinern |
   | Griffe und blaue Ankerpunkte | wie mit der Maus (Größe ändern, verbinden); an der markierten Note sind sie größer und immer sichtbar |
 
   Auf schmalen Bildschirmen liegt die Seitenleiste **Project** als Schublade über der Map (schließt sich nach dem Öffnen einer Map) und das **Panel** als Blatt am unteren Rand; beide blendest du mit den Knöpfen *Project* / *Panel* ein und aus. Die Toolbar lässt sich seitlich wischen.
@@ -308,7 +308,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 ## 16. Dateien und Bilder
 
 - **Bilder** per Drag & Drop, `Ctrl+V` oder **Insert → Image…**. Sie werden in der Map gespeichert.
-  - **Drehen:** Über einem markierten Bild sitzt ein runder Griff – ziehen dreht das Bild um seine Mitte (rastet bei 0°, 90°, 180°, 270° ein; mit `Shift` in 15°-Schritten). Oder Rechtsklick → **Rotate** → 90° nach rechts / links bzw. **Straighten** (gerade stellen). Am Handy: Bild antippen, dann mit **zwei Fingern** drehen und gleichzeitig größer / kleiner ziehen.
+  - **Drehen** (Bilder und Emoji-Notes): Über einem markierten Bild sitzt ein runder Griff – ziehen dreht das Bild um seine Mitte (rastet bei 0°, 90°, 180°, 270° ein; mit `Shift` in 15°-Schritten). Oder Rechtsklick → **Rotate** → 90° nach rechts / links bzw. **Straighten** (gerade stellen). Am Handy: Bild antippen, dann mit **zwei Fingern** drehen und gleichzeitig größer / kleiner ziehen.
 - **Andere Dateien** (Excel, Word, PDF, …) auf die Fläche ziehen oder **Insert → File…**: Die Datei wird in den Unterordner `Assets/` des Projektordners kopiert, die Note verweist darauf.
   - Öffnen per Klick auf das Symbol, ↗ oder `Ctrl+Klick`. PDF, Text, Bilder usw. öffnen im Browser, alles andere wird heruntergeladen.
   - Rechtsklick: **Open file ↗**, **Replace file…**, **Show file path**. Löschen der Note löscht die Datei nicht.
@@ -352,7 +352,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 
 ## 17. Emoji
 
-`Ctrl+.` oder `Ctrl+Shift+E` (auch beim Schreiben), Knopf **☺** in der Toolbar, Rechtsklick → **Emoji…** oder **Insert → Emoji…**: ins Textfeld einfügen oder als eigene, große Note. Steht der Cursor in einem **Eingabefeld des Panels** (z. B. Tags, Link, Name einer Routine-Kategorie), landet das Emoji in diesem Feld.
+`Ctrl+.` oder `Ctrl+Shift+E` (auch beim Schreiben), Knopf **☺** in der Toolbar, Rechtsklick → **Emoji…** oder **Insert → Emoji…**: ins Textfeld einfügen oder als eigene, große Note. Eine solche **Emoji-Note** verhält sich wie ein Bild: Das Zeichen wächst mit dem Rahmen, und sie lässt sich drehen (runder Griff, Rechtsklick → **Rotate**, am Handy zwei Finger). Steht der Cursor in einem **Eingabefeld des Panels** (z. B. Tags, Link, Name einer Routine-Kategorie), landet das Emoji in diesem Feld.
 
 ## 18. Darstellung: Darkmode, Sprache, Panel
 

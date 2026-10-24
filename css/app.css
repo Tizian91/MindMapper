@@ -1411,3 +1411,14 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
   .dy-ov-rot { width: 22px; height: 22px; margin-left: -11px; top: -34px; }
   .dy-ov-handle { width: 18px; height: 18px; right: -10px; bottom: -10px; }
 }
+
+/* phones: the bars of the diary are one row that can be swiped sideways (like the toolbar) */
+@media (max-width: 600px) {
+  .dy-bar, .dy-ov-tools { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 6px 8px; }
+  .dy-bar::-webkit-scrollbar, .dy-ov-tools::-webkit-scrollbar { display: none; }
+  .dy-bar > *, .dy-ov-tools > * { flex: none; }
+  .dy-title { max-width: 40vw; }
+  .dy-days { max-width: 46vw; }
+  .dy-spacer { display: none; }
+  .dy-scroll { padding: 10px 6px; }
+}

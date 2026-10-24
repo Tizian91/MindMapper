@@ -297,10 +297,10 @@
         // ---- derived map (F5) ----
         !multi && one.derivedMap && { label: 'Open derived map ↗', action: () => A.openDerivedMap(one) },
         !multi && !one.derivedMap && { label: 'Create map from note…', action: A.deriveMapFromSelection },
-        hasImage && { label: 'Rotate', submenu: [
+        nodes.some(MM.canRotate) && { label: 'Rotate', submenu: [
           { label: 'Rotate right (90°)', action: () => A.rotateImages(90) },
           { label: 'Rotate left (90°)', action: () => A.rotateImages(-90) },
-          { label: 'Straighten', disabled: !images.some((n) => n.rotate), action: () => A.rotateImages(null) },
+          { label: 'Straighten', disabled: !nodes.some((n) => MM.canRotate(n) && n.rotate), action: () => A.rotateImages(null) },
         ] },
         // a thought that grew: it and the notes below it become tasks (only tasks count as sub-tasks)
         A.subNotesToConvert(nodes).length > 0 && { label: 'Make tasks (with notes below)', action: A.makeTasksWithSubNotes },

@@ -315,10 +315,10 @@
     MM.commit();
   };
 
-  /** Turn the selected images by `deg` degrees (null = straight again). */
+  /** Turn the selected images / symbols by `deg` degrees (null = straight again). */
   A.rotateImages = function (deg) {
     for (const n of MM.selectedNodes()) {
-      if (n.type !== 'image') continue;
+      if (!MM.canRotate(n)) continue;
       n.rotate = deg === null ? 0 : MM.snapAngle((n.rotate || 0) + deg);
       if (!n.rotate) delete n.rotate;
     }

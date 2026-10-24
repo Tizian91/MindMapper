@@ -184,7 +184,9 @@
     div.style.top = n.y + 'px';
     div.style.width = n.w + 'px';
     div.style.height = n.h + 'px';
-    div.style.transform = n.type === 'image' && n.rotate ? `rotate(${n.rotate}deg)` : '';
+    div.style.transform = MM.canRotate(n) && n.rotate ? `rotate(${n.rotate}deg)` : '';
+    // symbol note: the character grows with the box (like an image)
+    if (n.symbol && div._content) div._content.style.fontSize = Math.max(8, Math.round(Math.min(n.w, n.h) * 0.56)) + 'px';
     if (n.type === 'draw') return drawFrame(div, n);
     const isImage = n.type === 'image';
     const ins = isImage ? { x: 0, y: 0 } : MM.geo.contentInset(n.shape, n.w, n.h);
@@ -407,7 +409,7 @@
   /** Grow the node height until its content fits. Returns true if it grew. */
   R.autoGrow = function (div, n) {
     const c = div._content, inner = c.firstElementChild;
-    if (!inner || n.type === 'image' || n.type === 'diary') return false; // a diary entry keeps its size, the preview is cut off
+    if (!inner || n.type === 'image' || n.type === 'diary' || n.symbol) return false; // a diary entry keeps its size, the preview is cut off; a symbol fits its box
     let grew = false;
     for (let i = 0; i < 8; i++) {
       const over = inner.offsetHeight - c.clientHeight;
@@ -540,8 +542,8 @@
           s += `<rect class="handle-resize h-${d}" data-dir="${d}" x="${x - hs / 2}" y="${y - hs / 2}"` +
             ` width="${hs}" height="${hs}" stroke-width="${k}"/>`;
         }
-        // images: a round handle above them turns them
-        if (n.type === 'image') {
+        // images and symbols: a round handle above them turns them
+        if (MM.canRotate(n)) {
           const rx = n.x + n.w / 2, ry = n.y - off - 24 * k * fat;
           s += `<line class="rotate-stem" x1="${rx}" y1="${n.y - off}" x2="${rx}" y2="${ry}" stroke-width="${k}"/>` +
             `<circle class="handle-rotate" cx="${rx}" cy="${ry}" r="${6 * k * fat}" stroke-width="${1.5 * k}"/>`;
