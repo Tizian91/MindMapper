@@ -1,0 +1,10 @@
+// Cloudflare Workers: serves the app as static files (no worker code).
+// What is NOT published is listed in .assetsignore.
+{
+  "name": "mindmapper",
+  "compatibility_date": "2026-10-19",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": false },
+  "assets": { "directory": "." }
+}

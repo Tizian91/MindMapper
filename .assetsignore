@@ -1,0 +1,12 @@
+# Not published on Cloudflare: repository, build and project files (only the app is served)
+.git/
+.wrangler/
+.github/
+.vscode/
+.claude/
+node_modules/
+plans/
+.gitignore
+.assetsignore
+.nojekyll
+wrangler.jsonc

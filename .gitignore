@@ -10,3 +10,6 @@ Thumbs.db
 desktop.ini
 .DS_Store
 *.tmp
+
+# Cloudflare (wrangler) build files
+.wrangler/
