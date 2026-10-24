@@ -79,7 +79,7 @@ Den Typ änderst du per Rechtsklick → **Change type** oder im Panel.
 
 ## 5. Die Task: Projektaufgabe, Termin oder Routine
 
-Fast alles in MindMapper dreht sich um Aufgaben: Auslastung, Pläne, Overview, Routinen. **Was** eine Aufgabe ist – Projektaufgabe, Termin oder Routine – entscheidet nicht ihr Typ, sondern welche Felder du im Panel unter **Details** setzt. Der Typ **Task** ist dafür gemacht (Chips immer sichtbar, Klickmenü an jedem Chip, Fortschritt, Untertasks), die Felder wirken aber genauso an einer einfachen Note oder einer To-do-Liste.
+Fast alles in MindMapper dreht sich um Aufgaben: Auslastung, Pläne, Overview, Routinen. Aufgaben sind Notes vom Typ **Task**: Sie zeigen ihre Details als Chips mit Klickmenü, haben Fortschritt und Untertasks. **Was** für eine Aufgabe eine Task ist – Projektaufgabe, Termin oder Routine – entscheiden die Felder, die du im Panel unter **Details** setzt.
 
 **Die Grundfrage – drei Fragen, eine Antwort:**
 - Kommt es **regelmäßig** wieder (jeden Dienstag, 5 h pro Woche)? → **Routine** (*Repeat*)
@@ -87,22 +87,22 @@ Fast alles in MindMapper dreht sich um Aufgaben: Auslastung, Pläne, Overview, R
 - Muss es **bis zu einem Tag fertig** sein (Bericht bis Freitag)? → **Projektaufgabe** (*Deadline*)
 - Dazu fast immer: **wie lange** dauert es? → *Estimate*. Ohne Schätzung kann MindMapper keine Zeit einplanen.
 
-### Jede Note kann eine Aufgabe werden
+### Jede Note lässt sich in eine Task umwandeln
 
-Das Besondere an MindMapper ist die **freie Struktur**: Was eine Aufgabe ist, steckt allein in ihren **Metadaten** (Deadline, Termin, Schätzung, Repeat, Status, Priorität) – und die lassen sich **jeder Note** geben. Eine einfache Note, eine Überschrift, eine Outline oder eine To-do-Liste wird so jederzeit zur Projektaufgabe, zum Termin oder zur Routine, ohne dass du sie neu anlegen musst.
+Das Besondere an MindMapper ist die **freie Struktur**: Du musst nicht vorher wissen, was aus einem Gedanken wird. Jede Note – eine einfache Note, eine Überschrift, eine To-do-Liste oder eine Outline – lässt sich jederzeit in eine Task umwandeln, ohne sie neu anzulegen.
 
 **Beispiel:** Du notierst einen Gedanken als einfache Note – „Workshop für die neuen Studierenden?“. In den nächsten Tagen hängen sich weitere Notes daran: Themen, Raum, wer hilft mit. Irgendwann ist klar: Das ist kein Gedanke mehr, das ist eine Aufgabe.
-- **Einfach Details setzen:** Note markieren, im Panel *Estimate* `6h` und *Deadline* eintragen – fertig ist die Projektaufgabe. Sie erscheint im Overview und zählt in der Auslastung. Mit *Scheduled* statt Deadline wird sie zum Termin, mit *Repeat* zur Routine.
-- **Oder zur Task machen:** Rechtsklick → **Change type → Task**. Text, Details, Tags und alle Verbindungen bleiben erhalten (Einträge einer To-do-Liste werden zu Stichpunkten). Als Task zeigt sie ihre Details als Chips mit Klickmenü und bekommt Fortschritt und Untertasks.
-- **Untertasks:** Sollen die angehängten Notes als Untertasks mitzählen (geteilte Schätzung, Fortschritt ∑, Kapitel 12), mach sie ebenfalls zu Tasks – Untertasks entstehen nur zwischen Tasks. Beim Verschieben (`Ctrl` + Ziehen, **Move to map**) kommen die angehängten Notes aber in jedem Fall mit.
+1. Rechtsklick auf die Note → **Change type → Task**. Text, Tags und alle Verbindungen bleiben erhalten (Einträge einer To-do-Liste werden zu Stichpunkten).
+2. Hängen an ihr weitere Notes, fragt MindMapper: *„Auch die 3 Note(s) darunter zu Tasks machen?“* – mit **Ja** wird der ganze Zweig zu Tasks, und die angehängten Notes sind jetzt ihre **Untertasks** (geteilte Schätzung, Fortschritt ∑, Kapitel 12). Später geht das auch per Rechtsklick → **Make tasks (with notes below)**.
+3. Details setzen: *Estimate* `6h` und *Deadline* – fertig ist die Projektaufgabe. Mit *Scheduled* statt Deadline wird sie zum Termin, mit *Repeat* zur Routine.
 
-Umgekehrt geht es genauso: Nimmst du die Details wieder heraus, ist die Note wieder ein einfacher Gedanke. Nur Bilder, Dateien und Zeichnungen behalten ihren Typ.
+Mitgenommen werden Notes, Überschriften, To-do-Listen und Outlines, die per Pfeil darunter hängen (beliebig tief); Bilder, Dateien, Gruppen, Links und Code bleiben, wie sie sind. Ein `Ctrl+Z` macht die ganze Umwandlung wieder rückgängig.
 
-### Was wird aus meiner Note?
+### Was wird aus meiner Task?
 
 Es gilt die **erste** Zeile, die passt:
 
-| Gesetzt im Panel | Die Note ist … | Wirkung auf deine Zeit | Wo sie auftaucht |
+| Gesetzt im Panel | Die Task ist … | Wirkung auf deine Zeit | Wo sie auftaucht |
 |---|---|---|---|
 | *Repeat* wöchentlich / monatlich | 🔁 **Routine** mit festen Tagen | zieht ihre *Estimate* an jedem ihrer Tage von der Kapazität ab | Tages- und Wochenplan (Spalte des Tages), Workload → *Routines* |
 | *Repeat* *Time budget per week* / *Several times per week* | 🔁 **Routine** ohne feste Tage | der Wochenanteil wird auf die Arbeitstage der Woche verteilt | Wochenplan: Liste ihrer Kategorie (bzw. *Routines this week*) |
@@ -110,16 +110,16 @@ Es gilt die **erste** Zeile, die passt:
 | *Repeat* *Day(s) off / vacation* | 🏖 **Urlaub / frei** | Tag ohne Kapazität (oder weniger, wenn *Estimate* gesetzt) | 🏖-Eintrag im Plan |
 | *Scheduled* (Termin, optional Uhrzeit) | 📌 **Termin** | blockt die *Estimate* an genau diesem Tag – auch abgehakt | Tages- und Wochenplan, Overview, Workload (`−2 h 📌`), Konfliktmeldung |
 | *Deadline* + *Estimate* | **Projektaufgabe** | der Restaufwand wird auf die Tage bis zur Deadline verteilt | Overview, Matrix, Workload, Puffer, Statusleiste |
-| nur *Estimate* | Aufwand **ohne Frist** | wird nicht verteilt, nur gemeldet („… h ohne Deadline“) | Hinweis auf der Workload-Seite; Overview (bei Tasks) |
-| nur *Deadline* | Frist **ohne Aufwand** | zählt nicht – bei Tasks (und Notes mit Status) Hinweis „without estimate“ | Overview |
-| nichts davon | einfache Aufgabe / Notiz | keine | Overview, wenn es eine Task ist oder Status / Priorität hat |
+| nur *Estimate* | Aufwand **ohne Frist** | wird nicht verteilt, nur gemeldet („… h ohne Deadline“) | Overview, Hinweis auf der Workload-Seite |
+| nur *Deadline* | Frist **ohne Aufwand** | zählt nicht – Hinweis „without estimate“ | Overview |
+| nichts davon | offene Aufgabe | keine | Overview |
 
 **Gut zu wissen:**
-- **Repeat schlägt alles.** Eine Note mit Regel ist immer eine Routine; Deadline oder Termin daneben spielen keine Rolle. Routinen stehen nicht in den Aufgabenlisten des Overview, sondern auf der Workload-Seite unter *Routines* (mit Verlauf ▣□).
+- **Repeat schlägt alles.** Eine Task mit Regel ist immer eine Routine; Deadline oder Termin daneben spielen keine Rolle. Routinen stehen nicht in den Aufgabenlisten des Overview, sondern auf der Workload-Seite unter *Routines* (mit Verlauf ▣□).
 - **Termin oder Deadline – nie beides.** Wer eins setzt, löscht das andere (Kapitel 4).
 - **Erledigt** (*Done*, 100 %) oder **verschoben** (→ andere Map) zählt nicht mehr als Arbeit. Ausnahme **Termin**: Abgehakt bleibt seine Zeit an dem Tag reserviert – er hat ja stattgefunden. Vergangene Tage zählen nie.
 - **Fortschritt** verringert den Restaufwand: 10 h geschätzt, 40 % erledigt → 6 h werden noch verteilt.
-- **To-do-Listen** zählen nur mit Schätzung, anteilig nach offenen Einträgen (4 von 8 offen → halbe Schätzung).
+- **To-do-Listen** (z. B. die Spalten der Tages- und Wochenpläne) zählen nur mit Schätzung, anteilig nach offenen Einträgen (4 von 8 offen → halbe Schätzung).
 - **Haupt- und Untertasks** teilen sich eine Schätzung (Kapitel 12); eine große Aufgabe bekommt bei Bedarf ihre eigene Map (Kapitel 10).
 
 ### Der Weg einer Task
@@ -135,7 +135,7 @@ Es gilt die **erste** Zeile, die passt:
 
 Oft bleibt für Projekte weniger Zeit als gedacht – weil viel Zeit in Kleinkram fließt, der nirgends steht. Routinen machen diese Zeit sichtbar:
 
-1. Lege eine Map **Routinen** an und trage ehrlich ein, was regelmäßig Zeit kostet – jede Sache als Note mit *Repeat* und *Estimate*, z. B.:
+1. Lege eine Map **Routinen** an und trage ehrlich ein, was regelmäßig Zeit kostet – jede Sache als Task mit *Repeat* und *Estimate*, z. B.:
    - „E-Mails“ – *Weekly*, Mo–Fr, `30m`
    - „Teammeeting“ – *Weekly*, Di 10:00, `1h 30m`
    - „Studentenbetreuung“ – *Time budget per week*, `5h`
@@ -229,7 +229,7 @@ Toolbar **Overview** sammelt die Aufgaben **aller Maps** des Projektordners:
 
 ## 12. Haupt- und Untertasks
 
-- Ein **Pfeil von Task A auf Task B** macht B zur Untertask von A (beliebig tief).
+- Ein **Pfeil von Task A auf Task B** macht B zur Untertask von A (beliebig tief). Nur Tasks zählen als Untertasks – hängen an einer Task noch einfache Notes, macht Rechtsklick → **Make tasks (with notes below)** sie mit einem Klick zu Tasks (siehe Kapitel 5).
 - Die Tasks einer **aus A abgeleiteten Map** sind ebenfalls Untertasks von A.
 - **Deadline:** Eine Untertask ist spätestens zur Deadline ihrer Haupttask fällig. Ohne eigene Deadline übernimmt sie die der Haupttask. Eine frühere ist erlaubt, eine spätere wird auf die der Haupttask zurückgesetzt (Hinweis in der Statusleiste). Wird die Haupttask früher fällig, rücken ihre Untertasks mit. Untertasks mit Termin (Scheduled) statt Deadline bleiben unberührt, ebenso Untertasks in abgeleiteten Maps.
 - **Zeitaufwand:** Die Schätzung der Haupttask ist der **Gesamtaufwand**, die Untertasks teilen ihn auf. Was noch nicht aufgeteilt ist (z. B. 10 h geschätzt, Untertasks zusammen 6 h → 4 h), wird bei der Haupttask mit ihrer Deadline eingeplant. Ergeben die Untertasks mehr als die Haupttask, zählen die Untertasks (Hinweis „sub-tasks 12h > 10h estimated“). Nichts wird doppelt gezählt.

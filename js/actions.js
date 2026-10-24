@@ -300,11 +300,60 @@
     MM.interaction.openEmojiPicker(document.getElementById('emoji-btn').getBoundingClientRect());
   };
 
-  /** Change the type of all selected notes. */
+  /**
+   * Change the type of all selected notes. Made a task while notes hang below it
+   * (arrows): offer to make those tasks as well - only tasks count as sub-tasks.
+   */
   A.setType = function (type) {
-    for (const n of MM.selectedNodes()) MM.setNodeType(n, type);
+    const sel = MM.selectedNodes();
+    const sub = type === 'task' ? subNotesToConvert(sel) : [];
+    for (const n of sel) MM.setNodeType(n, type);
+    if (sub.length && confirm(MM.tr('Also make the {n} note(s) below it tasks?\n\nOnly tasks count as sub-tasks: shared estimate, progress ∑, due by the deadline of the main task at the latest.', { n: sub.length }))) {
+      for (const n of sub) MM.setNodeType(n, 'task');
+      MM.ui.flash(MM.tr('{n} note(s) below made tasks as well', { n: sub.length }));
+    }
     MM.commit();
   };
+
+  /** Context menu: the selected notes and everything below them (arrows) become tasks. */
+  A.makeTasksWithSubNotes = function () {
+    const sel = MM.selectedNodes().filter((n) => TASKABLE.has(n.type) || n.type === 'task');
+    const sub = subNotesToConvert(sel);
+    const all = sel.filter((n) => n.type !== 'task').concat(sub);
+    for (const n of all) MM.setNodeType(n, 'task');
+    MM.commit();
+    MM.ui.flash(MM.tr('{n} note(s) made tasks', { n: all.length }));
+  };
+
+  /** Types of thoughts that sensibly become a task (not images, files, groups, links, code, diary entries). */
+  const TASKABLE = new Set(['text', 'heading', 'todo', 'outline']);
+
+  /**
+   * Notes below `roots` (following arrows, any depth) that would become sub-tasks:
+   * taskable notes and the way down through tasks - an image or a group in
+   * between ends the chain, just as it would for sub-tasks.
+   */
+  function subNotesToConvert(roots) {
+    const below = new Map();
+    for (const e of Object.values(S.doc.edges)) {
+      const a = e.source && e.source.node, b = e.target && e.target.node;
+      if (a && b && a !== b) (below.get(a) || below.set(a, []).get(a)).push(b);
+    }
+    const start = new Set(roots.filter((n) => TASKABLE.has(n.type) || n.type === 'task').map((n) => n.id));
+    const seen = new Set(start), out = [];
+    const walk = (id) => {
+      for (const c of below.get(id) || []) {
+        const n = S.doc.nodes[c];
+        if (seen.has(c) || !n || n.movedTo || !(TASKABLE.has(n.type) || n.type === 'task')) continue;
+        seen.add(c);
+        if (n.type !== 'task') out.push(n);
+        walk(c);
+      }
+    };
+    for (const id of start) walk(id);
+    return out;
+  }
+  A.subNotesToConvert = subNotesToConvert;
 
   /** Tab: create a connected child note to the right of the selected note. */
   A.addChild = function (type) {

@@ -271,6 +271,8 @@
         // ---- derived map (F5) ----
         !multi && one.derivedMap && { label: 'Open derived map ↗', action: () => A.openDerivedMap(one) },
         !multi && !one.derivedMap && { label: 'Create map from note…', action: A.deriveMapFromSelection },
+        // a thought that grew: it and the notes below it become tasks (only tasks count as sub-tasks)
+        A.subNotesToConvert(nodes).length > 0 && { label: 'Make tasks (with notes below)', action: A.makeTasksWithSubNotes },
         !hasImage && !hasFile && {
           label: 'Change type',
           submenu: MM.TEXT_TYPES.map((ty) => ({

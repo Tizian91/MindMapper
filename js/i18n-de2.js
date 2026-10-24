@@ -256,6 +256,12 @@
     'Last 8 weeks (oldest first): ▣ done · □ missed · ◌ this week, still open · · no entries':
       'Letzte 8 Wochen (älteste zuerst): ▣ erledigt · □ verpasst · ◌ diese Woche, noch offen · · keine Einträge',
     'Week of {d}': 'Woche ab {d}',
+    // ---- actions.js (a thought becomes a task, with the notes below it) ----
+    'Also make the {n} note(s) below it tasks?\n\nOnly tasks count as sub-tasks: shared estimate, progress ∑, due by the deadline of the main task at the latest.':
+      'Auch die {n} Note(s) darunter zu Tasks machen?\n\nNur Tasks zählen als Untertasks: gemeinsame Schätzung, Fortschritt ∑, spätestens zur Deadline der Haupttask fällig.',
+    '{n} note(s) below made tasks as well': '{n} Note(s) darunter ebenfalls zu Tasks gemacht',
+    '{n} note(s) made tasks': '{n} Note(s) zu Tasks gemacht',
+    'Make tasks (with notes below)': 'Zu Tasks machen (mit Notes darunter)',
     // ---- export.js (map as PDF / print) ----
     'There is nothing to print.': 'Es gibt nichts zu drucken.',
     'Map as PDF / print': 'Map als PDF / drucken',
