@@ -28,6 +28,7 @@
     root.addEventListener('click', onClick);
     root.addEventListener('contextmenu', onContextMenu);
     buildDialog();
+    if (P.cloud && (await initCloud())) return; // pCloud folder in use - otherwise the local one as usual
     if (!P.supported) {
       P.status = 'unsupported';
       P.render();
@@ -46,7 +47,10 @@
 
   P.choose = async function () {
     try {
-      P.backend = await MM.fsys.local.pick();
+      const b = await MM.fsys.local.pick();
+      await leaveFolder();
+      P.backend = b;
+      if (P.cloud) P.cloud.setActive(false);
       S.settings.showProject = true;
       MM.saveSettings();
       await connected();
@@ -62,6 +66,99 @@
     P.render();
   };
 
+  /**
+   * Before another project folder is opened: save the open map into its file,
+   * then let go of it - it stays on screen, but no longer belongs to a folder
+   * (otherwise it would keep writing into the old folder).
+   */
+  async function leaveFolder() {
+    if (S.file.backend && S.file.path) await MM.storage.writeFile();
+    if (S.file.backend) {
+      S.file.backend = null;
+      S.file.path = null;
+      S.file.version = null;
+    }
+    P.history = [];
+  }
+
+  // ---- pCloud (cloud version only: cloud.html loads cloud-pcloud.js) ----------------
+  // The cloud version offers both: a local folder (PC, Edge / Chrome) and a pCloud
+  // folder - one of them is open at a time.
+
+  P.cloud = MM.fsys.pcloud || null;
+
+  /** Start: open the pCloud folder if it was the one in use. Returns true if it was. */
+  async function initCloud() {
+    const C = P.cloud;
+    if (C.loginFailed) alert(tr('The pCloud login did not work. Please try again.'));
+    if (!C.restore() && C.hasToken() && !C.folder()) {
+      await P.choosePcloudFolder(); // just back from the first pCloud login: choose the folder
+      return P.backend && P.backend.kind === 'pcloud';
+    }
+    if (!C.restore()) return false;
+    P.backend = C.restore();
+    try {
+      await connected();
+    } catch (err) {
+      P.backend = null;
+      P.status = 'none';
+      alert(tr('Could not open the pCloud folder: {err}', { err: err.message }));
+    }
+    P.render();
+    return true;
+  }
+
+  /** "Connect pCloud…": log in first, then choose the folder. */
+  P.connectPcloud = async function () {
+    if (!P.cloud.hasToken()) P.cloud.login(); // leaves the page, comes back with the token
+    else await P.choosePcloudFolder();
+  };
+
+  P.choosePcloudFolder = async function () {
+    const folder = await P.cloud.chooseFolder();
+    if (!folder) return;
+    await leaveFolder();
+    P.cloud.setFolder(folder);
+    P.backend = P.cloud.restore();
+    S.settings.showProject = true;
+    MM.saveSettings();
+    try {
+      await connected();
+    } catch (err) {
+      P.backend = null;
+      P.status = 'none';
+      alert(tr('Could not open the pCloud folder: {err}', { err: err.message }));
+    }
+    MM.refresh();
+    P.render();
+  };
+
+  P.disconnectPcloud = async function () {
+    if (!confirm(tr('Disconnect pCloud?\n\nThis browser forgets the login and the folder. Your maps stay in pCloud. To revoke the access completely, remove MindMapper in pCloud under Settings → Apps.'))) return;
+    const wasOpen = P.backend && P.backend.kind === 'pcloud';
+    if (wasOpen) await leaveFolder();
+    P.cloud.disconnect();
+    if (wasOpen) {
+      P.backend = null;
+      P.status = P.supported ? 'none' : 'unsupported';
+      P.entries = [];
+      P.diaries = [];
+    }
+    MM.refresh();
+    P.render();
+  };
+
+  /** "…" next to the folder name in the cloud version: switch between local and pCloud. */
+  function cloudMenu(x, y) {
+    const items = [];
+    if (P.supported) items.push({ label: 'Open a local folder…', action: () => P.choose() });
+    if (P.cloud.allowed) {
+      items.push({ label: P.cloud.hasToken() ? 'Choose a pCloud folder…' : 'Connect pCloud…', action: () => P.connectPcloud() });
+      if (P.cloud.hasToken()) items.push('-', { label: 'Disconnect pCloud…', action: () => P.disconnectPcloud() });
+    }
+    MM.menu.open(items, x, y);
+  }
+
   /** Use a folder handle directly (also used by the tests). */
   P.useFolder = async function (handle) {
     P.backend = MM.fsys.local.from(handle);
@@ -75,8 +172,11 @@
     await P.scan();
     // the last session's map came from this folder -> link it to its file again
     const path = MM.storage.restoredPath;
+    const folder = MM.storage.restoredFolder;
     MM.storage.restoredPath = null;
-    if (path && !S.file.path && P.find(path)) {
+    // the same path in another folder (e.g. local and pCloud) is another file
+    const same = !folder || folder === MM.storage.folderKey(P.backend);
+    if (path && same && !S.file.path && P.find(path)) {
       await relinkRestored(path);
       if (S.file.path) await P.fillPlan(); // the plan of the last session gets what is new as well
     }
@@ -712,8 +812,15 @@
       ${P.status === 'ready' ? `<button data-p="overview" title="${esc(tr('Tasks of all maps'))}">${tr('Overview')}</button>` : ''}
       ${P.status === 'ready' ? `<button data-p="scan" title="${esc(tr('Reload folder'))}">⟳</button>` : ''}
       <button data-p="hide" title="${esc(tr('Hide sidebar'))}">✕</button></div>`;
+    // cloud version: pCloud next to the local folder (only pCloud where the browser has no folder access)
+    if (P.cloud && P.status !== 'ready') {
+      h += P.cloud.allowed
+        ? `<p class="hint">${tr('Keep your maps in a folder of your pCloud – on the PC and on the phone.')}</p>
+          <button class="sb-wide primary" data-p="pcloud">${tr('Connect pCloud…')}</button>`
+        : `<p class="hint">${tr('The cloud version only runs at its own address: {url}', { url: esc(P.cloud.ORIGINS[0]) })}</p>`;
+    }
     if (P.status === 'unsupported') {
-      h += `<p class="hint">${tr('Project folders need Edge or Chrome. You can still open and save single maps.')}</p>`;
+      if (!P.cloud) h += `<p class="hint">${tr('Project folders need Edge or Chrome. You can still open and save single maps.')}</p>`;
     } else if (P.status === 'none') {
       h += `<p class="hint">${tr('Keep several maps together in one folder – e.g. weekly and monthly plans.')}</p>
         <button class="sb-wide" data-p="choose">${tr('Open folder…')}</button>`;
@@ -723,7 +830,7 @@
         <button class="sb-wide" data-p="choose">${tr('Other folder…')}</button>`;
     } else {
       h += `<div class="sb-folder" title="${esc(tr('Project folder'))}"><span class="sb-folder-name">${esc(P.backend.name)}</span>
-          <button data-p="choose" title="${esc(tr('Open another folder'))}">…</button></div>
+          <button data-p="${P.cloud ? 'cloudMenu' : 'choose'}" title="${esc(tr(P.cloud ? 'Other folder (local or pCloud), disconnect…' : 'Open another folder'))}">…</button></div>
         <button class="sb-wide primary" data-p="new">${tr('+ New map')}</button>
         ${back ? `<button class="sb-wide sb-back" data-p="back" title="${esc(back)}">${tr('← Back to {name}', { name: esc(displayName(back.split('/').pop())) })}</button>` : ''}
         <div class="sb-tree">${tree(P.entries, 0) || `<p class="hint">${tr('No maps yet.')}</p>`}</div>
@@ -812,7 +919,11 @@
       const a = btn.dataset.p;
       if (a === 'choose') P.choose();
       else if (a === 'reconnect') P.reconnect();
-      else if (a === 'scan') P.scan();
+      else if (a === 'pcloud') P.connectPcloud();
+      else if (a === 'cloudMenu') {
+        const r = btn.getBoundingClientRect();
+        cloudMenu(r.left, r.bottom);
+      } else if (a === 'scan') P.scan();
       else if (a === 'new') P.showNewDialog();
       else if (a === 'back') P.back();
       else if (a === 'overview') MM.overview.open();

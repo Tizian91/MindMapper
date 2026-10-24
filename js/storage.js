@@ -273,7 +273,7 @@
 
   ST.autosave = function () {
     const json = JSON.stringify({
-      time: Date.now(), name: S.file.name, path: S.file.path || null, dirty: S.dirty, doc: ST.prunedDoc(),
+      time: Date.now(), name: S.file.name, path: S.file.path || null, folder: ST.folderKey(S.file.backend), dirty: S.dirty, doc: ST.prunedDoc(),
     });
     // Small maps also go to localStorage: it is synchronous, so it survives closing the tab.
     const small = json.length < 2e6;
@@ -284,6 +284,9 @@
       });
     }
   };
+
+  /** Which project folder a map belongs to ("local:Planung", "pcloud:pCloud · MindMapper"), or null. */
+  ST.folderKey = (backend) => (backend ? `${backend.kind}:${backend.name}` : null);
 
   /** Restore the newest autosave. Resolves to false if there was nothing to restore. */
   ST.restoreAutosave = async function () {
@@ -302,6 +305,7 @@
     ST.load(found[0].doc, found[0].name);
     S.dirty = !!found[0].dirty;
     ST.restoredPath = found[0].path || null; // re-linked to its project file once the folder is reconnected
+    ST.restoredFolder = found[0].folder || null; // ... but only in the same folder (older autosaves: any)
     ST.restoredTime = found[0].time || 0;    // the file wins if it was changed after this (other PC, sync)
     return true;
   };

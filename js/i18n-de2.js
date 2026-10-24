@@ -229,6 +229,30 @@
     'conflict': 'Konflikt',
     'Reloaded {name} - your changes were discarded': '{name} neu geladen – deine Änderungen wurden verworfen',
     'Your version was saved as {name}; the original stays as it is': 'Deine Version wurde als {name} gespeichert; das Original bleibt, wie es ist',
+    // ---- cloud-pcloud.js / project.js (pCloud, cloud version only) ----
+    'pCloud is not set up yet (the app has no pCloud client ID).': 'pCloud ist noch nicht eingerichtet (der App fehlt die pCloud-Client-ID).',
+    'not connected to pCloud': 'nicht mit pCloud verbunden',
+    'pCloud login expired – please connect again': 'pCloud-Anmeldung abgelaufen – bitte neu verbinden',
+    'Choose the pCloud folder for your maps': 'pCloud-Ordner für deine Maps wählen',
+    'Pick a folder (or create one). All maps, the Diaries and Assets folders and the settings of this project live in it.':
+      'Wähle einen Ordner (oder lege einen an). Darin liegen alle Maps, die Ordner Diaries und Assets und die Einstellungen dieses Projekts.',
+    'Use this folder': 'Diesen Ordner verwenden',
+    'Reading…': 'Wird gelesen…',
+    'No sub folders.': 'Keine Unterordner.',
+    'Name of the new folder:': 'Name des neuen Ordners:',
+    'The pCloud login did not work. Please try again.': 'Die Anmeldung bei pCloud hat nicht geklappt. Bitte noch einmal versuchen.',
+    'Could not open the pCloud folder: {err}': 'Der pCloud-Ordner konnte nicht geöffnet werden: {err}',
+    'open another folder': 'einen anderen Ordner öffnen',
+    'disconnect pCloud': 'pCloud trennen',
+    'Disconnect pCloud?\n\nThis browser forgets the login and the folder. Your maps stay in pCloud. To revoke the access completely, remove MindMapper in pCloud under Settings → Apps.':
+      'pCloud trennen?\n\nDieser Browser vergisst die Anmeldung und den Ordner. Deine Maps bleiben in pCloud. Um den Zugriff ganz zu entziehen, entferne MindMapper in pCloud unter Einstellungen → Apps.',
+    'Open a local folder…': 'Lokalen Ordner öffnen…',
+    'Choose a pCloud folder…': 'pCloud-Ordner wählen…',
+    'Disconnect pCloud…': 'pCloud trennen…',
+    'Keep your maps in a folder of your pCloud – on the PC and on the phone.': 'Deine Maps liegen in einem Ordner deiner pCloud – am PC und am Handy.',
+    'Connect pCloud…': 'Mit pCloud verbinden…',
+    'The cloud version only runs at its own address: {url}': 'Die Cloud-Version läuft nur unter ihrer eigenen Adresse: {url}',
+    'Other folder (local or pCloud), disconnect…': 'Anderer Ordner (lokal oder pCloud), trennen…',
     '"{path}" was changed elsewhere in the meantime (other computer, other tab). It was not overwritten - open it again and repeat the step.':
       '„{path}“ wurde inzwischen woanders geändert (anderer Rechner, anderer Tab) und deshalb nicht überschrieben – bitte neu öffnen und den Schritt wiederholen.',
   };

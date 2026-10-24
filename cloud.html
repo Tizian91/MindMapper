@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!--
+    Cloud version (served at the Cloudflare address, "/" leads here - see _redirects).
+    Generated from index.html: keep everything except this block and the pCloud
+    script line the same as there (change index.html, then build this file again).
+    Connections only to this site and to pCloud's API / download servers.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.pcloud.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>MindMapper ☁</title>
+  <meta name="theme-color" content="#2b6cde">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="app">
+    <header id="toolbar">
+      <div class="tb-group">
+        <span class="brand">MindMapper</span>
+      </div>
+      <div class="tb-group">
+        <button data-action="newDoc" title="New map">New</button>
+        <button data-action="open" title="Open… (Ctrl+O)">Open</button>
+        <button data-action="save" title="Save (Ctrl+S)">Save</button>
+        <button data-action="saveAs" title="Save as… (Ctrl+Shift+S)">Save as</button>
+        <button data-action="toggleProject" data-toggle="showProject" title="Project folder with several maps">Project</button>
+        <button data-action="togglePanel" data-toggle="showPanel" title="Toggle properties panel">Panel</button>
+        <button data-action="overview" title="Tasks of all maps in the project folder">Overview</button>
+        <button data-action="views" title="Tree, radial, bubble and treemap view of this map (selected note = start)">Views</button>
+      </div>
+      <div class="tb-group">
+        <button data-action="undo" title="Undo (Ctrl+Z)">↶</button>
+        <button data-action="redo" title="Redo (Ctrl+Y)">↷</button>
+      </div>
+      <div class="tb-group">
+        <button data-action="insertMenu" id="insert-btn" title="Insert a note (or right-click the canvas)">+ Insert ▾</button>
+        <button data-action="emoji" id="emoji-btn" title="Emoji / symbol (Ctrl+. or Ctrl+Shift+E)">☺</button>
+        <button data-action="drawMenu" id="draw-btn" title="Draw a rectangle, ellipse, line or arrow">✎ Draw ▾</button>
+      </div>
+      <div class="tb-group">
+        <button data-action="toggleGuides" data-toggle="smartGuides" title="Snap to other notes (smart guides). Hold Alt while dragging to bypass.">Smart guides</button>
+        <button data-action="toggleGrid" data-toggle="grid" title="Snap to grid">Grid</button>
+      </div>
+      <div class="tb-group">
+        <button data-action="toggleMeta" data-toggle="showMeta" title="Show deadline, estimate, priority and tags below notes">Details</button>
+        <button data-action="toggleFilter" title="Filter notes by text, tags, priority, deadline">Filter</button>
+      </div>
+      <div class="tb-group tb-right">
+        <button data-action="zoomOut" title="Zoom out (-)">−</button>
+        <button data-action="zoomReset" id="zoom-label" title="Reset zoom to 100%">100%</button>
+        <button data-action="zoomIn" title="Zoom in (+)">+</button>
+        <button data-action="fit" title="Fit map to window (Shift+1)">Fit</button>
+        <button data-action="toggleTheme" id="theme-btn" title="Toggle theme (Light / Dark / Auto)">🌓</button>
+        <button data-action="toggleLang" id="lang-btn" title="Switch language">EN</button>
+        <button data-action="help" title="Handbook and example map">?</button>
+      </div>
+    </header>
+
+    <div id="filterbar" hidden></div>
+
+    <main id="main">
+      <aside id="sidebar"></aside>
+      <div id="viewport" tabindex="0">
+        <div id="world">
+          <div id="group-layer"></div>
+          <svg id="edge-layer" class="layer-svg"></svg>
+          <div id="node-layer"></div>
+          <div id="label-layer"></div>
+          <div id="overlay-node-layer"></div>
+          <svg id="overlay-layer" class="layer-svg"></svg>
+          <div id="ui-layer"></div>
+        </div>
+        <div id="rubber-band" hidden></div>
+      </div>
+      <div id="panel-resizer"></div>
+      <aside id="panel"></aside>
+      <button type="button" id="panel-expand-btn" title="Expand panel" aria-label="Expand panel">‹</button>
+    </main>
+
+    <footer id="statusbar">
+      <span id="status-file"></span>
+      <span id="status-info"></span>
+      <span id="status-load"></span>
+      <span id="status-hint"></span>
+    </footer>
+  </div>
+
+  <div id="context-menu" class="menu" hidden></div>
+  <input type="file" id="file-input" accept=".json,application/json" hidden>
+
+  <!-- Plain scripts (no modules), so the app also works when opened via file:// -->
+  <script src="js/state.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/i18n-de.js"></script>
+  <script src="js/i18n-de2.js"></script>
+  <script src="js/markdown.js"></script>
+  <script src="js/geometry.js"></script>
+  <script src="js/snapping.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/meta.js"></script>
+  <script src="js/tasks.js"></script>
+  <script src="js/links.js"></script>
+  <script src="js/images.js"></script>
+  <script src="js/files.js"></script>
+  <script src="js/editing.js"></script>
+  <script src="js/actions.js"></script>
+  <script src="js/interaction.js"></script>
+  <script src="js/draw.js"></script>
+  <script src="js/panel.js"></script>
+  <script src="js/contextmenu.js"></script>
+  <script src="js/filterbar.js"></script>
+  <script src="js/emoji.js"></script>
+  <script src="js/fsys.js"></script>
+  <script src="js/cloud-pcloud.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/templates.js"></script>
+  <script src="js/project.js"></script>
+  <script src="js/transfer.js"></script>
+  <script src="js/overview.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/workload.js"></script>
+  <script src="js/routines.js"></script>
+  <script src="js/diary.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

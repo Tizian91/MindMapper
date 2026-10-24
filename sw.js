@@ -13,6 +13,7 @@ const CACHE = 'mindmapper-v1';
 const FILES = [
   './',
   'index.html',
+  'cloud.html',
   'css/app.css',
   'HANDBUCH.md',
   'manifest.webmanifest',
@@ -41,6 +42,7 @@ const FILES = [
   'js/filterbar.js',
   'js/emoji.js',
   'js/fsys.js',
+  'js/cloud-pcloud.js',
   'js/storage.js',
   'js/templates.js',
   'js/project.js',

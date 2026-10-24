@@ -10,3 +10,4 @@ plans/
 .assetsignore
 .nojekyll
 wrangler.jsonc
+tools/
