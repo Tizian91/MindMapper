@@ -98,6 +98,20 @@ Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Sta
   - Übertragen werden nur To-do-Listen, die als Aufgabe zählen (siehe Kapitel 10) – die Spalten der Pläne gehören dazu, eine reine Abhakliste (z. B. Einkaufszettel ohne Deadline) bleibt im alten Plan.
   - Legst du einen Plan **im Voraus** an (z. B. nächste Woche), wird noch nichts übertragen. Sobald der Zeitraum begonnen hat, fragt MindMapper beim Öffnen einmal nach.
 
+### Was passiert automatisch?
+
+Alles, was MindMapper in Tages- und Wochenpläne von selbst einträgt oder ändert, auf einen Blick:
+
+| Wann | Was | Wohin |
+|---|---|---|
+| Plan wird angelegt | 🔁 Routinen, 📌 Termine, 🏖 Urlaub dieses Tages / dieser Woche | Tagesspalten (Woche) bzw. *Morning / Afternoon / Evening* (Tag) |
+| Wochenplan wird angelegt | Wochenbudgets (z. B. Studentenbetreuung 5 h) | eigene Liste **Routines this week** links neben *Goals* |
+| Plan wird angelegt, sein Zeitraum hat schon begonnen (sonst: beim ersten Öffnen danach, mit Nachfrage) | Unerledigtes aus dem vorigen Tag / der vorigen Woche / dem vorigen Monat | Liste **Carried over** und die übertragenen Notes; im alten Plan als übertragen markiert (→) |
+| Plan wird geöffnet | neue 🔁 / 📌 / 🏖 ab heute dazu; offene Einträge gelöschter oder verschobener Termine / Routinen weg | wie beim Anlegen |
+| Abhaken (oder wieder öffnen) irgendwo | derselbe 🔁 / 📌-Eintrag im Tages- und Wochenplan und die Termin-Note | überall mit (Strg+Z nimmt es überall zurück) |
+
+**Nie automatisch:** In **Goals** und **Notes** trägt MindMapper nichts ein. Unerledigte Goals werden auch nicht übertragen. Goals ist eine einfache Abhakliste, außer du gibst ihr selbst eine Deadline, Schätzung oder Priorität. Vergangene Tage und abgehakte Einträge werden beim Öffnen nie verändert.
+
 ## 8. Notes in eine andere Map verschieben
 
 - Rechtsklick auf eine oder mehrere Notes → **Move to map** → **Next day / Next week / Next month / Today / This week** oder **Other map…**.
