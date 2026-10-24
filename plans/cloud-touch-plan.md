@@ -26,6 +26,12 @@ Vorschlag (kein eigener Dauer-Branch, sonst laufen zwei Code-Stände auseinander
 - **Cloud-Variante:** eigene Startseite, lädt zusätzlich die Cloud-Dateien.
 - **Vor Etappe 3 klären:** Unter derselben Adresse (`tizian91.github.io`) teilen sich beide Varianten den Browser-Speicher (auch den gemerkten lokalen Ordner). Für eine saubere Trennung braucht die Cloud-Variante eine eigene Adresse (anderer Hoster / eigene Domain).
 
+**Umgesetzt (24.10.2026):**
+- Lokale Variante: `index.html` mit Content-Security-Policy (keine Verbindung nach außen). Der Nutzer arbeitet selbst nur damit (Arbeitsordner).
+- Cloud-Variante: Cloudflare Workers (Static Assets), `https://mindmapper.tizian-arold.workers.dev/` → `_redirects` → `cloud.html` (aus `index.html` erzeugt mit `tools/make_cloud_html.py`, eigene CSP: nur pCloud). Sie bietet **lokalen Ordner und pCloud** (einer zur Zeit), damit Freunde ohne pCloud dieselbe Adresse nutzen können. Auf anderen Adressen bleibt der pCloud-Teil aus.
+- `wrangler.jsonc` + `.assetsignore`: veröffentlicht wird nur die App (kein `.git`, `plans/`, `tools/`).
+- pCloud-App beantragt (App-Ordner, Schreibrecht); **Client-ID fehlt noch** → `PC.CLIENT_ID` in `js/cloud-pcloud.js`.
+
 ## Mehrere Cloud-Anbieter (keine Entweder-oder-Entscheidung)
 
 Die Speicher-Schnittstelle (Architektur, Abschnitt 1) ist für **mehrere Anbieter** gebaut: jeder Dienst ist ein eigenes Modul mit denselben Funktionen und eigener Anmeldung. Seitenleiste ohne Ordner z. B.: *Open folder… · Connect pCloud… · Connect OneDrive… · Connect Google Drive…* (nur die eingebauten Anbieter). Jeder Nutzer verbindet sein eigenes Konto; die Daten bleiben in seiner Cloud, kein Server dazwischen. Die App wird später auch an Freunde weitergegeben.
