@@ -521,7 +521,7 @@ window.MM = window.MM || {};
     // bump on every change of doc.nodes/dispatch; invalidates derived caches (see meta.visibleSet)
     rev: 0,
     edgeStyle: MM.clone(MM.DEFAULT_EDGE_STYLE), // style for new connections (last used)
-    file: { handle: null, name: 'Untitled.mindmap.json', path: null }, // path: location inside the project folder
+    file: { handle: null, backend: null, name: 'Untitled.mindmap.json', path: null }, // path: location inside the project folder (backend), handle: a single file outside it
     dirty: false,
   };
 

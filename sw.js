@@ -40,6 +40,7 @@ const FILES = [
   'js/contextmenu.js',
   'js/filterbar.js',
   'js/emoji.js',
+  'js/fsys.js',
   'js/storage.js',
   'js/templates.js',
   'js/project.js',

@@ -173,7 +173,7 @@
         label: MM.t('helpLoadExample'),
         action: async () => {
           if (!(await MM.storage.confirmLeave('open the example map'))) return;
-          S.file = { handle: null, name: 'Beispiel.mindmap.json', path: null };
+          S.file = { handle: null, backend: null, name: 'Beispiel.mindmap.json', path: null };
           MM.storage.load(demoDoc(), S.file.name);
           S.dirty = false;
           MM.actions.fit();

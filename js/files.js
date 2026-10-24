@@ -204,7 +204,7 @@
   F.open = async function (node) {
     const file = node && node.file;
     if (!file || !file.path) return;
-    if (!MM.project.dir) {
+    if (!MM.project.backend) {
       alert(MM.tr('This note points to "{path}".\nOpen the project folder first (sidebar "Project").', { path: file.path }));
       return;
     }
@@ -213,8 +213,11 @@
       alert(MM.tr('This note points to "{path}".\nAllow access to the project folder first (sidebar "Project").', { path: file.path }));
       return;
     }
-    const handle = await MM.project.getHandle(file.path);
-    if (!handle) {
+    let blob = null;
+    try {
+      blob = await MM.project.backend.readBlob(file.path);
+    } catch (err) { /* treated like a missing file */ }
+    if (!blob) {
       // the asset may never have been copied (older bug) - offer to pick it again
       if (confirm(MM.tr('File not found:\n{path}\n\nPick the file from disk and copy it into Assets/ now?', { path: file.path }))) {
         await F.pickReplace(node);
@@ -222,8 +225,6 @@
       return;
     }
     try {
-      // getFile() already returns a Blob/File - no .blob() call needed
-      const blob = await handle.getFile();
       const url = URL.createObjectURL(blob);
       if (INLINE.test(ext(file.name))) {
         // Note: with the "noopener" window feature window.open() always returns
@@ -258,7 +259,7 @@
   /** Show the relative asset path (helps finding the file on disk). */
   F.reveal = function (node) {
     const p = node && node.file && node.file.path;
-    if (p) MM.ui.flash(MM.tr('Stored as {path}', { path: (MM.project.dir ? MM.project.dir.name + '/' : '') + p }));
+    if (p) MM.ui.flash(MM.tr('Stored as {path}', { path: (MM.project.backend ? MM.project.backend.name + '/' : '') + p }));
   };
 
   /** Files contained in a clipboard / drag-and-drop DataTransfer (non-image). */

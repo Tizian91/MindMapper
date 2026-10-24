@@ -50,11 +50,11 @@
 
   ST.PROJECT_SETTINGS_FILE = 'mindmapper.settings.json';
   ST.CAPACITY_KEYS = ['hoursPerDay', 'hoursPerWeekendDay', 'workDays'];
-  const projectReady = () => !!(MM.project && MM.project.status === 'ready' && MM.project.dir);
+  const projectReady = () => !!(MM.project && MM.project.status === 'ready' && MM.project.backend);
 
   /** Where the capacity is stored (for hints in the UI). */
   ST.capacityLocation = () => (projectReady()
-    ? `in the folder "${MM.project.dir.name}" (${ST.PROJECT_SETTINGS_FILE})`
+    ? `in the folder "${MM.project.backend.name}" (${ST.PROJECT_SETTINGS_FILE})`
     : 'in this browser');
 
   /**
@@ -63,13 +63,16 @@
    */
   ST.loadProjectSettings = async function () {
     if (!projectReady()) return;
-    const fh = await MM.project.getHandle(ST.PROJECT_SETTINGS_FILE);
-    if (!fh) {
+    let f = null;
+    try {
+      f = await MM.project.backend.read(ST.PROJECT_SETTINGS_FILE);
+    } catch (e) { /* treated like a missing file */ }
+    if (!f) {
       await ST.saveProjectSettings();
       return;
     }
     try {
-      const data = JSON.parse(await (await fh.getFile()).text());
+      const data = JSON.parse(f.text);
       const c = (data && data.capacity) || {};
       for (const k of ST.CAPACITY_KEYS) if (c[k] !== undefined) S.settings[k] = c[k];
       MM.setPrioSystem(data && data.prioSystem, false);
@@ -150,29 +153,40 @@
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(ST.autosave, 800);
     // maps of a project folder are written straight back into their file
-    if (S.file.handle && S.file.path && S.settings.autoSaveFile) {
+    if (inProject() && S.settings.autoSaveFile) {
       clearTimeout(fileTimer);
       fileTimer = setTimeout(() => ST.writeFile(), 1200);
     }
   };
 
-  /** Write the current map into its file handle (writes are queued, never overlap). */
+  /** The open map belongs to the project folder (S.file.backend + path). */
+  const inProject = () => !!(S.file.backend && S.file.path);
+
+  /** The open map has a file to write to: a map of the project folder or a single file handle. */
+  ST.hasFile = () => inProject() || !!S.file.handle;
+
+  /** Write the current map into its file (writes are queued, never overlap). */
   let writeQueue = Promise.resolve();
   ST.writeFile = function () {
     clearTimeout(fileTimer);
-    const handle = S.file.handle;
-    if (!handle) return writeQueue;
+    if (!ST.hasFile()) return writeQueue;
+    const { backend, path, handle } = S.file;
+    const name = path ? path.split('/').pop() : handle.name;
     const json = ST.serialize();
     writeQueue = writeQueue.then(async () => {
       try {
-        const w = await handle.createWritable();
-        await w.write(json);
-        await w.close();
-        if (S.file.handle === handle) S.dirty = false;
+        if (backend && path) {
+          await backend.write(path, json);
+        } else {
+          const w = await handle.createWritable();
+          await w.write(json);
+          await w.close();
+        }
+        if (S.file.backend === backend && S.file.path === path && S.file.handle === handle) S.dirty = false;
         ST.autosave();
         MM.ui.update();
       } catch (err) {
-        MM.ui.flash(MM.tr('Could not save {name}: {err}', { name: handle.name, err: err.message }));
+        MM.ui.flash(MM.tr('Could not save {name}: {err}', { name, err: err.message }));
       }
     });
     return writeQueue;
@@ -219,28 +233,32 @@
   ST.confirmLeave = async function (what) {
     MM.edit.finish();
     if (!S.dirty) return true;
-    if (S.file.handle && S.file.path) {
+    if (inProject()) {
       await ST.writeFile();
       return true;
     }
     return confirm(MM.tr('Discard unsaved changes and {what}?', { what: MM.tr(what) }));
   };
 
-  /** Path of a file handle inside the project folder (e.g. "Weeks/2026-W43.mindmap.json") or null. */
-  async function projectPath(handle) {
-    const dir = MM.project && MM.project.dir;
-    if (!dir || !handle) return null;
-    try {
-      const parts = await dir.resolve(handle);
-      return parts ? parts.join('/') : null;
-    } catch (e) {
-      return null;
-    }
+  /**
+   * Link the open map to a file handle from "Open" / "Save as": a file inside
+   * the project folder is used through the folder's backend (path), any other
+   * file through its handle.
+   */
+  async function linkHandle(handle) {
+    const b = MM.project && MM.project.backend;
+    const path = b && b.resolve ? await b.resolve(handle) : null;
+    S.file.handle = path ? null : handle;
+    S.file.backend = path ? b : null;
+    S.file.path = path;
   }
+
+  /** Directory to start the file pickers in (the local project folder). */
+  const startIn = () => MM.project && MM.project.backend && MM.project.backend.dir;
 
   ST.newDoc = async function () {
     if (!(await ST.confirmLeave('start a new map'))) return;
-    S.file = { handle: null, name: 'Untitled.mindmap.json', path: null };
+    S.file = { handle: null, backend: null, name: 'Untitled.mindmap.json', path: null };
     ST.load(MM.emptyDoc());
     S.dirty = false;
     MM.actions.fit();
@@ -251,18 +269,21 @@
     MM.edit.finish();
     const json = ST.serialize();
     try {
-      if (window.showSaveFilePicker) {
-        if (!S.file.handle || saveAs) {
+      if (!saveAs && inProject()) {
+        await S.file.backend.write(S.file.path, json);
+      } else if (window.showSaveFilePicker) {
+        let handle = S.file.handle;
+        if (!handle || saveAs) {
           const opts = { suggestedName: S.file.name, types: FILE_TYPES };
-          if (MM.project && MM.project.dir) opts.startIn = MM.project.dir;
-          S.file.handle = await window.showSaveFilePicker(opts);
+          if (startIn()) opts.startIn = startIn();
+          handle = await window.showSaveFilePicker(opts);
         }
-        const w = await S.file.handle.createWritable();
+        const w = await handle.createWritable();
         await w.write(json);
         await w.close();
-        S.file.name = S.file.handle.name;
-        S.file.path = await projectPath(S.file.handle);
-        if (MM.project && MM.project.dir) MM.project.scan();
+        S.file.name = handle.name;
+        await linkHandle(handle);
+        if (MM.project && MM.project.backend) MM.project.scan();
       } else {
         const name = saveAs || !S.file.saved ? prompt(MM.tr('File name'), S.file.name) : S.file.name;
         if (!name) return;
@@ -288,7 +309,7 @@
     try {
       if (window.showOpenFilePicker) {
         const opts = { types: FILE_TYPES };
-        if (MM.project && MM.project.dir) opts.startIn = MM.project.dir;
+        if (startIn()) opts.startIn = startIn();
         const [handle] = await window.showOpenFilePicker(opts);
         await ST.openHandle(handle);
       } else {
@@ -300,6 +321,7 @@
           try {
             ST.load(JSON.parse(await file.text()), file.name);
             S.file.handle = null;
+            S.file.backend = null;
             S.file.path = null;
             afterOpen();
           } catch (err) {
@@ -313,16 +335,25 @@
     }
   };
 
-  /** Load a map from a file handle (used by Open and the project sidebar). */
+  /** Load a map from a file handle (used by Open). */
   ST.openHandle = async function (handle) {
     const file = await handle.getFile();
     const text = await file.text();
     ST.load(text.trim() ? JSON.parse(text) : MM.emptyDoc(), file.name);
-    S.file.handle = handle;
-    S.file.path = await projectPath(handle);
+    await linkHandle(handle);
     afterOpen();
-    MM.tasks.refreshExternal(); // progress of tasks with derived maps (read in the background)
-    MM.load.scheduleRefresh();  // the map we came from is one of the "other" maps now
+  };
+
+  /** Load a map of the project folder (used by the project sidebar). */
+  ST.openPath = async function (path) {
+    const backend = MM.project.backend;
+    const f = await backend.read(path);
+    if (!f) throw new Error('not found: ' + path);
+    ST.load(f.text.trim() ? JSON.parse(f.text) : MM.emptyDoc(), path.split('/').pop());
+    S.file.handle = null;
+    S.file.backend = backend;
+    S.file.path = path;
+    afterOpen();
   };
 
   function afterOpen() {
@@ -330,5 +361,7 @@
     MM.actions.fit();
     ST.autosave();
     MM.ui.flash(MM.tr('Opened {name}', { name: S.file.name }));
+    MM.tasks.refreshExternal(); // progress of tasks with derived maps (read in the background)
+    MM.load.scheduleRefresh();  // the map we came from is one of the "other" maps now
   }
 })(window.MM);

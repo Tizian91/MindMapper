@@ -436,7 +436,7 @@
   }
 
   function render() {
-    dialog.querySelector('.ov-folder').textContent = MM.project.dir ? '· ' + MM.project.dir.name : '';
+    dialog.querySelector('.ov-folder').textContent = MM.project.backend ? '· ' + MM.project.backend.name : '';
     dialog.querySelectorAll('[data-ov-mode]').forEach((b) => b.classList.toggle('active', b.dataset.ovMode === view.mode));
     // type filter is built from what is actually there
     const typeSel = dialog.querySelector('.ov-type');

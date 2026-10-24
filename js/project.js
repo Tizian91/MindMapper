@@ -1,8 +1,9 @@
 'use strict';
 /*
  * Project folder: several maps in one folder (with sub folders, e.g. Weeks/, Months/).
- * Uses the File System Access API (Edge / Chrome). The folder handle is kept in
- * IndexedDB; after a restart the browser asks once for permission ("Reconnect").
+ * All file access goes through a storage backend (fsys.js); the local folder
+ * uses the File System Access API (Edge / Chrome). After a restart the browser
+ * asks once for permission ("Reconnect").
  * Maps opened from the project are saved back into their file automatically.
  */
 (function (MM) {
@@ -10,11 +11,10 @@
   const P = (MM.project = {});
   const esc = (s) => MM.render.esc(s);
   const tr = (s, v) => MM.tr(s, v);
-  const DIR_KEY = 'projectDir';
 
-  P.supported = !!window.showDirectoryPicker;
-  P.dir = null;
-  P.entries = [];          // tree: { kind: 'dir'|'file', name, path, handle, children? }
+  P.supported = MM.fsys.local.supported;
+  P.backend = null;        // storage backend of the project folder (see fsys.js)
+  P.entries = [];          // tree: { kind: 'dir'|'file', name, path, children? }
   P.status = 'none';       // none | ready | needs-permission | unsupported
   const collapsed = new Set();
   let root, dialog;
@@ -34,11 +34,10 @@
       return;
     }
     try {
-      const h = await MM.storage.idb.get(DIR_KEY);
-      if (h) {
-        P.dir = h;
-        const perm = await h.queryPermission({ mode: 'readwrite' });
-        if (perm === 'granted') await connected();
+      const b = await MM.fsys.local.restore();
+      if (b) {
+        P.backend = b;
+        if ((await b.access(false)) === 'granted') await connected();
         else P.status = 'needs-permission';
       }
     } catch (e) { /* no stored folder */ }
@@ -47,9 +46,7 @@
 
   P.choose = async function () {
     try {
-      const h = await window.showDirectoryPicker({ id: 'mindmapper', mode: 'readwrite' });
-      P.dir = h;
-      await MM.storage.idb.set(DIR_KEY, h);
+      P.backend = await MM.fsys.local.pick();
       S.settings.showProject = true;
       MM.saveSettings();
       await connected();
@@ -60,15 +57,14 @@
   };
 
   P.reconnect = async function () {
-    if (!P.dir) return;
-    const perm = await P.dir.requestPermission({ mode: 'readwrite' });
-    if (perm === 'granted') await connected();
+    if (!P.backend) return;
+    if ((await P.backend.access(true)) === 'granted') await connected();
     P.render();
   };
 
   /** Use a folder handle directly (also used by the tests). */
   P.useFolder = async function (handle) {
-    P.dir = handle;
+    P.backend = MM.fsys.local.from(handle);
     await connected();
   };
 
@@ -79,10 +75,7 @@
     // the last session's map came from this folder -> link it to its file again
     const path = MM.storage.restoredPath;
     MM.storage.restoredPath = null;
-    if (path && !S.file.handle) {
-      const e = P.find(path);
-      if (e) await relinkRestored(e, path);
-    }
+    if (path && !S.file.path && P.find(path)) await relinkRestored(path);
     P.render();
     MM.ui.update();
     if (MM.panel) MM.panel.update(true); // capacity hint now names the folder
@@ -95,49 +88,51 @@
    * folder), the file is loaded instead - otherwise the next autosave would
    * overwrite the newer file with the old copy.
    */
-  async function relinkRestored(e, path) {
+  async function relinkRestored(path) {
     let modified = 0;
     try {
-      modified = (await e.handle.getFile()).lastModified;
+      const st = await P.backend.stat(path);
+      if (st) modified = st.modified;
     } catch (err) { /* unreadable: keep the local copy */ }
     const newer = modified > (MM.storage.restoredTime || 0) + 2000;
     if (newer && (!S.dirty || confirm(tr('"{path}" was changed on disk after your last session here (e.g. on another computer).\n\nOK: load the file (recommended).\nCancel: keep the local copy - it will overwrite the file.', { path })))) {
       try {
-        await MM.storage.openHandle(e.handle);
+        await MM.storage.openPath(path);
         return;
       } catch (err) {
         alert(tr('Could not load {path}: {err}', { path, err: err.message }));
         return; // keep the local copy, but don't link it to the file it could not read
       }
     }
-    S.file.handle = e.handle;
+    S.file.handle = null;
+    S.file.backend = P.backend;
     S.file.path = path;
   }
 
   P.scan = async function () {
-    if (!P.dir) return;
-    P.entries = await list(P.dir, '', 0);
+    if (!P.backend) return;
+    P.entries = await list('', 0);
     P.diaries = await listDiaries();
     MM.diary.loadIndex(); // 🔒 marks of diary notes on closed pages (background)
     P.render();
     MM.load.scheduleRefresh(); // workload of all maps (read in the background)
   };
 
-  async function list(dir, prefix, depth) {
+  async function list(prefix, depth) {
     const out = [];
-    for await (const [name, h] of dir.entries()) {
+    for (const { kind, name } of await P.backend.list(prefix)) {
       if (name.startsWith('.')) continue;
       // per-folder capacity settings, not a map
-      if (depth === 0 && h.kind === 'file' && name === MM.storage.PROJECT_SETTINGS_FILE) continue;
+      if (depth === 0 && kind === 'file' && name === MM.storage.PROJECT_SETTINGS_FILE) continue;
       // Assets/ holds the files of data notes - never list it as maps
-      if (depth === 0 && h.kind === 'directory' && MM.files && name === MM.files.ASSET_FOLDER) continue;
+      if (depth === 0 && kind === 'dir' && MM.files && name === MM.files.ASSET_FOLDER) continue;
       // Diaries/ holds the diaries (own sidebar section), and a diary file is no map anywhere
-      if (depth === 0 && h.kind === 'directory' && name === P.DIARY_FOLDER) continue;
-      if (h.kind === 'file' && DIARY_EXT.test(name)) continue;
-      if (h.kind === 'directory' && depth < 4) {
-        out.push({ kind: 'dir', name, path: prefix + name, handle: h, children: await list(h, prefix + name + '/', depth + 1) });
-      } else if (h.kind === 'file' && /\.json$/i.test(name)) {
-        out.push({ kind: 'file', name, path: prefix + name, handle: h });
+      if (depth === 0 && kind === 'dir' && name === P.DIARY_FOLDER) continue;
+      if (kind === 'file' && DIARY_EXT.test(name)) continue;
+      if (kind === 'dir' && depth < 4) {
+        out.push({ kind: 'dir', name, path: prefix + name, children: await list(prefix + name + '/', depth + 1) });
+      } else if (kind === 'file' && /\.json$/i.test(name)) {
+        out.push({ kind: 'file', name, path: prefix + name });
       }
     }
     const coll = new Intl.Collator(undefined, { numeric: true });
@@ -155,9 +150,8 @@
   async function listDiaries() {
     const out = [];
     try {
-      const dir = await P.dir.getDirectoryHandle(P.DIARY_FOLDER);
-      for await (const [name, h] of dir.entries()) {
-        if (h.kind === 'file' && DIARY_EXT.test(name)) {
+      for (const { kind, name } of await P.backend.list(P.DIARY_FOLDER)) {
+        if (kind === 'file' && DIARY_EXT.test(name)) {
           out.push({ name: name.replace(DIARY_EXT, ''), path: P.DIARY_FOLDER + '/' + name });
         }
       }
@@ -171,15 +165,14 @@
   P.readDiary = async function (name) {
     let raw = null;
     try {
-      const fh = await P.getHandle(P.diaryPath(name));
-      if (fh) raw = JSON.parse(await (await fh.getFile()).text());
+      const f = await P.backend.read(P.diaryPath(name));
+      if (f) raw = JSON.parse(f.text);
     } catch (e) { /* missing or broken: start fresh */ }
     return MM.diary.normalize(raw, name);
   };
 
   P.writeDiary = async function (data) {
     if (!(await P.ensureWriteAccess())) throw new Error(tr('no write access to the project folder'));
-    await P.ensureDir(P.DIARY_FOLDER, true);
     await P.writeText(P.diaryPath(data.name), JSON.stringify(data, null, 2));
   };
 
@@ -205,47 +198,14 @@
 
   // ---- Low level file helpers (used by rename, transfer, files, derive-map) ----
 
-  /** Directory handle of `folder` ("Weeks/2026-Q4"), optionally created. */
-  P.ensureDir = async function (folder, create) {
-    let dir = P.dir;
-    for (const part of String(folder || '').split('/').map((s) => s.trim()).filter(Boolean)) {
-      dir = await dir.getDirectoryHandle(part, { create: !!create });
-    }
-    return dir;
-  };
-
-  /**
-   * Handle of a path inside the project folder. Unlike P.find() this also
-   * works for folders and non-JSON files (e.g. "Assets/report.xlsx").
-   */
-  P.getHandle = async function (path, opts) {
-    if (!P.dir || !path) return null;
-    const o = opts || {};
-    const parts = String(path).split('/').filter(Boolean);
-    const name = parts.pop();
-    try {
-      const dir = await P.ensureDir(parts.join('/'), o.create);
-      return o.kind === 'directory'
-        ? await dir.getDirectoryHandle(name, { create: !!o.create })
-        : await dir.getFileHandle(name, { create: !!o.create });
-    } catch (e) {
-      return null;
-    }
-  };
-
   /** True if a file with that path exists in the folder. */
   P.exists = async function (path) {
-    return !!(await P.getHandle(path));
+    return !!P.backend && !!path && (await P.backend.exists(path));
   };
 
-  /** Write a document (or any text) to a path of the project folder. */
+  /** Write a document (or any text) to a path of the project folder (folders are created). */
   P.writeText = async function (path, text) {
-    const fh = await P.getHandle(path, { create: true });
-    if (!fh) throw new Error('Cannot create ' + path);
-    const w = await fh.createWritable();
-    await w.write(text);
-    await w.close();
-    return fh;
+    return P.backend.write(path, text);
   };
 
   /**
@@ -254,15 +214,9 @@
    * not fail silently. Returns true when writing is allowed.
    */
   P.ensureWriteAccess = async function () {
-    if (!P.dir) return false;
+    if (!P.backend) return false;
     try {
-      if (typeof P.dir.queryPermission === 'function') {
-        let perm = await P.dir.queryPermission({ mode: 'readwrite' });
-        if (perm === 'prompt' && typeof P.dir.requestPermission === 'function') {
-          perm = await P.dir.requestPermission({ mode: 'readwrite' });
-        }
-        if (perm !== 'granted') return false;
-      }
+      if ((await P.backend.access(true)) !== 'granted') return false;
       if (P.status !== 'ready') await connected();
       return P.status === 'ready';
     } catch (e) {
@@ -272,34 +226,12 @@
 
   /**
    * Write binary data (File, Blob or ArrayBuffer) into the project folder.
-   * Unlike P.getHandle() this does NOT swallow the error, so the caller can
-   * tell the user what actually went wrong (NotAllowedError, quota, ...).
+   * Does NOT swallow the error, so the caller can tell the user what actually
+   * went wrong (NotAllowedError, quota, ...).
    */
   P.writeBlob = async function (path, data) {
-    if (!P.dir) throw new Error('no project folder is open');
-    const parts = String(path || '').split('/').filter(Boolean);
-    const name = parts.pop();
-    if (!name) throw new Error('invalid path: ' + path);
-    const dir = await P.ensureDir(parts.join('/'), true);
-    const fh = await dir.getFileHandle(name, { create: true });
-    let w = await fh.createWritable();
-    try {
-      // Blobs / Files are supported directly, but a few Chromium builds only
-      // accept them reliably as a buffer - retry that way when it fails.
-      try {
-        await w.write(data);
-      } catch (err) {
-        try { await w.abort(); } catch (e) { /* stream already closed */ }
-        w = await fh.createWritable();
-        const buf = data instanceof Blob ? await data.arrayBuffer() : data;
-        await w.write(buf);
-      }
-      await w.close();
-    } catch (err) {
-      try { await w.abort(); } catch (e) { /* stream already closed */ }
-      throw err;
-    }
-    return fh;
+    if (!P.backend) throw new Error('no project folder is open');
+    await P.backend.writeBlob(path, data);
   };
 
   /**
@@ -389,10 +321,11 @@
    */
   P.readMap = async function (path) {
     if (path === S.file.path) return S.doc;
-    const e = P.find(path);
-    if (!e) return null;
+    if (!P.find(path)) return null;
     try {
-      const text = await (await e.handle.getFile()).text();
+      const f = await P.backend.read(path);
+      if (!f) return null;
+      const text = f.text;
       return text.trim() ? MM.normalizeDoc(JSON.parse(text)) : MM.emptyDoc();
     } catch (err) {
       return null;
@@ -411,7 +344,7 @@
     const from = S.file.path;
     if (!(await MM.storage.confirmLeave('open another map'))) return false;
     try {
-      await MM.storage.openHandle(e.handle);
+      await MM.storage.openPath(path);
     } catch (err) {
       alert(tr('Could not open {name}: {err}', { name: e.name, err: err.message }));
       return false;
@@ -489,13 +422,10 @@
       await MM.storage.writeFile();
       return;
     }
-    const e = P.find(carry.path);
-    const doc = e && (await P.readMap(carry.path));
+    const doc = await P.readMap(carry.path);
     if (!doc) return;
     MM.templates.markMoved(doc, carry.data, newPath, newName);
-    const w = await e.handle.createWritable();
-    await w.write(JSON.stringify(doc, null, 2));
-    await w.close();
+    await P.writeText(carry.path, JSON.stringify(doc, null, 2));
   }
 
   /** Unfinished work of the map `<folder>/<name>.mindmap.json`, or null if there is none. */
@@ -512,22 +442,13 @@
    * Opens it unless opts.open === false. Returns the path (or null if cancelled).
    */
   P.createMap = async function ({ folder, name, doc, carry, open = true }) {
-    const dir = await P.ensureDir(folder, true);
+    await P.backend.mkdir(folder);
     const fname = /\.json$/i.test(name) ? name : name + '.mindmap.json';
     const path = (folder ? folder.replace(/\/+$/, '') + '/' : '') + fname;
-    let exists = true;
-    try {
-      await dir.getFileHandle(fname);
-    } catch (e) {
-      exists = false;
-    }
-    if (exists) {
+    if (await P.exists(path)) {
       if (!confirm(tr('"{name}" already exists. Open it instead?', { name: fname }))) return null;
     } else {
-      const fh = await dir.getFileHandle(fname, { create: true });
-      const w = await fh.createWritable();
-      await w.write(JSON.stringify(doc, null, 2));
-      await w.close();
+      await P.writeText(path, JSON.stringify(doc, null, 2));
       if (carry) await markMoved(carry, path);
     }
     await P.scan();
@@ -549,7 +470,7 @@
    * points at it (link, movedTo, movedFrom, derivedMap) in all maps.
    */
   P.renameMap = async function (oldPath, newPath) {
-    if (!P.dir || !oldPath || !newPath) return false;
+    if (!P.backend || !oldPath || !newPath) return false;
     if (oldPath === newPath) return true;
     const oldEntry = P.find(oldPath);
     if (!oldEntry) return false;
@@ -572,10 +493,7 @@
 
     try {
       await P.writeText(newPath, JSON.stringify(doc, null, 2));
-      const parts = oldPath.split('/');
-      const oldName = parts.pop();
-      const oldDir = await P.ensureDir(parts.join('/'), false);
-      await oldDir.removeEntry(oldName);
+      await P.backend.remove(oldPath);
     } catch (err) {
       alert(tr('Could not rename the map: {err}', { err: err.message }));
       return false;
@@ -584,7 +502,6 @@
     // the open map keeps pointing at its (moved) file
     const wasOpen = oldPath === S.file.path;
     if (wasOpen) {
-      S.file.handle = await P.getHandle(newPath);
       S.file.path = newPath;
       S.file.name = newPath.split('/').pop();
     }
@@ -727,7 +644,7 @@
     if (!root) return;
     document.getElementById('main').classList.toggle('with-sidebar', !!S.settings.showProject);
     // rebuild only when something visible changed (keeps clicks from getting lost)
-    const key = JSON.stringify([P.status, P.dir && P.dir.name, paths(P.entries), S.file.path, S.file.name, [...collapsed], P.history, MM.getLang(), P.diaries.map((d) => d.name)]);
+    const key = JSON.stringify([P.status, P.backend && P.backend.name, paths(P.entries), S.file.path, S.file.name, [...collapsed], P.history, MM.getLang(), P.diaries.map((d) => d.name)]);
     if (key === lastKey) return;
     lastKey = key;
     const back = P.history.length ? P.history[P.history.length - 1] : null;
@@ -741,11 +658,11 @@
       h += `<p class="hint">${tr('Keep several maps together in one folder – e.g. weekly and monthly plans.')}</p>
         <button class="sb-wide" data-p="choose">${tr('Open folder…')}</button>`;
     } else if (P.status === 'needs-permission') {
-      h += `<p class="hint">${tr('The browser needs your OK to use the folder <b>{name}</b> again.', { name: esc(P.dir.name) })}</p>
-        <button class="sb-wide primary" data-p="reconnect">${tr('Reconnect "{name}"', { name: esc(P.dir.name) })}</button>
+      h += `<p class="hint">${tr('The browser needs your OK to use the folder <b>{name}</b> again.', { name: esc(P.backend.name) })}</p>
+        <button class="sb-wide primary" data-p="reconnect">${tr('Reconnect "{name}"', { name: esc(P.backend.name) })}</button>
         <button class="sb-wide" data-p="choose">${tr('Other folder…')}</button>`;
     } else {
-      h += `<div class="sb-folder" title="${esc(tr('Project folder'))}"><span class="sb-folder-name">${esc(P.dir.name)}</span>
+      h += `<div class="sb-folder" title="${esc(tr('Project folder'))}"><span class="sb-folder-name">${esc(P.backend.name)}</span>
           <button data-p="choose" title="${esc(tr('Open another folder'))}">…</button></div>
         <button class="sb-wide primary" data-p="new">${tr('+ New map')}</button>
         ${back ? `<button class="sb-wide sb-back" data-p="back" title="${esc(back)}">${tr('← Back to {name}', { name: esc(displayName(back.split('/').pop())) })}</button>` : ''}
@@ -812,14 +729,11 @@
     const label = P.mapName(path);
     try {
       if (path === S.file.path) {
-        S.file = { handle: null, name: 'Untitled.mindmap.json', path: null };
+        S.file = { handle: null, backend: null, name: 'Untitled.mindmap.json', path: null };
         MM.storage.load(MM.emptyDoc(), S.file.name);
         S.dirty = false;
       }
-      const parts = path.split('/');
-      const name = parts.pop();
-      const dir = await P.ensureDir(parts.join('/'), false);
-      await dir.removeEntry(name);
+      await P.backend.remove(path);
       P.history = P.history.filter((p) => p !== path);
       await P.scan();
       MM.storage.autosave();

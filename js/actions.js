@@ -211,7 +211,7 @@
     n.derivedMap = path;
     if (!n.link) n.link = path;
     MM.commit();
-    if (S.file.handle) await MM.storage.writeFile();
+    if (MM.storage.hasFile()) await MM.storage.writeFile();
     MM.project.scan();
     await MM.project.openMap(path);
   };

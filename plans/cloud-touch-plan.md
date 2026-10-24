@@ -16,6 +16,16 @@ Private Maps (z. B. Übungsplan Band) am **Android-Handy** im Browser ansehen un
 - Projektordner nutzen `showDirectoryPicker` (File System Access API) – **gibt es auf Android nicht**. Deshalb ist auf dem Handy heute nur „einzelne Datei“ möglich.
 - Direkte Dateizugriffe stecken fast nur in `project.js` (27 Stellen) und `storage.js` (17, davon Einzeldatei-Öffnen/Speichern), dazu je 1–2 in `files.js`, `transfer.js`, `actions.js`.
 
+## Rein lokale Variante bleibt immer erhalten (Wunsch des Nutzers, 24.10.2026)
+
+Es muss immer eine Version geben, die **gar keine Cloud-Verbindung kann** – für Nutzer, die keine Cloud wollen, und damit es mit Arbeitgebern keine Probleme gibt.
+
+Vorschlag (kein eigener Dauer-Branch, sonst laufen zwei Code-Stände auseinander):
+- Ein Code-Stand. Jeder Cloud-Anbieter in einer eigenen Datei (`js/cloud-pcloud.js`, …); `fsys.js` enthält nur `local`.
+- **Lokale Variante** (`index.html`): lädt keine Cloud-Dateien und setzt eine Content-Security-Policy (`connect-src 'self'` u. a.), damit der Browser jede Verbindung nach außen blockiert – nachprüfbar im Quelltext.
+- **Cloud-Variante:** eigene Startseite, lädt zusätzlich die Cloud-Dateien.
+- **Vor Etappe 3 klären:** Unter derselben Adresse (`tizian91.github.io`) teilen sich beide Varianten den Browser-Speicher (auch den gemerkten lokalen Ordner). Für eine saubere Trennung braucht die Cloud-Variante eine eigene Adresse (anderer Hoster / eigene Domain).
+
 ## Mehrere Cloud-Anbieter (keine Entweder-oder-Entscheidung)
 
 Die Speicher-Schnittstelle (Architektur, Abschnitt 1) ist für **mehrere Anbieter** gebaut: jeder Dienst ist ein eigenes Modul mit denselben Funktionen und eigener Anmeldung. Seitenleiste ohne Ordner z. B.: *Open folder… · Connect pCloud… · Connect OneDrive… · Connect Google Drive…* (nur die eingebauten Anbieter). Jeder Nutzer verbindet sein eigenes Konto; die Daten bleiben in seiner Cloud, kein Server dazwischen. Die App wird später auch an Freunde weitergegeben.
@@ -97,7 +107,7 @@ backend = {
 
 | # | Inhalt | Ergebnis |
 |---|---|---|
-| **1** | Speicher-Schnittstelle, `local`-Anbieter = heutiger Code | keine sichtbare Änderung, alles läuft wie vorher (gründlich testen: Maps, Move to map, Carry-over, Umbenennen, Assets, Tagebuch, Termin-Sync) |
+| **1** | Speicher-Schnittstelle, `local`-Anbieter = heutiger Code – **umgesetzt 24.10.2026** (`js/fsys.js`, `P.backend`, `S.file.backend`; `list(folder)` liefert nur eine Ebene, die Rekursion und Filter bleiben in `project.js`) | keine sichtbare Änderung, alles läuft wie vorher (gründlich testen: Maps, Move to map, Carry-over, Umbenennen, Assets, Tagebuch, Termin-Sync) |
 | **2** | Konfliktschutz über Versionen (lokal) | R7 erledigt |
 | **3** | pCloud-Anbieter: Anmeldung, Ordnerwahl, alle Dateioperationen, Konfliktschutz | privater Ordner am PC über pCloud nutzbar |
 | **4** | Touch-Bedienung + schmale Ansicht | am Android-Handy bedienbar |

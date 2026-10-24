@@ -399,7 +399,7 @@
       if (!c.src.link && c.src.type !== 'draw') c.src.link = targetPath;
     }
     MM.commit();
-    if (S.file.handle) await MM.storage.writeFile();
+    if (MM.storage.hasFile()) await MM.storage.writeFile();
 
     MM.tasks.refreshExternal(); // the target may be a derived map of a task here
     MM.load.scheduleRefresh();
@@ -473,7 +473,7 @@
       o.movedBatch = null;
     }
     MM.commit();
-    if (S.file.handle) await MM.storage.writeFile();
+    if (MM.storage.hasFile()) await MM.storage.writeFile();
     MM.tasks.refreshExternal();
     MM.load.scheduleRefresh();
     MM.ui.flash(MM.tr('Move undone'));
