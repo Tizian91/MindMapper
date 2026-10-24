@@ -324,6 +324,32 @@
     return fill ? { added: count, removed } : count;
   };
 
+  /** Show the note behind a 🔁 / 📌 / 🏖 entry; its map is opened when it is another one. */
+  R.openSource = async function (id) {
+    const S = MM.state, P = MM.project;
+    if (MM.node(id)) {
+      MM.actions.focusNode(id);
+      return;
+    }
+    const find = () => {
+      for (const [path, doc] of MM.load.docs()) {
+        const n = path !== S.file.path && doc.nodes && doc.nodes[id];
+        if (n && !n.movedTo && P.find(path)) return path;
+      }
+      return null;
+    };
+    let path = find();
+    if (!path && P.status === 'ready') {
+      await MM.load.refresh(); // just created in another map: not in the cache yet
+      path = find();
+    }
+    if (!path) {
+      MM.ui.flash(MM.tr('The note of this entry does not exist any more'));
+      return;
+    }
+    if (await P.openMap(path)) MM.actions.focusNode(id);
+  };
+
   // ---- Done in one place = done everywhere --------------------------------------------
   //
   // A meeting (🔁) or an appointment (📌) is listed in the day plan and in the

@@ -511,6 +511,11 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .node:hover .todo-add, .node.selected .todo-add { opacity: 1; }
 .todo-list li.moved .todo-text { opacity: 0.45; text-decoration: line-through; }
 .todo-moved { flex: none; width: 1em; text-align: center; font-weight: 700; opacity: 0.6; }
+/* ↗ behind a routine / appointment entry: shown on hover (always on touch screens) */
+.todo-jump { flex: none; padding: 0 2px; font-size: 0.85em; color: var(--muted); cursor: pointer; opacity: 0; }
+.todo-list li:hover .todo-jump { opacity: 0.8; }
+.todo-jump:hover { color: var(--accent); opacity: 1 !important; }
+@media (pointer: coarse) { .todo-jump { opacity: 0.6; } }
 .node.moved > .node-content { opacity: 0.5; }
 .todo-add:hover { color: var(--accent); }
 

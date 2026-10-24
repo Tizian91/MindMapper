@@ -214,6 +214,8 @@
     // ---- routines.js (filling existing plans) ----
     'Added {n} routine / appointment entries': '{n} Routine-/Termineinträge nachgetragen',
     'Removed {n} entries of deleted or moved appointments / routines': '{n} Einträge gelöschter oder verschobener Termine/Routinen entfernt',
+    'Show the note of this entry': 'Die Notiz zu diesem Eintrag zeigen',
+    'The note of this entry does not exist any more': 'Die Notiz zu diesem Eintrag gibt es nicht mehr',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

@@ -240,6 +240,12 @@
         return;
       }
 
+      // ↗ of a routine / appointment entry: go to its note
+      if (t.classList.contains('todo-jump')) {
+        const it = n.items.find((i) => i.id === t.closest('li').dataset.item);
+        if (it && it.routine) MM.routines.openSource(it.routine);
+        return;
+      }
       // to-do checkbox / add item
       if (t.classList.contains('todo-check')) {
         const it = n.items.find((i) => i.id === t.closest('li').dataset.item);
@@ -630,7 +636,7 @@
     const t = document.elementFromPoint(e.clientX, e.clientY) || e.target;
     if (!vp.contains(t)) return;
     if (MM.editing || t.classList.contains('label-editor')) return;
-    if (/todo-check|todo-add|outline-toggle|outline-bullet/.test(t.className)) return;
+    if (/todo-check|todo-jump|todo-add|outline-toggle|outline-bullet/.test(t.className)) return;
     if (t.closest('[class*="handle"]') || t.classList.contains('anchor-dot')) return;
 
     const nodeEl = t.closest('.node');

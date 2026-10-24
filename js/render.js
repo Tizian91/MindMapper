@@ -316,6 +316,12 @@
         const text = el('span', 'todo-text', it.text);
         text.dataset.field = 'item';
         li.append(check, text);
+        // 🔁 / 📌 / 🏖 entry of a plan: ↗ shows the note it came from
+        if (it.routine && !it.moved) {
+          const jump = el('span', 'todo-jump', '↗');
+          jump.title = MM.tr('Show the note of this entry');
+          li.append(jump);
+        }
         list.append(li);
       }
       wrap.append(head, list, el('div', 'todo-add', '+ Add item'));
