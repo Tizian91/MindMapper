@@ -434,6 +434,84 @@
     }
   };
 
+  // ---- History and streak (motivation) ----------------------------------------------
+  //
+  // Counted from what is on the plans: the 🔁 entries of a routine (day / week columns
+  // with their date, check boxes on the routine lists of a week plan). A week is
+  // fulfilled when all its entries are checked. Weeks without entries (no plan, or
+  // all entries deleted - "cancelled") count neither way.
+
+  /** routine id -> Map(Monday 'YYYY-MM-DD' -> { dates: Map(date -> done), boxes, ticked }) */
+  R.historyIndex = function (docs) {
+    const T = MM.templates, idx = new Map();
+    for (const [path, doc] of docs) {
+      const info = T.parsePath(path);
+      const weekEnd = info.kind === 'week' && info.date ? iso(addDays(info.date, 6)) : '';
+      for (const n of Object.values((doc && doc.nodes) || {})) {
+        if (n.type !== 'todo' || (n.tags || []).includes('carried-over')) continue;
+        const isList = n.routineList !== undefined || (n.text === 'Routines this week' && !(n.meta && n.meta.deadline));
+        const date = isList ? weekEnd : (n.meta && n.meta.deadline) || '';
+        const d = parse(date);
+        if (!d) continue;
+        const mon = iso(T.mondayOf(d));
+        for (const it of n.items || []) {
+          if (!it.routine) continue;
+          if (!idx.has(it.routine)) idx.set(it.routine, new Map());
+          const weeks = idx.get(it.routine);
+          if (!weeks.has(mon)) weeks.set(mon, { dates: new Map(), boxes: 0, ticked: 0 });
+          const w = weeks.get(mon);
+          if (isList) {
+            w.boxes++;
+            if (it.done) w.ticked++;
+          } else {
+            w.dates.set(date, w.dates.get(date) || !!it.done); // day and week plan: the same entry once
+          }
+        }
+      }
+    }
+    return idx;
+  };
+
+  /**
+   * The last `count` weeks of a routine (oldest first): state 'done' | 'missed' | 'open'
+   * (this week, not all checked yet) | 'none' (no entries), and the streak: fulfilled
+   * weeks in a row up to now (this week counts once it is fulfilled; weeks without
+   * entries are skipped, a missed one ends it).
+   */
+  R.history = function (id, idx, count = 8) {
+    const weeks = idx.get(id) || new Map();
+    const mon0 = MM.templates.mondayOf(new Date());
+    const stateOf = (i) => {
+      const w = weeks.get(iso(addDays(mon0, -7 * i)));
+      const total = w ? w.boxes + w.dates.size : 0;
+      if (!total) return 'none';
+      const done = w.ticked + [...w.dates.values()].filter(Boolean).length;
+      return done >= total ? 'done' : i === 0 ? 'open' : 'missed';
+    };
+    const list = [];
+    for (let i = count - 1; i >= 0; i--) list.push({ mon: iso(addDays(mon0, -7 * i)), state: stateOf(i) });
+    let streak = 0;
+    for (let i = 0; i < 104; i++) {
+      const s = stateOf(i);
+      if (s === 'missed') break;
+      if (s === 'done') streak++;
+    }
+    return { weeks: list, streak, any: list.some((w) => w.state !== 'none') };
+  };
+
+  const HIST_MARK = { done: '▣', missed: '□', open: '◌', none: '·' };
+
+  /** "▣▣□·▣▣▣◌ · 4 weeks in a row" as HTML (empty while the routine has no entries yet). */
+  R.historyHTML = function (id, idx) {
+    const h = R.history(id, idx);
+    if (!h.any) return '';
+    const esc = MM.render.esc;
+    const title = MM.tr('Last 8 weeks (oldest first): ▣ done · □ missed · ◌ this week, still open · · no entries');
+    const marks = h.weeks.map((w) => `<span class="rt-w rt-${w.state}" title="${esc(MM.tr('Week of {d}', { d: w.mon }))}">${HIST_MARK[w.state]}</span>`).join('');
+    const streak = h.streak ? ` <span class="rt-streak">${esc(h.streak === 1 ? MM.tr('1 week in a row') : MM.tr('{n} weeks in a row', { n: h.streak }))}</span>` : '';
+    return `<span class="rt-hist" title="${esc(title)}">${marks}</span>${streak}`;
+  };
+
   /** Show the note behind a 🔁 / 📌 / 🏖 entry; its map is opened when it is another one. */
   R.openSource = async function (id) {
     const S = MM.state, P = MM.project;

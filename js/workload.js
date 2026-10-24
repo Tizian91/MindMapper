@@ -513,12 +513,15 @@
     if (!sum.routines.length) {
       h += `<p class="hint">${esc(tr('No routines yet. Give a note a rule in the panel ("Repeat"), e.g. in a map "Routines".'))}</p>`;
     }
+    const hidx = R.historyIndex(allDocs()); // done / missed per week, from the plans
     for (const r of sum.routines) {
       if (r.rule.kind === 'off') continue; // listed below
       const next = R.next(r.rule);
       const cat = R.category(r.rule.category);
+      const hist = R.historyHTML(r.id, hidx);
       h += `<div class="load-row ov-routine${r.leisure ? ' leisure' : ''}" data-path="${esc(r.path)}" data-id="${esc(r.id)}">` +
-        `<span class="load-label">🔁 ${esc(r.title)}${cat ? ` <span class="muted">· ${esc(R.categoryTitle(cat))}</span>` : ''}</span>` +
+        `<span class="load-label">🔁 ${esc(r.title)}${cat ? ` <span class="muted">· ${esc(R.categoryTitle(cat))}</span>` : ''}` +
+        `${hist ? `<br>${hist}` : ''}</span>` +
         `<span class="muted">${esc(R.label(r.rule, r.minutes))}` +
         `${r.minutes ? '' : esc(tr(' – no duration (Estimate) set'))}${r.leisure ? esc(tr(' – leisure, not counted')) : ''}</span>` +
         `<span class="load-val">${R.isWeekly(r.rule) ? tr('weekly') : next ? esc(fmtDate(iso(next))) : '–'}</span>` +

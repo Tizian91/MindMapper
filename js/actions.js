@@ -543,4 +543,5 @@
   A.open = () => MM.storage.open();
   A.save = () => MM.storage.save(false);
   A.saveAs = () => MM.storage.save(true);
+  A.exportPdf = () => MM.mapPrint.open();
 })(window.MM);

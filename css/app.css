@@ -284,6 +284,13 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .cat-row .cat-emoji { flex: none; width: 2.4em; padding: 2px 0; text-align: center; }
 .cat-row label.check { flex: none; white-space: nowrap; }
 .ov-routine.leisure { opacity: 0.6; }
+/* routine history: ▣ done, □ missed, ◌ this week open, · no entries */
+.rt-hist { letter-spacing: 2px; font-size: 1.05em; white-space: nowrap; cursor: help; }
+.rt-done { color: #2f9e44; }
+.rt-missed { color: #c92a2a; }
+.rt-open { color: var(--accent, #2b6cde); }
+.rt-none { color: var(--muted); }
+.rt-streak { font-size: 0.85em; font-weight: 600; color: #2f9e44; white-space: nowrap; }
 /* pCloud folder browser (cloud version) */
 .pcloud-dialog { width: min(460px, 92vw); }
 .pc-path { font-weight: 600; margin: 8px 0 6px; word-break: break-all; }
@@ -1307,7 +1314,7 @@ button.dy-cal-day.current { background: var(--accent); color: #fff; }
 @media print {
   @page { margin: 12mm; }
   html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
-  body > *:not(#diary-print) { display: none !important; }
+  body:not(.print-map) > *:not(#diary-print) { display: none !important; }
   #diary-print { display: block !important; }
   #diary-print .dy-page { max-width: none; min-height: 0; margin: 0; border-radius: 0; box-shadow: none;
     break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
@@ -1330,3 +1337,16 @@ button.dy-cal-day.current { background: var(--accent); color: #fff; }
 #diary-print.dy-measure { display: block; position: absolute; left: -10000px; top: 0; visibility: hidden; }
 #diary-print .dy-page { margin: 0; }
 @media print { @page { size: A4; margin: 12mm; } }
+
+/* map as PDF / print (export.js): a scaled copy of the drawn map on one page */
+#map-print { display: none; }
+#map-print .mp-page { position: relative; overflow: hidden; }
+#map-print .mp-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+#map-print .mp-world > div { position: absolute; left: 0; top: 0; }
+#map-print .mp-title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3mm;
+  font-family: system-ui, sans-serif; font-size: 12px; color: #333; }
+.mp-line { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+@media print {
+  body.print-map > *:not(#map-print) { display: none !important; }
+  body.print-map #map-print { display: block !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

@@ -19,6 +19,7 @@ window.MM = window.MM || {};
       tbSaveTitle: 'Speichern (Strg+S)',
       tbSaveAs: 'Speichern unter',
       tbSaveAsTitle: 'Speichern unter… (Strg+Umschalt+S)',
+      tbPdfTitle: 'Map als PDF / drucken (Strg+P)',
       tbProject: 'Projekt',
       tbProjectTitle: 'Projektordner mit mehreren Maps',
       tbPanel: 'Panel',
@@ -68,7 +69,7 @@ window.MM = window.MM || {};
       st_counts: '{nodes} Notizen · {edges} Verbindungen',
       st_selected: '{n} ausgewählt',
       st_filterShown: 'Filter: {n} sichtbar',
-      helpOpenHandbook: 'Handbuch öffnen (HANDBUCH.md)',
+      helpOpenHandbook: 'Handbuch öffnen',
       helpLoadExample: 'Beispiel-Map laden',
 
       // Filterbar (dynamic part)
@@ -291,6 +292,7 @@ window.MM = window.MM || {};
       sc_clipboard: 'Kopieren / Einfügen / Duplizieren',
       sc_arrows: 'Verschieben (Umschalt = 10px)',
       sc_fit: 'Ins Fenster einpassen',
+      sc_pdf: 'Map als PDF / drucken',
 
       // Shortcut keys (left column)
       key_rightClick: 'Rechtsklick',
@@ -310,6 +312,7 @@ window.MM = window.MM || {};
       key_clipboard: 'Strg+C / V / D',
       key_arrows: 'Pfeiltasten',
       key_fit: 'Umschalt+1',
+      key_pdf: 'Strg+P',
 
       // Panel extras
       appearance: 'Darstellung',
@@ -356,6 +359,7 @@ window.MM = window.MM || {};
       tbSaveTitle: 'Save (Ctrl+S)',
       tbSaveAs: 'Save as',
       tbSaveAsTitle: 'Save as… (Ctrl+Shift+S)',
+      tbPdfTitle: 'Map as PDF / print (Ctrl+P)',
       tbProject: 'Project',
       tbProjectTitle: 'Project folder with several maps',
       tbPanel: 'Panel',
@@ -405,7 +409,7 @@ window.MM = window.MM || {};
       st_counts: '{nodes} notes · {edges} connections',
       st_selected: '{n} selected',
       st_filterShown: 'filter: {n} shown',
-      helpOpenHandbook: 'Open handbook (HANDBUCH.md, German)',
+      helpOpenHandbook: 'Open handbook (German)',
       helpLoadExample: 'Load example map',
 
       // Filterbar (dynamic part)
@@ -628,6 +632,7 @@ window.MM = window.MM || {};
       sc_clipboard: 'Copy / paste / duplicate',
       sc_arrows: 'Nudge (Shift = 10px)',
       sc_fit: 'Fit to window',
+      sc_pdf: 'Map as PDF / print',
 
       // Shortcut keys (left column)
       key_rightClick: 'Right-click',
@@ -647,6 +652,7 @@ window.MM = window.MM || {};
       key_clipboard: 'Ctrl+C / V / D',
       key_arrows: 'Arrows',
       key_fit: 'Shift+1',
+      key_pdf: 'Ctrl+P',
 
       // Panel extras
       appearance: 'Appearance',
@@ -757,6 +763,7 @@ window.MM = window.MM || {};
       open: { text: MM.t('tbOpen'), title: MM.t('tbOpenTitle'), aria: MM.t('tbOpenTitle') },
       save: { text: MM.t('tbSave'), title: MM.t('tbSaveTitle'), aria: MM.t('tbSaveTitle') },
       saveAs: { text: MM.t('tbSaveAs'), title: MM.t('tbSaveAsTitle'), aria: MM.t('tbSaveAsTitle') },
+      exportPdf: { title: MM.t('tbPdfTitle'), aria: MM.t('tbPdfTitle') },
       toggleProject: { text: MM.t('tbProject'), title: MM.t('tbProjectTitle'), aria: MM.t('tbProjectTitle') },
       togglePanel: { text: MM.t('tbPanel'), title: MM.t('tbPanelTitle'), aria: MM.t('tbPanelAria') },
       overview: { text: MM.t('tbOverview'), title: MM.t('tbOverviewTitle'), aria: MM.t('tbOverviewTitle') },

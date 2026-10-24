@@ -253,6 +253,25 @@
     'Delete the category "{name}"?\n\nIts routines stay and get no category.': 'Kategorie „{name}“ löschen?\n\nIhre Routinen bleiben und haben dann keine Kategorie.',
     'Leisure routine: about {h} per week, not taken off your capacity.': 'Freizeit-Routine: etwa {h} pro Woche, wird nicht von der Kapazität abgezogen.',
     ' – leisure, not counted': ' – Freizeit, zählt nicht',
+    'Last 8 weeks (oldest first): ▣ done · □ missed · ◌ this week, still open · · no entries':
+      'Letzte 8 Wochen (älteste zuerst): ▣ erledigt · □ verpasst · ◌ diese Woche, noch offen · · keine Einträge',
+    'Week of {d}': 'Woche ab {d}',
+    // ---- export.js (map as PDF / print) ----
+    'There is nothing to print.': 'Es gibt nichts zu drucken.',
+    'Map as PDF / print': 'Map als PDF / drucken',
+    'What': 'Was',
+    'Whole map': 'Ganze Map',
+    'Visible area': 'Sichtbarer Ausschnitt',
+    'Selected notes': 'Markierte Notes',
+    'Paper': 'Papier',
+    'Automatic': 'Automatisch',
+    'Landscape': 'Querformat',
+    'Portrait': 'Hochformat',
+    'Name of the map and date on top': 'Name der Map und Datum oben',
+    'Everything is scaled onto one page. For a PDF choose "Save as PDF" as the printer.':
+      'Alles wird auf eine Seite verkleinert. Für ein PDF als Drucker „Als PDF speichern“ wählen.',
+    '1 week in a row': '1 Woche in Folge',
+    '{n} weeks in a row': '{n} Wochen in Folge',
     // ---- cloud-pcloud.js / project.js (pCloud, cloud version only) ----
     'pCloud is not set up yet (the app has no pCloud client ID).': 'pCloud ist noch nicht eingerichtet (der App fehlt die pCloud-Client-ID).',
     'not connected to pCloud': 'nicht mit pCloud verbunden',

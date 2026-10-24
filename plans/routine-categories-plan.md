@@ -40,7 +40,7 @@ Routinen sollen auch **motivieren**, nicht nur Zeit von der Kapazität abziehen.
 - `R.minutesOn`, `workload.js` (Kapazität, Konflikte, Liste), `R.addToPlan` (Zettel), Aufräumen (Zettel haben keine Deadline → Datum = Sonntag der Woche wie heute bei „Routines this week“), `doneState` / Mit-Abhaken (Zettel ohne Deadline → kein Abgleich mit Tagesplänen, wie heute).
 - Bestehende Liste „Routines this week“ in alten Wochenplänen weiter erkennen.
 
-## Etappe B – Serie und Verlauf (klein, danach bewerten)
+## Etappe B – Serie und Verlauf (klein, danach bewerten) – umgesetzt 24.10.2026, Test im Browser ausstehend
 
 - Daten gibt es schon: abgehakte / offene 🔁-Einträge mit Datum in den Plänen. Gezählt wird pro Routine und Woche (Einträge aus Tages- und Wochenplan desselben Datums nur einmal).
 - Woche **erfüllt**: alle Termine dieser Woche abgehakt (fester Tag) bzw. mindestens x Kästchen (x-mal pro Woche) bzw. das Budget-Kästchen.

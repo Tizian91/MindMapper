@@ -309,6 +309,9 @@
       : r.kind === 'times'
         ? esc(MM.tr('Duration of each time = Estimate above. Takes its time off the capacity; week plans get a check box per time.'))
         : t(r.kind === 'budget' ? 'repeatBudgetHint' : 'repeatDurationHint')}</p>`;
+      // how often it was done lately (from the plans; see routines.js history)
+      const hist = r.kind !== 'off' && MM.load.loaded() ? R.historyHTML(n.id, R.historyIndex(MM.load.docs())) : '';
+      if (hist) h += `<div class="rp-line rp-history">${hist}</div>`;
     }
     return h + '</div>';
   }
@@ -364,7 +367,7 @@
     ['key_dragAnchor', 'sc_dragAnchor'], ['Tab', 'sc_tab'], ['Enter / F2', 'sc_enterF2'],
     ['key_shiftEnter', 'sc_shiftEnter'], ['key_outline', 'sc_outline'], ['key_spaceDrag', 'sc_spaceDrag'],
     ['key_altDrag', 'sc_altDrag'], ['key_ctrlDrag', 'sc_ctrlDrag'], ['key_shiftResize', 'sc_shiftResize'], ['key_undoRedo', 'sc_undoRedo'],
-    ['key_clipboard', 'sc_clipboard'], ['key_arrows', 'sc_arrows'], ['key_fit', 'sc_fit'],
+    ['key_clipboard', 'sc_clipboard'], ['key_arrows', 'sc_arrows'], ['key_fit', 'sc_fit'], ['key_pdf', 'sc_pdf'],
   ];
 
   function canvasPanel() {

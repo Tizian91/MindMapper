@@ -10,6 +10,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 
 - **Starten:** `index.html` doppelklicken. Empfohlen sind **Edge** oder **Chrome** – nur dort kann MindMapper direkt in Dateien und Ordner schreiben.
 - **Einzelne Map:** **Open** / **Save** / **Save as** öffnen und speichern eine Datei `*.mindmap.json`.
+- **Als PDF / drucken:** Toolbar **PDF** oder `Ctrl+P`. Im Dialog wählst du **ganze Map**, **sichtbaren Ausschnitt** oder **markierte Notes**, Papier **A4 / A3** und **Quer-, Hochformat oder automatisch**; auf Wunsch stehen Name der Map und Datum oben. Alles wird **auf eine Seite** verkleinert. Für ein PDF im Druckdialog als Drucker „Als PDF speichern“ wählen. Gedruckt wird immer hell (auch im Darkmode); ein aktiver Filter „ausblenden“ gilt auch für den Druck.
 - **Projektordner (empfohlen):** In der linken Seitenleiste **Project** → **Open folder…** einen Ordner wählen. Alle Maps darin erscheinen als Liste, Unterordner (z. B. `Weeks/`, `Months/`, `Days/`) werden angezeigt.
   - Maps aus dem Projektordner werden **automatisch gespeichert** (Einstellung „Auto-save project maps into their file“ im Panel rechts, wenn nichts markiert ist).
   - Nach einem Neustart fragt der Browser einmal nach der Erlaubnis: **Reconnect**.
@@ -58,7 +59,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 | **Code** | Text in Festbreitenschrift |
 | **Group** | Rahmen – Notes darin werden mitbewegt |
 | **Image** | Bild (einfügen per Drag & Drop oder `Ctrl+V`); auch als **Overlay** über allem |
-| **File** | Datennote: eine beliebige Datei (siehe Kapitel 13) |
+| **File** | Datennote: eine beliebige Datei (siehe Kapitel 16) |
 
 Den Typ änderst du per Rechtsklick → **Change type** oder im Panel.
 
@@ -76,20 +77,82 @@ Den Typ änderst du per Rechtsklick → **Change type** oder im Panel.
 - **Link** im Panel: eine Map des Projekts, eine Webadresse oder ein **Ordner / eine Datei auf dem PC** (`C:\Projekte\Abrechnung`, `\\server\share\Team`; „Als Pfad kopieren“ aus dem Explorer funktioniert auch). Der kleine **↗**-Knopf an der Note (oder `Ctrl+Klick`) öffnet ihn.
   - Ein Ordner öffnet sich als Dateiliste in einem neuen Browser-Tab. Den Windows-Explorer selbst darf der Browser nicht starten – dafür kopiert MindMapper den Pfad in die Zwischenablage: `Win+E`, `Ctrl+L`, `Ctrl+V`.
 
-## 5. Filter
+## 5. Die Task: Projektaufgabe, Termin oder Routine
+
+Fast alles in MindMapper dreht sich um Aufgaben: Auslastung, Pläne, Overview, Routinen. **Was** eine Aufgabe ist – Projektaufgabe, Termin oder Routine – entscheidet nicht ihr Typ, sondern welche Felder du im Panel unter **Details** setzt. Der Typ **Task** ist dafür gemacht (Chips immer sichtbar, Klickmenü an jedem Chip, Fortschritt, Untertasks), die Felder wirken aber genauso an einer einfachen Note oder einer To-do-Liste.
+
+**Die Grundfrage – drei Fragen, eine Antwort:**
+- Kommt es **regelmäßig** wieder (jeden Dienstag, 5 h pro Woche)? → **Routine** (*Repeat*)
+- Findet es an einem **bestimmten Tag** statt (Workshop am 12.11., 9:00)? → **Termin** (*Scheduled*)
+- Muss es **bis zu einem Tag fertig** sein (Bericht bis Freitag)? → **Projektaufgabe** (*Deadline*)
+- Dazu fast immer: **wie lange** dauert es? → *Estimate*. Ohne Schätzung kann MindMapper keine Zeit einplanen.
+
+### Was wird aus meiner Note?
+
+Es gilt die **erste** Zeile, die passt:
+
+| Gesetzt im Panel | Die Note ist … | Wirkung auf deine Zeit | Wo sie auftaucht |
+|---|---|---|---|
+| *Repeat* wöchentlich / monatlich | 🔁 **Routine** mit festen Tagen | zieht ihre *Estimate* an jedem ihrer Tage von der Kapazität ab | Tages- und Wochenplan (Spalte des Tages), Workload → *Routines* |
+| *Repeat* *Time budget per week* / *Several times per week* | 🔁 **Routine** ohne feste Tage | der Wochenanteil wird auf die Arbeitstage der Woche verteilt | Wochenplan: Liste ihrer Kategorie (bzw. *Routines this week*) |
+| *Repeat* in einer **Freizeit-Kategorie** | 🔁 **Freizeit-Routine** | **keine** – nur zum Abhaken und Dranbleiben | wie oben; Workload-Seite ausgegraut |
+| *Repeat* *Day(s) off / vacation* | 🏖 **Urlaub / frei** | Tag ohne Kapazität (oder weniger, wenn *Estimate* gesetzt) | 🏖-Eintrag im Plan |
+| *Scheduled* (Termin, optional Uhrzeit) | 📌 **Termin** | blockt die *Estimate* an genau diesem Tag – auch abgehakt | Tages- und Wochenplan, Overview, Workload (`−2 h 📌`), Konfliktmeldung |
+| *Deadline* + *Estimate* | **Projektaufgabe** | der Restaufwand wird auf die Tage bis zur Deadline verteilt | Overview, Matrix, Workload, Puffer, Statusleiste |
+| nur *Estimate* | Aufwand **ohne Frist** | wird nicht verteilt, nur gemeldet („… h ohne Deadline“) | Hinweis auf der Workload-Seite; Overview (bei Tasks) |
+| nur *Deadline* | Frist **ohne Aufwand** | zählt nicht – bei Tasks (und Notes mit Status) Hinweis „without estimate“ | Overview |
+| nichts davon | einfache Aufgabe / Notiz | keine | Overview, wenn es eine Task ist oder Status / Priorität hat |
+
+**Gut zu wissen:**
+- **Repeat schlägt alles.** Eine Note mit Regel ist immer eine Routine; Deadline oder Termin daneben spielen keine Rolle. Routinen stehen nicht in den Aufgabenlisten des Overview, sondern auf der Workload-Seite unter *Routines* (mit Verlauf ▣□).
+- **Termin oder Deadline – nie beides.** Wer eins setzt, löscht das andere (Kapitel 4).
+- **Erledigt** (*Done*, 100 %) oder **verschoben** (→ andere Map) zählt nicht mehr als Arbeit. Ausnahme **Termin**: Abgehakt bleibt seine Zeit an dem Tag reserviert – er hat ja stattgefunden. Vergangene Tage zählen nie.
+- **Fortschritt** verringert den Restaufwand: 10 h geschätzt, 40 % erledigt → 6 h werden noch verteilt.
+- **To-do-Listen** zählen nur mit Schätzung, anteilig nach offenen Einträgen (4 von 8 offen → halbe Schätzung).
+- **Haupt- und Untertasks** teilen sich eine Schätzung (Kapitel 12); eine große Aufgabe bekommt bei Bedarf ihre eigene Map (Kapitel 10).
+
+### Der Weg einer Task
+
+1. **Festhalten:** Rechtsklick → **Insert → Task**, Stichpunkte notieren. Noch ohne Felder ist sie nur eine offene Aufgabe im Overview.
+2. **Planen:** *Estimate* und *Deadline* setzen (Klick auf die Chips). Jetzt rechnet MindMapper: Die Statusleiste zeigt, wie sich die Woche füllt, das Panel unter **Workload**, wie viel Puffer bis zur Deadline bleibt.
+3. **Aufteilen:** Große Aufgaben per Pfeil in Untertasks zerlegen – der Fortschritt der Haupttask rechnet sich dann selbst (∑).
+4. **Termin daraus machen:** Wird aus „Workshop vorbereiten bis Freitag“ ein fester Block („Workshop, Do 9:00, 3 h“), *Scheduled* setzen: Die Deadline verschwindet, die Zeit ist an dem Tag geblockt, und 📌 steht im Tages- und Wochenplan. Den 📌 im Plan abhaken setzt die Task auf *Done* – und umgekehrt.
+5. **Abschließen:** Status *Done* oder 100 %. Unerledigtes eines Tages- / Wochenplans wandert beim nächsten Plan mit (Carry-over, Kapitel 8) oder per **Move to map** (Kapitel 9).
+6. **Wiederkehrend?** Wird etwas zur Gewohnheit (jeden Dienstag), *Repeat* setzen – ab jetzt ist es eine Routine.
+
+### Beispiel: Zeitfresser sichtbar machen
+
+Oft bleibt für Projekte weniger Zeit als gedacht – weil viel Zeit in Kleinkram fließt, der nirgends steht. Routinen machen diese Zeit sichtbar:
+
+1. Lege eine Map **Routinen** an und trage ehrlich ein, was regelmäßig Zeit kostet – jede Sache als Note mit *Repeat* und *Estimate*, z. B.:
+   - „E-Mails“ – *Weekly*, Mo–Fr, `30m`
+   - „Teammeeting“ – *Weekly*, Di 10:00, `1h 30m`
+   - „Studentenbetreuung“ – *Time budget per week*, `5h`
+   - „Verwaltung / Formulare“ – *Time budget per week*, `2h`
+2. **Overview → Workload:** Unter *Routines* steht die Summe, hier `11 h` pro Woche (2,5 + 1,5 + 5 + 2). Bei 40 h Kapazität bleiben für Projekte nur noch 29 h. Die Tageszeilen zeigen rechts die wirklich verfügbare Zeit – am Dienstag ist es am engsten.
+3. Im **Panel** jeder Routine steht, was sie pro Woche kostet („Routine: nimmt etwa 2,5 h pro Woche von deiner Kapazität.“) – die großen Brocken fallen sofort auf.
+4. **Ausprobieren:** Stell eine Schätzung testweise um (E-Mails `15m` statt `30m`). Eine Routine ändert nicht deine Arbeit, sondern die **verfügbare** Zeit: In der Statusleiste wächst die Wochenzeit hinter dem Schrägstrich um gut 1 h (z. B. `Week 26 h / 29 h` → `/ 30,3 h`), und sie meldet den größeren Puffer bis zur knappsten Deadline (`smallest buffer +2 h → +4 h`). So siehst du, wo sich Einsparen lohnt – und mit `Ctrl+Z` ist alles wieder wie vorher.
+5. **Dranbleiben:** Die Routinen stehen in den Tages- und Wochenplänen zum Abhaken. Ihr **Verlauf** (▣ erledigt, □ verpasst) zeigt nach ein paar Wochen, was wirklich passiert und was nur im Plan steht.
+6. **Einmalige Zeitfresser** (Klausuraufsicht, Gutachten-Sitzung) als **Termin** mit Schätzung eintragen – dann stimmt die Kapazität auch in Ausnahmewochen, und MindMapper warnt, wenn ein Termin nicht mehr in den Tag passt.
+
+### Beispiel: Freizeit planen, ohne die Arbeitszeit zu belasten
+
+„Schlagzeug: Rhythmus-Übungen“ als *Several times per week*, **3×**, `30m`, Kategorie **Schlagzeug** (*Freizeit*): Der Wochenplan bekommt drei Kästchen auf dem Zettel „🥁 Schlagzeug“, von der Kapazität geht nichts ab, und die Serie („4 Wochen in Folge“) motiviert. Mehr dazu in Kapitel 14.
+
+## 6. Filter
 
 Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Status, Priorität, Deadline, Typ.
 - **Dim** blendet nicht passende Notes ab, **Hide** versteckt sie.
 - **Keep sub-notes** lässt Notes sichtbar, die per Pfeil unter einem Treffer hängen oder in einer passenden Gruppe liegen.
 
-## 6. Projekt: mehrere Maps
+## 7. Projekt: mehrere Maps
 
-- **+ New map** legt eine Map an – leer oder als Vorlage (siehe Kapitel 7), in einem beliebigen (Unter-)Ordner.
+- **+ New map** legt eine Map an – leer oder als Vorlage (siehe Kapitel 8), in einem beliebigen (Unter-)Ordner.
 - **Rechtsklick auf eine Map** in der Seitenleiste (oder der **⋯**-Knopf, der beim Darüberfahren erscheint): **Open**, **Rename or move…**, **Move to folder**, **Delete map…**. Beim Umbenennen werden Links in allen anderen Maps automatisch angepasst.
 - **Links zwischen Maps:** Eine Note mit Link auf eine Map öffnet diese per ↗. Existiert die Map noch nicht, bietet MindMapper an, sie anzulegen.
 - **← Back** in der Seitenleiste springt zur vorher geöffneten Map zurück.
 
-## 7. Tages-, Wochen- und Monatspläne
+## 8. Tages-, Wochen- und Monatspläne
 
 - Vorlagen im Dialog **New map**: **Day plan** (Morning / Afternoon / Evening), **Week plan** (eine Spalte pro Tag), **Month plan** (eine Spalte pro Woche). Jede mit „Goals“ links und „Notes“ rechts.
 - Die Pläne sind verknüpft: Monat → Wochen → Tage (↗ an Spalten bzw. Überschrift).
@@ -101,8 +164,8 @@ Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Sta
 - **Abhaken im Tages- oder Wochenplan:** Ein 🔁- oder 📌-Eintrag steht im Tagesplan und im Wochenplan. Wird er in einem davon abgehakt (oder wieder geöffnet), passiert das im anderen Plan desselben Datums automatisch mit. Bei einem 📌-Termin gilt das auch für die Original-Note, in beide Richtungen: Wird die Note auf *Done* gesetzt, sind ihre Einträge in Tages- und Wochenplan abgehakt. **Strg+Z** nimmt das Abhaken überall zurück. Die Regel-Note einer Routine bleibt offen, und ein auf einen anderen Tag verschobener Termin wird vom Eintrag des alten Tages nicht berührt. Voraussetzung: Der Projektordner ist verbunden.
 - **Carry-over:** Beim Anlegen des nächsten Tages / der nächsten Woche / des nächsten Monats werden **unerledigte Einträge** übernommen und im alten Plan als übertragen markiert (→).
   - Offene Einträge von To-do-Listen landen gesammelt in der Liste **Carried over**; deren Deadline ist der erste Tag des neuen Plans, so bleiben sie in der Overview.
-  - Unerledigte **Tasks und Notes mit Status** kommen als Ganzes mit, so wie bei **Move to map** (Kapitel 8): mit allen Untertasks, ihrer Gruppe und der Anordnung.
-  - Übertragen werden nur To-do-Listen, die als Aufgabe zählen (siehe Kapitel 10) – die Spalten der Pläne gehören dazu, eine reine Abhakliste (z. B. Einkaufszettel ohne Deadline) bleibt im alten Plan.
+  - Unerledigte **Tasks und Notes mit Status** kommen als Ganzes mit, so wie bei **Move to map** (Kapitel 9): mit allen Untertasks, ihrer Gruppe und der Anordnung.
+  - Übertragen werden nur To-do-Listen, die als Aufgabe zählen (siehe Kapitel 11) – die Spalten der Pläne gehören dazu, eine reine Abhakliste (z. B. Einkaufszettel ohne Deadline) bleibt im alten Plan.
   - Legst du einen Plan **im Voraus** an (z. B. nächste Woche), wird noch nichts übertragen. Sobald der Zeitraum begonnen hat, fragt MindMapper beim Öffnen einmal nach.
 
 ### Was passiert automatisch?
@@ -112,14 +175,14 @@ Alles, was MindMapper in Tages- und Wochenpläne von selbst einträgt oder ände
 | Wann | Was | Wohin |
 |---|---|---|
 | Plan wird angelegt | 🔁 Routinen, 📌 Termine, 🏖 Urlaub dieses Tages / dieser Woche | Tagesspalten (Woche) bzw. *Morning / Afternoon / Evening* (Tag) |
-| Wochenplan wird angelegt | Routinen ohne feste Tage (Wochenbudgets, „x-mal pro Woche“) | eine Liste je Routine-Kategorie (ohne Kategorie: **Routines this week**) links neben *Goals*, siehe Kapitel 13 |
+| Wochenplan wird angelegt | Routinen ohne feste Tage (Wochenbudgets, „x-mal pro Woche“) | eine Liste je Routine-Kategorie (ohne Kategorie: **Routines this week**) links neben *Goals*, siehe Kapitel 14 |
 | Plan wird angelegt, sein Zeitraum hat schon begonnen (sonst: beim ersten Öffnen danach, mit Nachfrage) | Unerledigtes aus dem vorigen Tag / der vorigen Woche / dem vorigen Monat | Liste **Carried over** und die übertragenen Notes; im alten Plan als übertragen markiert (→) |
 | Plan wird geöffnet | neue 🔁 / 📌 / 🏖 ab heute dazu; offene Einträge gelöschter oder verschobener Termine / Routinen weg | wie beim Anlegen |
 | Abhaken (oder wieder öffnen) irgendwo | derselbe 🔁 / 📌-Eintrag im Tages- und Wochenplan und die Termin-Note | überall mit (Strg+Z nimmt es überall zurück) |
 
 **Nie automatisch:** In **Goals** und **Notes** trägt MindMapper nichts ein. Unerledigte Goals werden auch nicht übertragen. Goals ist eine einfache Abhakliste, außer du gibst ihr selbst eine Deadline, Schätzung oder Priorität. Vergangene Tage und abgehakte Einträge werden beim Öffnen nie verändert.
 
-## 8. Notes in eine andere Map verschieben
+## 9. Notes in eine andere Map verschieben
 
 - Rechtsklick auf eine oder mehrere Notes → **Move to map** → **Next day / Next week / Next month / Today / This week** oder **Other map…**.
 - **Other map…** zeigt die Maps als Ordnerbaum (Ordner auf- und zuklappbar, Suchfeld = flache Trefferliste). **New map…** legt eine neue Ziel-Map an: Name und Ordner eingeben. Heißt sie wie ein Tag, eine Woche oder ein Monat (`2026-10-24`, `2026-W44`, `2026-11`), bekommt sie die passende Vorlage.
@@ -131,18 +194,18 @@ Alles, was MindMapper in Tages- und Wochenpläne von selbst einträgt oder ände
 - Die Kopie landet in der Ziel-Map, das Original bleibt ausgegraut mit dem Hinweis **→ 2026-W44** stehen (Klick öffnet die Ziel-Map). Gezählt wird nur noch die Kopie.
 - **Undo move** (Rechtsklick auf ein Original) nimmt den ganzen Umzug zurück, auch die mitgekommenen Notes.
 
-## 9. Map aus einer Note ableiten
+## 10. Map aus einer Note ableiten
 
 - Rechtsklick auf eine Note → **Create map from note…**: Es entsteht eine neue Map mit dem Titel der Note (Stichpunkte / Einträge werden als Startpunkt übernommen). Die Note verweist danach auf die Map (**Open derived map ↗**).
 - Typischer Einsatz: Eine große Aufgabe bekommt ihre eigene Map für die Detailplanung.
 
-## 10. Overview: alle Aufgaben aller Maps
+## 11. Overview: alle Aufgaben aller Maps
 
 Toolbar **Overview** sammelt die Aufgaben **aller Maps** des Projektordners:
 - **To-do-Listen** sind normalerweise reine Abhaklisten (wie ein Einkaufszettel) und erscheinen hier nicht. Sie zählen erst als Aufgabe, wenn sie eine **Schätzung**, eine **Deadline**, einen **Termin** oder eine **Priorität / Eisenhower-Einordnung** haben. Die Spalten der Tages-, Wochen- und Monatspläne haben ihre Deadline automatisch.
 - **By deadline:** gruppiert nach *Overdue*, *Today*, *Tomorrow*, *Next 7 days*, *Later*, *No deadline* – mit Zeitsummen und dem durchschnittlichen Fortschritt der Gruppe (**Ø**; auch bei *By task*).
 - **By task:** Haupttasks mit ihren Untertasks als aufklappbarer Baum.
-- **Workload:** Auslastung (siehe Kapitel 12).
+- **Workload:** Auslastung (siehe Kapitel 13).
 - **Matrix** (nur im Eisenhower-Modus): die vier Quadranten mit den Aufgaben als Kreisen.
   - **Kreisfläche** = geschätzter Aufwand (gestrichelt = keine Schätzung), **Innenkreis** = Fortschritt. Große Kreise stehen vorne – aufgeblähte Aufgaben fallen so auf. Die Kopfzeile zeigt Anzahl und Stunden je Quadrant.
   - **Oranger Rand:** Deadline in höchstens 3 Tagen; **roter Rand:** Deadline überschritten; **„!“:** Puffer bis zur Deadline zu knapp (rot = negativ, orange = unter 10 %).
@@ -153,7 +216,7 @@ Toolbar **Overview** sammelt die Aufgaben **aller Maps** des Projektordners:
 - Suche, Typ-, Status- und Prioritätsfilter, **Hide done**. Klick auf eine Zeile öffnet die Map und markiert die Note; **↗ map** öffnet eine abgeleitete Map.
 - **Fenster verschieben und skalieren:** an der Kopfzeile ziehen = verschieben; an den Rändern oder der Ecke unten rechts ziehen = Größe ändern. Doppelklick auf die Kopfzeile stellt Standardposition und -größe wieder her. Position und Größe werden im Browser gespeichert.
 
-## 11. Haupt- und Untertasks
+## 12. Haupt- und Untertasks
 
 - Ein **Pfeil von Task A auf Task B** macht B zur Untertask von A (beliebig tief).
 - Die Tasks einer **aus A abgeleiteten Map** sind ebenfalls Untertasks von A.
@@ -161,7 +224,7 @@ Toolbar **Overview** sammelt die Aufgaben **aller Maps** des Projektordners:
 - **Zeitaufwand:** Die Schätzung der Haupttask ist der **Gesamtaufwand**, die Untertasks teilen ihn auf. Was noch nicht aufgeteilt ist (z. B. 10 h geschätzt, Untertasks zusammen 6 h → 4 h), wird bei der Haupttask mit ihrer Deadline eingeplant. Ergeben die Untertasks mehr als die Haupttask, zählen die Untertasks (Hinweis „sub-tasks 12h > 10h estimated“). Nichts wird doppelt gezählt.
 - Eine Task mit Untertasks zeigt ihren Fortschritt **berechnet**, erkennbar am **∑**: nach Stunden gewichtet (Untertasks ohne Schätzung zählen wie der Durchschnitt der anderen), der noch nicht aufgeteilte Rest zählt als nicht begonnen, *Done* = 100 %. Dieser Wert ist nicht von Hand verstellbar.
 
-## 12. Auslastung und Puffer
+## 13. Auslastung und Puffer
 
 MindMapper berechnet aus **Schätzung**, **Fortschritt** und **Deadline**, wie viele Stunden pro Tag und Woche verplant sind:
 - Der **Restaufwand** (Schätzung × (1 − Fortschritt)) wird auf die Planungstage (Tage mit Kapazität) von heute bis zur Deadline verteilt, gewichtet nach den Stunden des Tages. Überfälliges zählt auf heute.
@@ -178,7 +241,7 @@ MindMapper berechnet aus **Schätzung**, **Fortschritt** und **Deadline**, wie v
 - Die Kapazität wird **pro Projektordner** in `mindmapper.settings.json` gespeichert. So kann ein Ordner die Freizeit planen (z. B. 3 h werktags, 8 h am Wochenende) und ein anderer Ordner die Arbeitszeit (8 h werktags, 0 h am Wochenende). Ohne geöffneten Ordner gilt die Einstellung des Browsers.
 - Arbeit wird auf alle Tage mit Kapazität bis zur Deadline verteilt, gewichtet nach den Stunden des Tages.
 
-## 13. Routinen und Urlaub
+## 14. Routinen und Urlaub
 
 Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammelt in einer Map „Routines“. Im Panel unter **Repeat**:
 
@@ -204,13 +267,19 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **Zettel im Wochenplan:** Routinen ohne feste Tage (*Time budget per week*, *Several times per week*) stehen im Wochenplan auf einer Liste je Kategorie, z. B. „🥁 Bandprobe“ mit „Rhythmus (30m)“ ×3 – ein Kästchen pro Mal. Routinen ohne Kategorie stehen in **Routines this week**. Routinen mit festen Tagen bleiben in der Tagesspalte.
 - Ändert sich etwas (Anzahl pro Woche, andere Kategorie, Kategorie umbenannt oder gelöscht), passt sich der Wochenplan beim nächsten **Öffnen** an (ab heute): fehlende Kästchen kommen dazu, überzählige **offene** verschwinden, abgehakte bleiben.
 
-## 14. Views und Auto-Layout
+### Verlauf und Serie
+
+- Im Panel einer Routine (unter *Repeat*) und auf der Workload-Seite steht, wie es in den **letzten 8 Wochen** lief (älteste links): **▣** erledigt · **□** verpasst · **◌** diese Woche, noch offen · **·** keine Einträge. Dazu die **Serie**, z. B. „4 Wochen in Folge“.
+- Gezählt wird, was in den Plänen abgehakt ist: Eine Woche ist **erledigt**, wenn alle ihre Einträge dieser Routine abgehakt sind (bei „3× pro Woche“ alle drei Kästchen).
+- **Gut zu wissen:** Wochen ohne Wochen- bzw. Tagesplan zählen nicht – weder als erledigt noch als verpasst (sie unterbrechen auch keine Serie). Ein **gelöschter** Eintrag („fällt diese Woche aus“) zählt nicht als verpasst. Die laufende Woche zählt erst, wenn sie erledigt ist.
+
+## 15. Views und Auto-Layout
 
 - Toolbar **Views** (oder Rechtsklick → **Show as**) zeigt die Map automatisch als **Tree**, **Radial mind map**, **Bubble map** oder **Treemap**. Grundlage sind die Pfeile (A → B: B ist Kind von A) und Gruppen.
   - Größe = geschätzte Zeit, Farbe = Status. Klick auf ein Element springt zur Note.
 - **Auto-layout:** Rechtsklick auf eine Note → **Auto-layout sub-notes**, auf die Fläche → **Auto-layout whole map**, oder **Apply to map** im Views-Dialog. Ordnet die echten Notes als Baum oder radial an – `Ctrl+Z` macht es rückgängig.
 
-## 15. Dateien und Bilder
+## 16. Dateien und Bilder
 
 - **Bilder** per Drag & Drop, `Ctrl+V` oder **Insert → Image…**. Sie werden in der Map gespeichert.
 - **Andere Dateien** (Excel, Word, PDF, …) auf die Fläche ziehen oder **Insert → File…**: Die Datei wird in den Unterordner `Assets/` des Projektordners kopiert, die Note verweist darauf.
@@ -253,11 +322,11 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **🖨 Drucken / PDF:** diese Seite, das ganze Tagebuch oder ein Zeitraum. Für ein PDF im Druckdialog „Als PDF speichern“ wählen. Jede Tagebuchseite beginnt auf einem neuen Blatt.
 - Tagebucheinträge erscheinen nicht in Overview und Auslastung und werden beim Carry-over nicht übertragen.
 
-## 16. Emoji
+## 17. Emoji
 
 `Ctrl+.` oder `Ctrl+Shift+E` (auch beim Schreiben), Knopf **☺** in der Toolbar, Rechtsklick → **Emoji…** oder **Insert → Emoji…**: ins Textfeld einfügen oder als eigene, große Note. Steht der Cursor in einem **Eingabefeld des Panels** (z. B. Tags, Link, Name einer Routine-Kategorie), landet das Emoji in diesem Feld.
 
-## 17. Darstellung: Darkmode, Sprache, Panel
+## 18. Darstellung: Darkmode, Sprache, Panel
 
 - **Farbschema**: Knopf 🌓 / 🌙 / ☀️ oben rechts wechselt Auto → Dunkel → Hell. *Auto* folgt der Windows-Einstellung. Auch im Panel (leere Fläche anklicken) unter **Darstellung**. Notizfarben, die du selbst gesetzt hast, bleiben unverändert.
 - **Sprache**: Knopf **EN / DE** oben rechts oder Panel → Darstellung → Sprache. Standard ist Englisch. Inhalte von Vorlagen (z. B. „Morning“, „Goals“ in Tages-/Wochenplänen) bleiben englisch, damit Übertrag und Routinen weiter funktionieren.
@@ -265,7 +334,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **Panel-Breite**: den schmalen Streifen links vom Panel ziehen. Doppelklick = Standardbreite, Pfeiltasten ←/→ ändern die Breite in 15-px-Schritten (Streifen vorher anklicken).
 - Alle drei Einstellungen werden im Browser gespeichert.
 
-## 18. Gut zu wissen
+## 19. Gut zu wissen
 
 - Alles bleibt lokal: Maps sind lesbare JSON-Dateien in deinem Ordner.
 - Undo/Redo gilt für die offene Map. Was in **andere** Maps geschrieben wurde (Move to map, Carry-over), nimmst du mit **Undo move** bzw. von Hand zurück. Ausnahme: Abgehakte 🔁/📌-Einträge und Termine werden beim Undo auch in den anderen Plänen zurückgenommen.

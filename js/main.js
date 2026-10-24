@@ -108,15 +108,17 @@
       'Typ ändern: Rechtsklick → Change type', 'Dateien auf die Fläche ziehen → Datennote (Assets/)']],
     ['4 · Details & Filter', ['Panel → Details: Deadline, Estimate, Status, Priority, Tags', 'In Tasks: Klick auf einen Chip öffnet ein Auswahlmenü',
       'Toolbar „Filter“: Suche, Tags, Status … (Dim / Hide)']],
-    ['5 · Projekt & Pläne', ['+ New map: leer, Day / Week / Month plan', 'Rechtsklick auf eine Map: umbenennen, verschieben, löschen',
+    ['5 · Die Task', ['Deadline → Projektaufgabe: Zeit bis dahin verteilt', 'Scheduled → Termin 📌: blockt seinen Tag',
+      'Repeat → Routine 🔁: nimmt Kapazität (Freizeit nicht)', 'Ohne Estimate wird nichts eingeplant']],
+    ['6 · Projekt & Pläne', ['+ New map: leer, Day / Week / Month plan', 'Rechtsklick auf eine Map: umbenennen, verschieben, löschen',
       'Carry-over: Unerledigtes wandert in den nächsten Plan', 'Rechtsklick → Move to map: Note in eine andere Map']],
-    ['6 · Overview & Untertasks', ['Toolbar „Overview“: alle Aufgaben aller Maps', 'By deadline · By task · Workload',
+    ['7 · Overview & Untertasks', ['Toolbar „Overview“: alle Aufgaben aller Maps', 'By deadline · By task · Workload',
       'Pfeil Task → Task: Untertask, Fortschritt ∑', 'Create map from note…: eigene Map für eine große Aufgabe']],
-    ['7 · Auslastung', ['Schätzung + Deadline → Stunden pro Tag und Woche', 'Statusleiste: Today · Week · Buffer (rot = Überlast)',
+    ['8 · Auslastung', ['Schätzung + Deadline → Stunden pro Tag und Woche', 'Statusleiste: Today · Week · Buffer (rot = Überlast)',
       'Panel → Workload: was eine Note zur Woche beiträgt', 'Kapazität: Panel bei leerer Auswahl']],
-    ['8 · Routinen & Urlaub', ['Panel → Repeat: Meeting, Budget pro Woche, monatlich', 'Day(s) off / vacation: Urlaub (Estimate leer = ganzer Tag)',
+    ['9 · Routinen & Urlaub', ['Panel → Repeat: Meeting, Budget pro Woche, monatlich', 'Day(s) off / vacation: Urlaub (Estimate leer = ganzer Tag)',
       'Ziehen ihre Zeit von der Kapazität ab', 'Erscheinen in neuen Tages- und Wochenplänen']],
-    ['9 · Views & Auto-Layout', ['Toolbar „Views“: Baum, radial, Bubble, Treemap', 'Größe = Schätzung, Farbe = Status',
+    ['10 · Views & Auto-Layout', ['Toolbar „Views“: Baum, radial, Bubble, Treemap', 'Größe = Schätzung, Farbe = Status',
       'Rechtsklick → Auto-layout: Notes automatisch anordnen', 'Ctrl+. : Emoji einfügen']],
   ];
 
@@ -137,8 +139,8 @@
       colY[c] += n.h + GAP;
     });
     // link to the full handbook next to this map
-    let url = 'HANDBUCH.md';
-    try { url = new URL('HANDBUCH.md', location.href).href; } catch (e) { /* keep relative */ }
+    let url = 'HANDBUCH.html';
+    try { url = new URL('HANDBUCH.html', location.href).href; } catch (e) { /* keep relative */ }
     const open = add('link', 0, 0, { text: 'Ganzes Handbuch öffnen', link: url, w: 260, h: 48 });
     open.x = X0;
     open.y = Y0 - 80;
@@ -156,7 +158,7 @@
 
   MM.demoDoc = demoDoc;
 
-  /** Toolbar "?": handbook (HANDBUCH.md) and the example map. */
+  /** Toolbar "?": handbook (HANDBUCH.html, built from HANDBUCH.md) and the example map. */
   MM.actions.help = function () {
     if (MM.menu.isOpen()) return MM.menu.close();
     const r = document.querySelector('[data-action="help"]').getBoundingClientRect();
@@ -164,8 +166,8 @@
       {
         label: MM.t('helpOpenHandbook'),
         action: () => {
-          let url = 'HANDBUCH.md';
-          try { url = new URL('HANDBUCH.md', location.href).href; } catch (e) { /* keep relative */ }
+          let url = 'HANDBUCH.html';
+          try { url = new URL('HANDBUCH.html', location.href).href; } catch (e) { /* keep relative */ }
           window.open(url, '_blank', 'noopener');
         },
       },

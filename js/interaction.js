@@ -748,6 +748,7 @@
     else if (ctrl && (key === 'y' || (key === 'z' && e.shiftKey))) A.redo();
     else if (ctrl && key === 's') e.shiftKey ? A.saveAs() : A.save();
     else if (ctrl && key === 'o') A.open();
+    else if (ctrl && key === 'p') A.exportPdf(); // the map as PDF instead of printing the screen
     else if (ctrl && key === 'a') A.selectAll();
     else if (ctrl && key === 'c') A.copy();
     else if (ctrl && key === 'x') A.cut();
