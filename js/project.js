@@ -75,7 +75,10 @@
     // the last session's map came from this folder -> link it to its file again
     const path = MM.storage.restoredPath;
     MM.storage.restoredPath = null;
-    if (path && !S.file.path && P.find(path)) await relinkRestored(path);
+    if (path && !S.file.path && P.find(path)) {
+      await relinkRestored(path);
+      if (S.file.path) await P.fillPlan(); // the plan of the last session gets what is new as well
+    }
     P.render();
     MM.ui.update();
     if (MM.panel) MM.panel.update(true); // capacity hint now names the folder
@@ -352,7 +355,31 @@
     if (from && !(opts && opts.noHistory)) P.history.push(from);
     P.render();
     await P.offerCarry();
+    await P.fillPlan();
     return true;
+  };
+
+  /**
+   * The open map is a day / week plan: add the routines and appointments that
+   * were set up after it was created (today and later, see routines.js addToPlan).
+   */
+  P.fillPlan = async function () {
+    const path = S.file.path;
+    const kind = path && MM.templates.parsePath(path).kind;
+    if (kind !== 'day' && kind !== 'week') return;
+    const doc = S.doc;
+    const before = JSON.stringify(doc.planned || []);
+    await MM.load.refresh(); // fresh from disk: the cache may still hold the map we came from as it was
+    const r = await MM.routines.addToPlan(doc, path, { fill: true });
+    if (doc !== S.doc) return; // another map was opened meanwhile
+    if (!r.added && !r.removed && JSON.stringify(doc.planned || []) === before) return;
+    MM.commit();
+    await MM.storage.writeFile();
+    if (r.added || r.removed) {
+      MM.ui.flash([r.added ? tr('Added {n} routine / appointment entries', { n: r.added }) : '',
+        r.removed ? tr('Removed {n} entries of deleted or moved appointments / routines', { n: r.removed }) : ''].filter(Boolean).join(' · '));
+    }
+    MM.refresh();
   };
 
   /**
@@ -557,7 +584,7 @@
   /** The open document as a plain object (used when renaming the open map). */
   function ST_doc() {
     return MM.clone({
-      nodes: S.doc.nodes, edges: S.doc.edges, assets: S.doc.assets, view: S.doc.view, carriedOver: S.doc.carriedOver,
+      nodes: S.doc.nodes, edges: S.doc.edges, assets: S.doc.assets, view: S.doc.view, carriedOver: S.doc.carriedOver, planned: S.doc.planned,
     });
   }
 

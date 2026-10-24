@@ -354,6 +354,8 @@ window.MM = window.MM || {};
   // Kept out of the undo snapshots because they can be large.
   // carriedOver: the unfinished work of the previous day / week / month was taken over
   // (or the user declined). Plans created ahead of time stay false until their period starts.
+  // planned (day / week plans only): routine / appointment entries put in once ("<note id>@<date>"),
+  // so an entry the user deleted is not added again (see routines.js addToPlan).
   MM.emptyDoc = () => ({
     app: 'MindMapper', version: 1, nodes: {}, edges: {}, assets: {}, view: { x: 0, y: 0, zoom: 1 }, carriedOver: false,
   });
@@ -373,6 +375,7 @@ window.MM = window.MM || {};
     if (!raw || typeof raw !== 'object') return doc;
     // older files have no flag: they were created with the old "always carry over" rule
     doc.carriedOver = raw.carriedOver === undefined ? true : !!raw.carriedOver;
+    if (Array.isArray(raw.planned)) doc.planned = raw.planned.map(str).filter(Boolean).slice(0, 2000);
     if (raw.view && typeof raw.view === 'object') {
       doc.view = { x: num(raw.view.x, 0), y: num(raw.view.y, 0), zoom: num(raw.view.zoom, 1) || 1 };
     }

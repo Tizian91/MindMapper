@@ -210,17 +210,44 @@
    * Put the routines and the scheduled notes (📌) into a freshly built day or
    * week plan (before it is written). Returns the number of entries added.
    * Entries of appointments carry item.routine = note id as well, so carry-over skips them.
+   *
+   * opts.fill: the plan exists already (opened again) - add only what is new since:
+   * days before today are left alone, an entry that is in its list already is not
+   * doubled, and one that was put in before (doc.planned) is not added again after
+   * the user deleted it. Open entries of today and later that would not be put in
+   * any more (note deleted, appointment on another day, routine changed) are
+   * removed; checked ones stay. Returns { added, removed } then.
    */
-  R.addToPlan = async function (doc, path) {
+  R.addToPlan = async function (doc, path, opts) {
+    const fill = !!(opts && opts.fill);
     const info = MM.templates.parsePath(path);
-    if (info.kind !== 'week' && info.kind !== 'day') return 0;
+    if (info.kind !== 'week' && info.kind !== 'day') return fill ? { added: 0, removed: 0 } : 0;
     const list = await R.all();
     const appts = R.appointments(MM.load.docs());
-    if (!list.length && !appts.length) return 0;
+    if (!fill && !list.length && !appts.length) return 0;
     // the plan's columns (the "Carried over" list has a deadline as well, but is no column)
     const cols = Object.values(doc.nodes).filter((n) => n.type === 'todo' && n.meta && n.meta.deadline &&
       !(n.tags || []).includes('carried-over'));
+    const planned = new Set(doc.planned || []);
+    const expected = new Set(); // every entry the plan should have now
+    const today = iso(new Date());
+    const sunday = info.kind === 'week' ? iso(addDays(info.date, 6)) : '';
     let count = 0;
+    // date: the day the entry is for (for a weekly budget the last day of the week)
+    const add = (col, r, icon, date) => {
+      const key = `${r.id}@${date}`;
+      expected.add(key);
+      if (fill) {
+        if (date < today || planned.has(key)) return;
+        if (col.items.some((it) => it.routine === r.id)) {
+          planned.add(key); // put in before this list was kept
+          return;
+        }
+      }
+      addEntry(col, r, icon);
+      planned.add(key);
+      count++;
+    };
     const colByTime = (time, byName) => {
       const h = time ? +time.slice(0, 2) : 0;
       return byName(h >= 17 ? 'Evening' : h >= 12 ? 'Afternoon' : 'Morning') || cols[0];
@@ -230,38 +257,35 @@
       const off = d && R.offOn(list, d);
       if (!off) return false;
       const src = offsOn(list, d)[0];
-      addEntry(col, { id: src.id, title: off.title, rule: { time: '' }, minutes: off.full ? 0 : off.minutes }, '🏖');
-      count++;
+      add(col, { id: src.id, title: off.title, rule: { time: '' }, minutes: off.full ? 0 : off.minutes }, '🏖', iso(d));
       return off.full;
     };
     if (info.kind === 'week') {
       for (const col of cols) {
         const d = parse(col.meta.deadline);
-        if (markOff(col, d)) continue;
+        if (!d || markOff(col, d)) continue;
         for (const r of list) {
-          if (d && R.occursOn(r.rule, d)) {
-            addEntry(col, r);
-            count++;
-          }
+          if (R.occursOn(r.rule, d)) add(col, r, '🔁', iso(d));
         }
         for (const a of appts) {
-          if (d && a.date === iso(d)) {
-            addEntry(col, a, '📌');
-            count++;
-          }
+          if (a.date === iso(d)) add(col, a, '📌', iso(d));
         }
       }
       // weekly budgets: one list left of the goals (the day columns are below them)
       const budgets = list.filter((r) => R.budgetActive(r.rule, info.date));
       if (budgets.length) {
-        const goals = Object.values(doc.nodes).find((n) => n.type === 'todo' && n.text === 'Goals');
-        const x = goals ? goals.x - 160 : -840, y = goals ? goals.y + goals.h / 2 : 0;
-        const box = MM.createNode('todo', x, y, { text: 'Routines this week', w: 240 });
-        box.items = budgets.map((r) => Object.assign(MM.createTodoItem(entryText(r)), { routine: r.id }));
-        box.style.fill = '#f0fff4';
-        box.style.stroke = '#38a169';
-        doc.nodes[box.id] = box;
-        count += budgets.length;
+        const old = Object.values(doc.nodes).find((n) => n.type === 'todo' && n.text === 'Routines this week');
+        let box = old;
+        if (!box) {
+          const goals = Object.values(doc.nodes).find((n) => n.type === 'todo' && n.text === 'Goals');
+          const x = goals ? goals.x - 160 : -840, y = goals ? goals.y + goals.h / 2 : 0;
+          box = MM.createNode('todo', x, y, { text: 'Routines this week', w: 240 });
+          box.items = [];
+          box.style.fill = '#f0fff4';
+          box.style.stroke = '#38a169';
+        }
+        for (const r of budgets) add(box, r, '🔁', sunday);
+        if (!old && box.items.length) doc.nodes[box.id] = box;
       }
     } else {
       // day plan: by time of day (no time = morning)
@@ -271,22 +295,33 @@
       for (const a of appts) {
         if (a.date !== day) continue;
         const col = colByTime(a.rule.time, byName);
-        if (col) {
-          addEntry(col, a, '📌');
-          count++;
-        }
+        if (col) add(col, a, '📌', day);
       }
-      if (markOff(byName('Morning') || cols[0], info.date)) return count;
-      for (const r of list) {
-        if (!R.occursOn(r.rule, info.date)) continue;
-        const col = colByTime(r.rule.time, byName);
-        if (col) {
-          addEntry(col, r);
-          count++;
+      if (!markOff(byName('Morning') || cols[0], info.date)) {
+        for (const r of list) {
+          if (!R.occursOn(r.rule, info.date)) continue;
+          const col = colByTime(r.rule.time, byName);
+          if (col) add(col, r, '🔁', day);
         }
       }
     }
-    return count;
+    // clean up - only when every map could be read, else its notes just look deleted
+    let removed = 0;
+    if (fill && MM.load.complete()) {
+      const lists = cols.map((c) => [c, c.meta.deadline]);
+      const box = Object.values(doc.nodes).find((n) => n.type === 'todo' && n.text === 'Routines this week');
+      if (box && sunday) lists.push([box, sunday]);
+      for (const [col, date] of lists) {
+        if (!date || date < today) continue;
+        const gone = (it) => it.routine && !it.done && !expected.has(`${it.routine}@${date}`);
+        for (const it of col.items.filter(gone)) planned.delete(`${it.routine}@${date}`); // may come back later
+        const keep = col.items.filter((it) => !gone(it));
+        removed += col.items.length - keep.length;
+        col.items = keep;
+      }
+    }
+    if (planned.size || doc.planned) doc.planned = [...planned];
+    return fill ? { added: count, removed } : count;
   };
 
   // ---- Done in one place = done everywhere --------------------------------------------

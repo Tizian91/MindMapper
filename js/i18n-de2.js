@@ -211,6 +211,9 @@
     'No pages in this period.': 'In diesem Zeitraum gibt es keine Seiten.',
     // ---- transfer.js (bundles) ----
     'Moved {n} note(s) to {map} (with {m} sub-note(s) / group)': '{n} Notiz(en) nach {map} verschoben (mit {m} Unter-Notiz(en) / Gruppe)',
+    // ---- routines.js (filling existing plans) ----
+    'Added {n} routine / appointment entries': '{n} Routine-/Termineinträge nachgetragen',
+    'Removed {n} entries of deleted or moved appointments / routines': '{n} Einträge gelöschter oder verschobener Termine/Routinen entfernt',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

@@ -281,31 +281,45 @@
 
   // ---- Reading the other maps ------------------------------------------------------
 
-  let timer = null, running = 0;
+  let timer = null, running = 0, latest = null, failed = 0;
+  /** Were all maps of the last refresh readable? (Otherwise their notes only look missing.) */
+  L.complete = () => othersVersion > 0 && !failed;
   L.scheduleRefresh = function () {
     clearTimeout(timer);
     timer = setTimeout(() => L.refresh(), 400);
   };
 
-  /** Read all other maps of the project folder (background). */
-  L.refresh = async function () {
+  /**
+   * Read all other maps of the project folder (background). Resolves once the
+   * cache is fresh - if a newer refresh started meanwhile, once that one is done.
+   */
+  L.refresh = function () {
     const run = ++running;
+    const done = read(run).then(() => (run === running ? undefined : latest));
+    latest = done;
+    return done;
+  };
+
+  async function read(run) {
     const P = MM.project;
     const next = new Map();
+    let bad = 0;
     if (P && P.status === 'ready') {
       for (const p of P.mapPaths()) {
         if (p === S.file.path) continue;
         try {
           const d = await P.readMap(p);
           if (d) next.set(p, d);
-        } catch (err) { /* unreadable map: skipped */ }
+          else bad++;
+        } catch (err) { bad++; /* unreadable map: skipped */ }
       }
     }
     if (run !== running) return;
     others = next;
+    failed = bad;
     othersVersion++;
     if (MM.ui) MM.ui.update();
-  };
+  }
 
   // ---- Display ---------------------------------------------------------------------
 
