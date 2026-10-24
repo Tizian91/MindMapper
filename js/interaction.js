@@ -707,6 +707,22 @@
     });
   };
 
+  /**
+   * Ctrl+. in a text field (panel: category name, tags, link …): the emoji goes into
+   * that field at the caret, not into the map. The field gets a change event as if typed.
+   */
+  function emojiIntoField(field) {
+    const start = field.selectionStart ?? field.value.length, end = field.selectionEnd ?? start;
+    MM.emoji.pick({ mode: 'pick', anchorRect: field.getBoundingClientRect() }).then((ch) => {
+      if (!ch || !field.isConnected) return;
+      field.value = field.value.slice(0, start) + ch + field.value.slice(end);
+      field.focus();
+      field.setSelectionRange(start + ch.length, start + ch.length);
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
   /** Ctrl+. or Ctrl+Shift+E (Cmd on a Mac) */
   I.isEmojiKey = (e) => (e.ctrlKey || e.metaKey) && (e.key === '.' || (e.shiftKey && e.key.toLowerCase() === 'e'));
 
@@ -715,7 +731,10 @@
     if (I.isEmojiKey(e)) {
       e.preventDefault();
       e.stopPropagation();
-      I.openEmojiPicker();
+      const field = document.activeElement;
+      if (!MM.editing && field && field.tagName === 'INPUT' && /^(text|search)$/.test(field.type) &&
+        !field.closest('.emoji-pop')) emojiIntoField(field);
+      else I.openEmojiPicker();
       return;
     }
     if (isTyping(e)) return;

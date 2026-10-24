@@ -327,6 +327,7 @@ window.MM = window.MM || {};
       'repeatKind_monthly-day': 'Monatlich (Tag im Monat)',
       'repeatKind_monthly-nth': 'Monatlich (n-ter Wochentag)',
       'repeatKind_budget': 'Zeitbudget pro Woche',
+      'repeatKind_times': 'Mehrmals pro Woche',
       'repeatKind_off': 'Freie Tage / Urlaub',
       route_straight: 'Gerade', route_elbow: 'Rechter Winkel', route_rounded: 'Abgerundeter Winkel', route_curved: 'Kurve',
       line_solid: 'Durchgezogen', line_dashed: 'Gestrichelt', line_dotted: 'Gepunktet', line_dashdot: 'Strichpunkt',

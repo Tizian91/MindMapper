@@ -266,7 +266,8 @@
   let cache = { key: null, value: null };
   /** Workload of the whole project (cached per change). */
   L.summary = function () {
-    const key = [S.rev, othersVersion, iso(today()), JSON.stringify(L.capacity()), MM.getLang()].join('|');
+    const key = [S.rev, othersVersion, iso(today()), JSON.stringify(L.capacity()), MM.getLang(),
+      JSON.stringify(S.settings.routineCategories || [])].join('|'); // leisure categories take no capacity
     if (cache.key !== key || cache.doc !== S.doc) {
       const docs = allDocs();
       cache = { key, doc: S.doc, value: L.compute(L.items(docs), MM.routines.collect(docs)) };
@@ -396,7 +397,9 @@
     }
     if (n.repeat) {
       const per = MM.routines.perWeek(n.repeat, Number(m.estimate) || 0);
-      return `<p class="hint">${tr('Routine: takes about {h} per week off your capacity.', { h: L.hours(per) })}</p>`;
+      return MM.routines.isLeisure(n.repeat)
+        ? `<p class="hint">${tr('Leisure routine: about {h} per week, not taken off your capacity.', { h: L.hours(per) })}</p>`
+        : `<p class="hint">${tr('Routine: takes about {h} per week off your capacity.', { h: L.hours(per) })}</p>`;
     }
     // main task: how much of its estimate the sub-tasks cover
     const info = MM.tasks.info(n);
@@ -506,18 +509,20 @@
     // routines: rule, next date, hours per week (click opens the map with the note)
     const R = MM.routines;
     h += `<div class="ov-group"><div class="ov-group-head">${tr('Routines')}<span class="muted">` +
-      (sum.routines.length ? tr('{h} per week', { h: L.hours(sum.routines.reduce((s, r) => s + R.perWeek(r.rule, r.minutes), 0)) }) : '') + '</span></div>';
+      (sum.routines.length ? tr('{h} per week', { h: L.hours(sum.routines.reduce((s, r) => s + (r.leisure ? 0 : R.perWeek(r.rule, r.minutes)), 0)) }) : '') + '</span></div>';
     if (!sum.routines.length) {
       h += `<p class="hint">${esc(tr('No routines yet. Give a note a rule in the panel ("Repeat"), e.g. in a map "Routines".'))}</p>`;
     }
     for (const r of sum.routines) {
       if (r.rule.kind === 'off') continue; // listed below
       const next = R.next(r.rule);
-      h += `<div class="load-row ov-routine" data-path="${esc(r.path)}" data-id="${esc(r.id)}">` +
-        `<span class="load-label">🔁 ${esc(r.title)}</span><span class="muted">${esc(R.label(r.rule, r.minutes))}` +
-        `${r.minutes ? '' : esc(tr(' – no duration (Estimate) set'))}</span>` +
-        `<span class="load-val">${r.rule.kind === 'budget' ? tr('weekly') : next ? esc(fmtDate(iso(next))) : '–'}</span>` +
-        `<span class="load-buf">${L.hours(R.perWeek(r.rule, r.minutes))}${tr('/wk')}</span></div>`;
+      const cat = R.category(r.rule.category);
+      h += `<div class="load-row ov-routine${r.leisure ? ' leisure' : ''}" data-path="${esc(r.path)}" data-id="${esc(r.id)}">` +
+        `<span class="load-label">🔁 ${esc(r.title)}${cat ? ` <span class="muted">· ${esc(R.categoryTitle(cat))}</span>` : ''}</span>` +
+        `<span class="muted">${esc(R.label(r.rule, r.minutes))}` +
+        `${r.minutes ? '' : esc(tr(' – no duration (Estimate) set'))}${r.leisure ? esc(tr(' – leisure, not counted')) : ''}</span>` +
+        `<span class="load-val">${R.isWeekly(r.rule) ? tr('weekly') : next ? esc(fmtDate(iso(next))) : '–'}</span>` +
+        `<span class="load-buf">${r.leisure ? '–' : L.hours(R.perWeek(r.rule, r.minutes)) + tr('/wk')}</span></div>`;
     }
     h += '</div>';
     // days off that are not over yet

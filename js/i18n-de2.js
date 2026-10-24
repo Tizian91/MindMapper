@@ -229,6 +229,30 @@
     'conflict': 'Konflikt',
     'Reloaded {name} - your changes were discarded': '{name} neu geladen – deine Änderungen wurden verworfen',
     'Your version was saved as {name}; the original stays as it is': 'Deine Version wurde als {name} gespeichert; das Original bleibt, wie es ist',
+    // ---- routines.js / panel.js / workload.js (routine categories, leisure, n times per week) ----
+    'Name of the new routine category (e.g. "Band practice", "Learning"):': 'Name der neuen Routine-Kategorie (z. B. „Bandprobe“, „Lernen“):',
+    'Routines this week': 'Routinen diese Woche',
+    '{n}× per week': '{n}× pro Woche',
+    '× per week (a check box each on the week plan)': '× pro Woche (je ein Kästchen im Wochenplan)',
+    '(none)': '(keine)',
+    'leisure': 'Freizeit',
+    'New category…': 'Neue Kategorie…',
+    'Category': 'Kategorie',
+    'Leisure: shown and checked off on the plans, but takes no time off the capacity.':
+      'Freizeit: steht in den Plänen und wird abgehakt, zieht aber keine Zeit von der Kapazität ab.',
+    'Duration of each time = Estimate above. Takes its time off the capacity; week plans get a check box per time.':
+      'Dauer pro Mal = Aufwand oben. Wird von der Kapazität abgezogen; Wochenpläne bekommen je Mal ein Kästchen.',
+    'Choose an emoji (right-click: remove it)': 'Emoji wählen (Rechtsklick: entfernen)',
+    'Leisure: its routines take no time off the capacity': 'Freizeit: ihre Routinen ziehen keine Zeit von der Kapazität ab',
+    'Delete category': 'Kategorie löschen',
+    'Routine categories': 'Routine-Kategorien',
+    'No categories yet.': 'Noch keine Kategorien.',
+    '+ Category': '+ Kategorie',
+    'Routines of a category share a list on the week plan. Leisure: shown and checked off, but no time off the capacity. Stored {where}.':
+      'Routinen einer Kategorie stehen im Wochenplan auf einer gemeinsamen Liste. Freizeit: steht dort und wird abgehakt, zieht aber keine Kapazität ab. Gespeichert {where}.',
+    'Delete the category "{name}"?\n\nIts routines stay and get no category.': 'Kategorie „{name}“ löschen?\n\nIhre Routinen bleiben und haben dann keine Kategorie.',
+    'Leisure routine: about {h} per week, not taken off your capacity.': 'Freizeit-Routine: etwa {h} pro Woche, wird nicht von der Kapazität abgezogen.',
+    ' – leisure, not counted': ' – Freizeit, zählt nicht',
     // ---- cloud-pcloud.js / project.js (pCloud, cloud version only) ----
     'pCloud is not set up yet (the app has no pCloud client ID).': 'pCloud ist noch nicht eingerichtet (der App fehlt die pCloud-Client-ID).',
     'not connected to pCloud': 'nicht mit pCloud verbunden',

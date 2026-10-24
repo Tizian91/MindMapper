@@ -40,6 +40,7 @@
       if (data) {
         Object.assign(S.settings, data.settings || {});
         Object.assign(S.edgeStyle, data.edgeStyle || {});
+        S.settings.routineCategories = MM.normalizeCategories(S.settings.routineCategories);
       }
     } catch (e) {
       /* ignore corrupt settings */
@@ -75,6 +76,9 @@
       const data = JSON.parse(f.text);
       const c = (data && data.capacity) || {};
       for (const k of ST.CAPACITY_KEYS) if (c[k] !== undefined) S.settings[k] = c[k];
+      // routine categories belong to the folder: none in the file = none here (not those of another folder)
+      S.settings.routineCategories = MM.normalizeCategories(data && data.routineCategories);
+      MM.saveSettings();
       MM.setPrioSystem(data && data.prioSystem, false);
     } catch (e) {
       console.warn('MindMapper: unreadable ' + ST.PROJECT_SETTINGS_FILE, e);
@@ -87,7 +91,9 @@
     const capacity = {};
     for (const k of ST.CAPACITY_KEYS) capacity[k] = S.settings[k];
     try {
-      await MM.project.writeText(ST.PROJECT_SETTINGS_FILE, JSON.stringify({ version: 1, capacity, prioSystem: S.settings.prioSystem }, null, 2));
+      await MM.project.writeText(ST.PROJECT_SETTINGS_FILE, JSON.stringify({
+        version: 1, capacity, prioSystem: S.settings.prioSystem, routineCategories: S.settings.routineCategories || [],
+      }, null, 2));
     } catch (e) {
       console.warn('MindMapper: could not write ' + ST.PROJECT_SETTINGS_FILE, e);
     }

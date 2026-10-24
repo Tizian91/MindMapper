@@ -290,12 +290,25 @@
         const wd = {};
         weekdays.forEach((v, i) => (wd[i] = v));
         h += `<div class="rp-line">${t('onThe')} ${select('data-repeat="nth"', String(r.nth), nth)} ${select('data-repeat="weekday"', String(r.weekday), wd)} ${time}</div>`;
+      } else if (r.kind === 'times') {
+        h += `<div class="rp-line"><input type="number" data-repeat="times" min="1" max="7" value="${r.times}"> ${esc(MM.tr('× per week (a check box each on the week plan)'))}</div>`;
+      }
+      if (r.kind !== 'off') {
+        // category: groups the routine on the week plan; a leisure category takes no capacity
+        const cats = { '': MM.tr('(none)') };
+        for (const c of R.categories()) cats[c.id] = R.categoryTitle(c) + (c.leisure ? ' · ' + MM.tr('leisure') : '');
+        cats.__new = MM.tr('New category…');
+        h += `<div class="rp-line"><label class="rp-inline">${esc(MM.tr('Category'))} ${select('data-repeat="category"', R.category(r.category) ? r.category : '', cats)}</label></div>`;
       }
       h += `<div class="rp-line"><label class="rp-inline">${t('from')} <input type="date" data-repeat="from" value="${esc(r.from)}"></label>
         <label class="rp-inline">${t('until')} <input type="date" data-repeat="until" value="${esc(r.until)}"></label></div>
         <p class="hint">${esc(R.label(r, n.meta.estimate))}. ${r.kind === 'off'
     ? t('repeatOffHint')
-    : t(r.kind === 'budget' ? 'repeatBudgetHint' : 'repeatDurationHint')}</p>`;
+    : R.isLeisure(r)
+      ? esc(MM.tr('Leisure: shown and checked off on the plans, but takes no time off the capacity.'))
+      : r.kind === 'times'
+        ? esc(MM.tr('Duration of each time = Estimate above. Takes its time off the capacity; week plans get a check box per time.'))
+        : t(r.kind === 'budget' ? 'repeatBudgetHint' : 'repeatDurationHint')}</p>`;
     }
     return h + '</div>';
   }
@@ -378,6 +391,7 @@
       <div class="row"><label>${t('prioSystem')}</label>${select('data-setting="prioSystem"', set.prioSystem, { levels: t('prioLevels'), eisenhower: t('eisenhower') })}</div>
       <p class="hint">${t('prioSystemHint').replace('{where}', esc(MM.storage.capacityLocation()))}</p>
     </section>
+    ${categoriesSection()}
     <section><h3>${t('newConnections')}</h3>
       ${edgeStyleControls(S.edgeStyle)}
     </section>
@@ -385,6 +399,22 @@
       <dl class="keys">
         ${SHORTCUTS.map(([k, d]) => `<dt>${esc(t(k, k))}</dt><dd>${esc(t(d))}</dd>`).join('\n        ')}
       </dl>
+    </section>`;
+  }
+
+  /** Settings: routine categories of this folder (name, emoji, leisure), see routines.js. */
+  function categoriesSection() {
+    const tr = MM.tr;
+    const rows = MM.routines.categories().map((c) => `<div class="cat-row">
+        <button class="cat-emoji" data-cat-emoji-pick="${esc(c.id)}" title="${esc(tr('Choose an emoji (right-click: remove it)'))}">${esc(c.emoji || '☺')}</button>
+        <input type="text" data-cat-name="${esc(c.id)}" value="${esc(c.name)}" maxlength="40">
+        <label class="check" title="${esc(tr('Leisure: its routines take no time off the capacity'))}"><input type="checkbox" data-cat-leisure="${esc(c.id)}" ${c.leisure ? 'checked' : ''}> ${esc(tr('leisure'))}</label>
+        <button class="icon-btn" data-cat-delete="${esc(c.id)}" title="${esc(tr('Delete category'))}">×</button>
+      </div>`).join('');
+    return `<section><h3>${esc(tr('Routine categories'))}</h3>
+      ${rows || `<p class="hint">${esc(tr('No categories yet.'))}</p>`}
+      <button data-cat-add>${esc(tr('+ Category'))}</button>
+      <p class="hint">${esc(tr('Routines of a category share a list on the week plan. Leisure: shown and checked off, but no time off the capacity. Stored {where}.', { where: MM.storage.capacityLocation() }))}</p>
     </section>`;
   }
 
@@ -475,6 +505,18 @@
     root.addEventListener('click', onClick);
     root.addEventListener('input', onInput);
     root.addEventListener('change', onChange);
+    // right-click on the emoji of a routine category removes it
+    root.addEventListener('contextmenu', (e) => {
+      const b = e.target.closest('[data-cat-emoji-pick]');
+      if (!b) return;
+      e.preventDefault();
+      MM.routines.editCategories((list) => {
+        const c = list.find((x) => x.id === b.dataset.catEmojiPick);
+        if (c) c.emoji = '';
+      });
+      MM.refresh();
+      P.update(true);
+    });
     initResizer();
     const expandBtn = document.getElementById('panel-expand-btn');
     if (expandBtn) {
@@ -586,6 +628,13 @@
     if (ds.repeat !== undefined || ds.repeatDay !== undefined) {
       const n = MM.selectedNodes()[0];
       if (!n) return false;
+      if (ds.repeat === 'category' && raw === '__new') {
+        raw = MM.routines.newCategory();
+        if (!raw) {
+          P.update(true); // cancelled: show the old choice again
+          return false;
+        }
+      }
       if (ds.repeat === 'kind') {
         n.repeat = raw === 'none' ? null : MM.normalizeRepeat(Object.assign(MM.routines.defaults(raw), n.repeat || {}, { kind: raw }));
         return true;
@@ -602,6 +651,18 @@
       }
       n.repeat = MM.normalizeRepeat(r);
       return true;
+    }
+    if (ds.catName !== undefined || ds.catLeisure !== undefined) {
+      // settings, not the map: stored at once, no undo step
+      const id = ds.catName || ds.catLeisure;
+      MM.routines.editCategories((list) => {
+        const c = list.find((x) => x.id === id);
+        if (!c) return;
+        if (ds.catName !== undefined && raw.trim()) c.name = raw.trim();
+        if (ds.catLeisure !== undefined) c.leisure = el.checked;
+      });
+      MM.refresh();
+      return false;
     }
     if (ds.workday !== undefined) {
       const days = new Set(MM.load.capacity().days);
@@ -675,6 +736,31 @@
       MM.actions[btn.dataset.action](btn.dataset.value);
       return;
     }
+    if (btn.dataset.catEmojiPick) {
+      const id = btn.dataset.catEmojiPick;
+      MM.emoji.pick({ mode: 'pick', anchorRect: btn.getBoundingClientRect() }).then((ch) => {
+        if (!ch) return;
+        MM.routines.editCategories((list) => {
+          const c = list.find((x) => x.id === id);
+          if (c) c.emoji = ch;
+        });
+        MM.refresh();
+        P.update(true);
+      });
+      return;
+    }
+    if (btn.dataset.catAdd !== undefined) {
+      if (MM.routines.newCategory()) P.update(true);
+      return;
+    }
+    if (btn.dataset.catDelete) {
+      const c = MM.routines.category(btn.dataset.catDelete);
+      if (!c || !confirm(MM.tr('Delete the category "{name}"?\n\nIts routines stay and get no category.', { name: c.name }))) return;
+      MM.routines.editCategories((list) => list.splice(list.findIndex((x) => x.id === c.id), 1));
+      MM.refresh();
+      P.update(true);
+      return;
+    }
     if (btn.dataset.removeTag !== undefined) {
       for (const n of MM.selectedNodes()) n.tags = n.tags.filter((t) => t !== btn.dataset.removeTag);
       MM.commit();
@@ -695,7 +781,7 @@
     if (el.type === 'checkbox' || el.tagName === 'SELECT') return;
     if (['estimate', 'deadline', 'scheduled', 'scheduledTime'].includes(el.dataset.meta) ||
       el.dataset.tagInput !== undefined || el.dataset.linkInput !== undefined ||
-      el.dataset.diaryField !== undefined) return; // applied on change (deadline / appointment exclude each other)
+      el.dataset.diaryField !== undefined || el.dataset.catName !== undefined) return; // applied on change (deadline / appointment exclude each other)
     if (apply(el, el.value)) {
       MM.render.all();
     }

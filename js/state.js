@@ -156,12 +156,15 @@ window.MM = window.MM || {};
   /**
    * Recurring notes (see routines.js). node.repeat = null or
    *   { kind, every (weeks), days [weekdays, 0 = Sunday], day (of month), nth (1..5, -1 = last),
-   *     weekday, time 'HH:MM', from / until 'YYYY-MM-DD' }
+   *     weekday, time 'HH:MM', from / until 'YYYY-MM-DD', times (per week), category (id) }
    * The duration of one occurrence (or the weekly budget) is meta.estimate.
+   * category: one of settings.routineCategories (see routines.js) - a leisure category
+   * takes no time off the capacity.
    */
   MM.REPEAT_KINDS = {
     weekly: 'Weekly / every n weeks', 'monthly-day': 'Monthly (day of month)',
     'monthly-nth': 'Monthly (n-th weekday)', budget: 'Time budget per week',
+    times: 'Several times per week', // no fixed days: a check box per time on the week plan
     off: 'Day(s) off / vacation', // from..until; estimate = hours off per day (empty = whole day)
   };
 
@@ -183,7 +186,20 @@ window.MM = window.MM || {};
       time: /^\d{2}:\d{2}$/.test(r.time) ? r.time : '',
       from: date(r.from),
       until: date(r.until),
+      times: int(r.times, 1, 7, 2),
+      category: typeof r.category === 'string' && /^[\w-]{1,40}$/.test(r.category) && r.kind !== 'off' ? r.category : '',
     };
+  };
+
+  /** Routine categories of the settings, cleaned up: [{ id, name, emoji, leisure }]. */
+  MM.normalizeCategories = function (list) {
+    const seen = new Set();
+    return (Array.isArray(list) ? list : []).filter((c) => c && typeof c === 'object').map((c) => ({
+      id: typeof c.id === 'string' && /^[\w-]{1,40}$/.test(c.id) ? c.id : MM.uid('c'),
+      name: String(c.name || '').trim().slice(0, 40) || 'Category',
+      emoji: String(c.emoji || '').trim().slice(0, 8),
+      leisure: !!c.leisure,
+    })).filter((c) => !seen.has(c.id) && seen.add(c.id)).slice(0, 50);
   };
 
   /**
@@ -453,6 +469,8 @@ window.MM = window.MM || {};
         delete node.diary;
       }
       node.repeat = MM.normalizeRepeat(n.repeat);
+      // list of a week plan for the routines of one category ('' = without category), see routines.js
+      if (node.routineList !== undefined) node.routineList = str(node.routineList).slice(0, 40);
       for (const it of node.items) if (it.routine !== undefined) it.routine = str(it.routine); // entry created from a routine
       if (node.type === 'file') {
         const f = Object.assign({ path: '', name: '', size: 0, mime: '' }, n.file && typeof n.file === 'object' ? n.file : {});
@@ -515,6 +533,7 @@ window.MM = window.MM || {};
       workDays: [1, 2, 3, 4, 5], // 0 = Sunday
       lastDiary: '',       // diary of the last diary entry (new entries go there)
       prioSystem: 'levels', // 'levels' | 'eisenhower' (per project folder, see storage.js)
+      routineCategories: [], // [{ id, name, emoji, leisure }] (per project folder, see routines.js)
     },
     // view filter (not saved, not part of undo); see meta.js
     filter: {

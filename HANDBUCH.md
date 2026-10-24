@@ -95,7 +95,7 @@ Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Sta
 - Die Pläne sind verknüpft: Monat → Wochen → Tage (↗ an Spalten bzw. Überschrift).
 - Namen: `Days/2026-10-21`, `Weeks/2026-W43`, `Months/2026-10`. Wer das Namensschema verlässt, verliert die automatische Verknüpfung.
 - **Termine (📌):** Neue Tages- und Wochenpläne bekommen alle offenen Notes mit Termin aus allen Maps als Eintrag – im Wochenplan in der Spalte des Tages, im Tagesplan nach Uhrzeit (ab 12 Uhr *Afternoon*, ab 17 Uhr *Evening*, sonst *Morning*). Wie Routinen werden sie nicht übertragen.
-- **Nachtragen:** Kommt ein Termin oder eine Routine erst dazu, wenn der Plan schon existiert, wird der Eintrag beim nächsten **Öffnen** des Plans nachgetragen (Hinweis in der Statusleiste). Das gilt nur für heute und spätere Tage; vergangene Tage bleiben, wie sie sind. Ein Eintrag, den du gelöscht hast, kommt nicht wieder.
+- **Nachtragen:** Kommt ein Termin oder eine Routine erst dazu, wenn der Plan schon existiert, wird der Eintrag beim nächsten **Öffnen** des Plans nachgetragen (Hinweis in der Statusleiste). Das gilt nur für heute und spätere Tage; vergangene Tage bleiben, wie sie sind. Ein Eintrag, den du gelöscht hast, kommt nicht wieder. Hast du eine Routine oder einen Termin umbenannt (oder Uhrzeit / Dauer geändert), bekommen die **offenen** Einträge beim Öffnen den neuen Text; abgehakte behalten ihren alten.
 - **Zur Notiz springen:** Hinter jedem 🔁-, 📌- und 🏖-Eintrag erscheint beim Darüberfahren ein kleines **↗**. Ein Klick öffnet die Map mit der Original-Note (Termin, Routine, Urlaub) und zeigt die Note – praktisch, wenn dort weitere Notizen zum Termin stehen.
 - **Aufräumen:** Ebenfalls beim Öffnen verschwinden **offene** Einträge (ab heute), deren Termin oder Routine gelöscht wurde, deren Termin jetzt an einem anderen Tag ist oder deren Routine an dem Tag nicht mehr stattfindet. **Abgehakte** Einträge und vergangene Tage bleiben stehen. Kann eine Map nicht gelesen werden, wird zur Sicherheit nicht aufgeräumt.
 - **Abhaken im Tages- oder Wochenplan:** Ein 🔁- oder 📌-Eintrag steht im Tagesplan und im Wochenplan. Wird er in einem davon abgehakt (oder wieder geöffnet), passiert das im anderen Plan desselben Datums automatisch mit. Bei einem 📌-Termin gilt das auch für die Original-Note, in beide Richtungen: Wird die Note auf *Done* gesetzt, sind ihre Einträge in Tages- und Wochenplan abgehakt. **Strg+Z** nimmt das Abhaken überall zurück. Die Regel-Note einer Routine bleibt offen, und ein auf einen anderen Tag verschobener Termin wird vom Eintrag des alten Tages nicht berührt. Voraussetzung: Der Projektordner ist verbunden.
@@ -112,7 +112,7 @@ Alles, was MindMapper in Tages- und Wochenpläne von selbst einträgt oder ände
 | Wann | Was | Wohin |
 |---|---|---|
 | Plan wird angelegt | 🔁 Routinen, 📌 Termine, 🏖 Urlaub dieses Tages / dieser Woche | Tagesspalten (Woche) bzw. *Morning / Afternoon / Evening* (Tag) |
-| Wochenplan wird angelegt | Wochenbudgets (z. B. Studentenbetreuung 5 h) | eigene Liste **Routines this week** links neben *Goals* |
+| Wochenplan wird angelegt | Routinen ohne feste Tage (Wochenbudgets, „x-mal pro Woche“) | eine Liste je Routine-Kategorie (ohne Kategorie: **Routines this week**) links neben *Goals*, siehe Kapitel 13 |
 | Plan wird angelegt, sein Zeitraum hat schon begonnen (sonst: beim ersten Öffnen danach, mit Nachfrage) | Unerledigtes aus dem vorigen Tag / der vorigen Woche / dem vorigen Monat | Liste **Carried over** und die übertragenen Notes; im alten Plan als übertragen markiert (→) |
 | Plan wird geöffnet | neue 🔁 / 📌 / 🏖 ab heute dazu; offene Einträge gelöschter oder verschobener Termine / Routinen weg | wie beim Anlegen |
 | Abhaken (oder wieder öffnen) irgendwo | derselbe 🔁 / 📌-Eintrag im Tages- und Wochenplan und die Termin-Note | überall mit (Strg+Z nimmt es überall zurück) |
@@ -188,12 +188,21 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 | **Monthly (day of month)** | am 15. jedes Monats |
 | **Monthly (n-th weekday)** | jeden 1. Montag, letzten Freitag |
 | **Time budget per week** | Studentenbetreuung 5 h pro Woche |
+| **Several times per week** | Rhythmus-Übungen 3× pro Woche je 30 min (ohne feste Tage) |
 | **Day(s) off / vacation** | Urlaub vom 23.12. bis 06.01. |
 
-- Die **Dauer** (bzw. Stunden pro Woche) ist das Feld **Estimate**. Optional **from / until**.
+- Die **Dauer** (bzw. Stunden pro Woche, bei *Several times per week* die Dauer **pro Mal**) ist das Feld **Estimate**. Optional **from / until**.
 - Routinen ziehen ihre Zeit von der **Kapazität** ab; neue Tages- und Wochenpläne bekommen sie als abhakbaren Eintrag (🔁), bestehende beim nächsten Öffnen (ab heute). Verpasste Termine werden nicht übertragen.
 - **Urlaub:** *Estimate* leer = ganzer Tag frei (keine Kapazität, Termine entfallen, 🏖 im Plan); *Estimate* z. B. `4h` = halber Tag frei.
 - Übersicht: **Overview → Workload** mit den Listen *Routines* und *Days off*.
+
+### Kategorien und Freizeit-Routinen
+
+- **Kategorie zuweisen:** Unter *Repeat* gibt es die Auswahl **Category** – eine vorhandene Kategorie oder **New category…** (Name eintippen, fertig).
+- **Kategorien verwalten:** Panel, wenn nichts markiert ist → Abschnitt **Routine categories**: Name, **Emoji** (Knopf ☺, Rechtsklick entfernt es), Häkchen **leisure** (Freizeit), × löscht (die Routinen bleiben, nur ohne Kategorie). Gespeichert **pro Projektordner** in `mindmapper.settings.json` – Arbeits- und Privatordner haben eigene Kategorien.
+- **Freizeit:** Routinen einer Freizeit-Kategorie ziehen **keine** Zeit von der Kapazität ab. Sie stehen trotzdem in den Plänen und werden abgehakt – zur Motivation. Auf der Workload-Seite erscheinen sie ausgegraut („Freizeit, zählt nicht“).
+- **Zettel im Wochenplan:** Routinen ohne feste Tage (*Time budget per week*, *Several times per week*) stehen im Wochenplan auf einer Liste je Kategorie, z. B. „🥁 Bandprobe“ mit „Rhythmus (30m)“ ×3 – ein Kästchen pro Mal. Routinen ohne Kategorie stehen in **Routines this week**. Routinen mit festen Tagen bleiben in der Tagesspalte.
+- Ändert sich etwas (Anzahl pro Woche, andere Kategorie, Kategorie umbenannt oder gelöscht), passt sich der Wochenplan beim nächsten **Öffnen** an (ab heute): fehlende Kästchen kommen dazu, überzählige **offene** verschwinden, abgehakte bleiben.
 
 ## 14. Views und Auto-Layout
 
@@ -246,7 +255,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 
 ## 16. Emoji
 
-`Ctrl+.` oder `Ctrl+Shift+E` (auch beim Schreiben), Knopf **☺** in der Toolbar, Rechtsklick → **Emoji…** oder **Insert → Emoji…**: ins Textfeld einfügen oder als eigene, große Note.
+`Ctrl+.` oder `Ctrl+Shift+E` (auch beim Schreiben), Knopf **☺** in der Toolbar, Rechtsklick → **Emoji…** oder **Insert → Emoji…**: ins Textfeld einfügen oder als eigene, große Note. Steht der Cursor in einem **Eingabefeld des Panels** (z. B. Tags, Link, Name einer Routine-Kategorie), landet das Emoji in diesem Feld.
 
 ## 17. Darstellung: Darkmode, Sprache, Panel
 

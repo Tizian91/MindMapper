@@ -7,8 +7,12 @@
  * The duration of one occurrence (or the hours per week of a budget) is the
  * note's estimate.
  *
+ * Categories (settings.routineCategories, per project folder): a routine can
+ * belong to one, e.g. "Band practice". A leisure category takes no time off the
+ * capacity - the routine is still listed and checked off (motivation, not workload).
+ *
  * Effects:
- *   - workload.js takes the routines' time off the capacity of each day
+ *   - workload.js takes the routines' time off the capacity of each day (not leisure ones)
  *   - new day / week plans get the occurrences as to-do entries (item.routine = note id)
  *     in the matching day column (week) or morning / afternoon / evening (day);
  *     carry-over skips these entries, a missed meeting is not carried along
@@ -41,6 +45,35 @@
   /** Icon of a rule: 🏖 for days off, 🔁 for everything else. */
   R.icon = (rule) => (rule && rule.kind === 'off' ? '🏖' : '🔁');
 
+  // ---- Categories -----------------------------------------------------------------
+
+  R.categories = () => MM.state.settings.routineCategories || [];
+  R.category = (id) => (id ? R.categories().find((c) => c.id === id) || null : null);
+  /** Does the rule belong to a leisure category (no time off the capacity)? */
+  R.isLeisure = (rule) => !!(rule && R.category(rule.category) && R.category(rule.category).leisure);
+  /** "🥁 Band practice" */
+  R.categoryTitle = (c) => (c ? (c.emoji ? c.emoji + ' ' : '') + c.name : 'Routines this week');
+
+  /** Change the categories (fn gets the list) and store them - in the project folder if one is open. */
+  R.editCategories = function (fn) {
+    const list = R.categories().map((c) => Object.assign({}, c));
+    fn(list);
+    MM.state.settings.routineCategories = MM.normalizeCategories(list);
+    MM.saveSettings();
+    MM.storage.saveProjectSettings();
+  };
+
+  /** Ask for a name and add a category. Returns its id or null. */
+  R.newCategory = function () {
+    const name = (prompt(MM.tr('Name of the new routine category (e.g. "Band practice", "Learning"):'), '') || '').trim().slice(0, 40);
+    if (!name) return null;
+    const old = R.categories().find((c) => c.name.toLowerCase() === name.toLowerCase());
+    if (old) return old.id;
+    const id = MM.uid('c');
+    R.editCategories((list) => list.push({ id, name, emoji: '', leisure: false }));
+    return id;
+  };
+
   // ---- Days off -------------------------------------------------------------------
 
   /** Days-off entries active on day d. */
@@ -69,9 +102,12 @@
     return !(from && d < from) && !(until && d > until);
   }
 
-  /** Does a dated routine (not a budget) take place on day d? */
+  /** A routine of the week without fixed days: time budget or "n times per week". */
+  R.isWeekly = (rule) => !!rule && (rule.kind === 'budget' || rule.kind === 'times');
+
+  /** Does a dated routine (not a budget / n times per week) take place on day d? */
   R.occursOn = function (rule, d) {
-    if (!rule || rule.kind === 'budget' || rule.kind === 'off' || !active(rule, d)) return false;
+    if (!rule || R.isWeekly(rule) || rule.kind === 'off' || !active(rule, d)) return false;
     if (rule.kind === 'weekly') {
       if (!rule.days.includes(d.getDay())) return false;
       if (rule.every <= 1) return true;
@@ -87,9 +123,9 @@
     return false;
   };
 
-  /** Is a weekly budget active in the week starting on Monday `mon`? */
+  /** Is a weekly budget / "n times per week" active in the week starting on Monday `mon`? */
   R.budgetActive = function (rule, mon) {
-    if (!rule || rule.kind !== 'budget') return false;
+    if (!R.isWeekly(rule)) return false;
     for (let i = 0; i < 7; i++) if (active(rule, addDays(mon, i))) return true;
     return false;
   };
@@ -111,6 +147,7 @@
     const dur = minutes ? ' · ' + MM.meta.formatDuration(minutes) : '';
     const time = rule.time ? ' ' + rule.time : '';
     if (rule.kind === 'budget') return fill(t('rl_budget'), { d: minutes ? MM.meta.formatDuration(minutes) : '?' });
+    if (rule.kind === 'times') return MM.tr('{n}× per week', { n: rule.times }) + dur;
     if (rule.kind === 'off') {
       const f = (s) => (parse(s) ? parse(s).toLocaleDateString(MM.locale(), { day: 'numeric', month: 'short' }) : '?');
       const range = !rule.until || rule.until === rule.from ? f(rule.from) : `${f(rule.from)} – ${f(rule.until)}`;
@@ -129,13 +166,17 @@
     const m = minutes || 0;
     if (rule.kind === 'off') return 0;
     if (rule.kind === 'budget') return m;
+    if (rule.kind === 'times') return m * rule.times;
     if (rule.kind === 'weekly') return (m * rule.days.length) / rule.every;
     return (m * 12) / 52;
   };
 
   // ---- Collecting --------------------------------------------------------------
 
-  /** All routines of the given docs (Map path -> doc): [{ path, id, title, rule, minutes }]. */
+  /**
+   * All routines of the given docs (Map path -> doc): [{ path, id, title, rule, minutes, leisure }].
+   * leisure: its category is leisure - listed and checked off, but no time off the capacity.
+   */
   R.collect = function (docs) {
     const out = [];
     for (const [path, doc] of docs) {
@@ -143,7 +184,7 @@
         if (!n.repeat || n.movedTo) continue;
         out.push({
           path, id: n.id, title: (n.text || '').split('\n')[0] || 'Routine', rule: n.repeat,
-          minutes: Number(n.meta && n.meta.estimate) || 0,
+          minutes: Number(n.meta && n.meta.estimate) || 0, leisure: R.isLeisure(n.repeat),
         });
       }
     }
@@ -160,13 +201,15 @@
    * Minutes the routines take on day d: fixed appointments + share of weekly
    * budgets (workdaysOfWeek = work days of that week that are not off).
    * Nothing on a whole day off - the meeting takes place without you.
+   * Leisure routines take no time (they are spare time).
    */
   R.minutesOn = function (list, d, workdaysOfWeek) {
     if (R.isOff(list, d)) return 0;
     let m = 0;
     for (const r of list) {
-      if (r.rule.kind === 'budget') {
-        if (workdaysOfWeek > 0 && R.budgetActive(r.rule, MM.templates.mondayOf(d))) m += r.minutes / workdaysOfWeek;
+      if (r.leisure) continue;
+      if (R.isWeekly(r.rule)) {
+        if (workdaysOfWeek > 0 && R.budgetActive(r.rule, MM.templates.mondayOf(d))) m += R.perWeek(r.rule, r.minutes) / workdaysOfWeek;
       } else if (R.occursOn(r.rule, d)) {
         m += r.minutes;
       }
@@ -194,6 +237,20 @@
   };
 
   // ---- New day / week plans ------------------------------------------------------
+
+  /**
+   * The lists of a week plan for the routines without fixed days (node.routineList =
+   * category id, '' = without category). Older plans have one list "Routines this week".
+   */
+  function routineLists(doc) {
+    const out = [];
+    for (const n of Object.values(doc.nodes)) {
+      if (n.type !== 'todo') continue;
+      if (n.routineList === undefined && n.text === 'Routines this week' && !(n.meta && n.meta.deadline)) n.routineList = '';
+      if (n.routineList !== undefined) out.push(n);
+    }
+    return out;
+  }
 
   const entryText = (r, icon) => `${icon || '🔁'} ${r.title}${r.rule.time ? ' ' + r.rule.time : ''}${r.minutes ? ' (' + MM.meta.formatDuration(r.minutes) + ')' : ''}`;
 
@@ -229,17 +286,30 @@
     const cols = Object.values(doc.nodes).filter((n) => n.type === 'todo' && n.meta && n.meta.deadline &&
       !(n.tags || []).includes('carried-over'));
     const planned = new Set(doc.planned || []);
-    const expected = new Set(); // every entry the plan should have now
+    // "<list id>|<id>@<date>" -> number of entries that list should have now
+    const expected = new Map();
     const today = iso(new Date());
     const sunday = info.kind === 'week' ? iso(addDays(info.date, 6)) : '';
-    let count = 0;
-    // date: the day the entry is for (for a weekly budget the last day of the week)
-    const add = (col, r, icon, date) => {
-      const key = `${r.id}@${date}`;
-      expected.add(key);
+    let count = 0, updated = 0, dry = false;
+    // date: the day the entry is for (for a weekly routine the last day of the week);
+    // slot: number of the check box of an "n times per week" routine (0 = the first / only one)
+    const add = (col, r, icon, date, slot = 0) => {
+      const base = `${r.id}@${date}`, key = slot ? `${base}#${slot}` : base, ek = `${col.id}|${base}`;
+      expected.set(ek, Math.max(expected.get(ek) || 0, slot + 1));
+      if (dry) return;
+      if (fill && slot === 0) {
+        // renamed note, other time / duration: open entries follow, checked ones keep their text
+        const text = entryText(r, icon);
+        for (const it of col.items) {
+          if (it.routine === r.id && !it.done && it.text !== text) {
+            it.text = text;
+            updated++;
+          }
+        }
+      }
       if (fill) {
         if (date < today || planned.has(key)) return;
-        if (col.items.some((it) => it.routine === r.id)) {
+        if (col.items.filter((it) => it.routine === r.id).length > slot) {
           planned.add(key); // put in before this list was kept
           return;
         }
@@ -260,68 +330,108 @@
       add(col, { id: src.id, title: off.title, rule: { time: '' }, minutes: off.full ? 0 : off.minutes }, '🏖', iso(d));
       return off.full;
     };
-    if (info.kind === 'week') {
-      for (const col of cols) {
-        const d = parse(col.meta.deadline);
-        if (!d || markOff(col, d)) continue;
-        for (const r of list) {
-          if (R.occursOn(r.rule, d)) add(col, r, '🔁', iso(d));
-        }
-        for (const a of appts) {
-          if (a.date === iso(d)) add(col, a, '📌', iso(d));
-        }
-      }
-      // weekly budgets: one list left of the goals (the day columns are below them)
-      const budgets = list.filter((r) => R.budgetActive(r.rule, info.date));
-      if (budgets.length) {
-        const old = Object.values(doc.nodes).find((n) => n.type === 'todo' && n.text === 'Routines this week');
-        let box = old;
-        if (!box) {
-          const goals = Object.values(doc.nodes).find((n) => n.type === 'todo' && n.text === 'Goals');
-          const x = goals ? goals.x - 160 : -840, y = goals ? goals.y + goals.h / 2 : 0;
-          box = MM.createNode('todo', x, y, { text: 'Routines this week', w: 240 });
-          box.items = [];
-          box.style.fill = '#f0fff4';
-          box.style.stroke = '#38a169';
-        }
-        for (const r of budgets) add(box, r, '🔁', sunday);
-        if (!old && box.items.length) doc.nodes[box.id] = box;
-      }
-    } else {
-      // day plan: by time of day (no time = morning)
-      const byName = (name) => cols.find((c) => c.text === name);
-      // appointments are listed even on a day off - they were set for that very day
-      const day = iso(info.date);
-      for (const a of appts) {
-        if (a.date !== day) continue;
-        const col = colByTime(a.rule.time, byName);
-        if (col) add(col, a, '📌', day);
-      }
-      if (!markOff(byName('Morning') || cols[0], info.date)) {
-        for (const r of list) {
-          if (!R.occursOn(r.rule, info.date)) continue;
-          const col = colByTime(r.rule.time, byName);
-          if (col) add(col, r, '🔁', day);
-        }
-      }
-    }
-    // clean up - only when every map could be read, else its notes just look deleted
+    // Clean up first (fill only, and only when every map could be read - else its notes
+    // just look deleted): a dry run tells what belongs on which list now; open entries
+    // that do not (note deleted, appointment on another day / at another time, routine
+    // changed or in another category) are removed, then the missing ones are put in.
     let removed = 0;
     if (fill && MM.load.complete()) {
+      dry = true;
+      place();
+      dry = false;
       const lists = cols.map((c) => [c, c.meta.deadline]);
-      const box = Object.values(doc.nodes).find((n) => n.type === 'todo' && n.text === 'Routines this week');
-      if (box && sunday) lists.push([box, sunday]);
+      if (sunday) for (const box of routineLists(doc)) lists.push([box, sunday]);
+      const released = new Set();
       for (const [col, date] of lists) {
         if (!date || date < today) continue;
-        const gone = (it) => it.routine && !it.done && !expected.has(`${it.routine}@${date}`);
-        for (const it of col.items.filter(gone)) planned.delete(`${it.routine}@${date}`); // may come back later
-        const keep = col.items.filter((it) => !gone(it));
+        // per routine: checked entries always stay, open ones up to the number it should have
+        const kept = new Map();
+        for (const it of col.items) if (it.routine && it.done) kept.set(it.routine, (kept.get(it.routine) || 0) + 1);
+        const keep = col.items.filter((it) => {
+          if (!it.routine || it.done) return true;
+          const k = kept.get(it.routine) || 0;
+          if (k < (expected.get(`${col.id}|${it.routine}@${date}`) || 0)) {
+            kept.set(it.routine, k + 1);
+            return true;
+          }
+          return false;
+        });
+        for (const it of col.items) if (!keep.includes(it)) released.add(`${it.routine}@${date}`);
         removed += col.items.length - keep.length;
         col.items = keep;
       }
+      // released entries may come back later (e.g. the appointment moves back to this day):
+      // forget them in doc.planned - beyond what is still on any list of the plan
+      for (const base of released) {
+        const [id, date] = base.split('@');
+        let left = 0;
+        for (const [col, d] of lists) if (d === date) left += col.items.filter((it) => it.routine === id).length;
+        for (let s = left; s < 7; s++) planned.delete(s ? `${base}#${s}` : base);
+      }
+      // a routine list that is empty now goes (it comes back when a routine needs it)
+      for (const box of routineLists(doc)) if (!box.items.length) delete doc.nodes[box.id];
     }
+    place();
     if (planned.size || doc.planned) doc.planned = [...planned];
-    return fill ? { added: count, removed } : count;
+    return fill ? { added: count, removed, updated } : count;
+
+    /** Put every entry where it belongs (dry: only note what belongs where). */
+    function place() {
+      if (info.kind === 'week') {
+        for (const col of cols) {
+          const d = parse(col.meta.deadline);
+          if (!d || markOff(col, d)) continue;
+          for (const r of list) {
+            if (R.occursOn(r.rule, d)) add(col, r, '🔁', iso(d));
+          }
+          for (const a of appts) {
+            if (a.date === iso(d)) add(col, a, '📌', iso(d));
+          }
+        }
+        // routines of the week without fixed days (budget, n times per week): one list per
+        // category left of the goals ("Routines this week" for those without category)
+        const goals = Object.values(doc.nodes).find((n) => n.type === 'todo' && n.text === 'Goals');
+        const made = [];
+        for (const r of list.filter((x) => R.budgetActive(x.rule, info.date))) {
+          const cat = R.category(r.rule.category);
+          let box = routineLists(doc).find((n) => n.routineList === (cat ? cat.id : ''));
+          if (!box && dry) continue; // a new list has nothing to clean up
+          if (!box) {
+            const k = routineLists(doc).length;
+            const x = (goals ? goals.x - 160 : -840) - k * 260, y = goals ? goals.y + goals.h / 2 : 0;
+            box = MM.createNode('todo', x, y, { text: R.categoryTitle(cat), w: 240 });
+            box.items = [];
+            box.routineList = cat ? cat.id : '';
+            box.style.fill = '#f0fff4';
+            box.style.stroke = '#38a169';
+            doc.nodes[box.id] = box;
+            made.push(box);
+          } else if (!dry && cat && box.text !== R.categoryTitle(cat)) {
+            box.text = R.categoryTitle(cat); // category renamed / new emoji
+          }
+          const n = r.rule.kind === 'times' ? r.rule.times : 1;
+          for (let slot = 0; slot < n; slot++) add(box, r, '🔁', sunday, slot);
+        }
+        for (const box of made) if (!box.items.length) delete doc.nodes[box.id]; // nothing new for it
+      } else {
+        // day plan: by time of day (no time = morning)
+        const byName = (name) => cols.find((c) => c.text === name);
+        // appointments are listed even on a day off - they were set for that very day
+        const day = iso(info.date);
+        for (const a of appts) {
+          if (a.date !== day) continue;
+          const col = colByTime(a.rule.time, byName);
+          if (col) add(col, a, '📌', day);
+        }
+        if (!markOff(byName('Morning') || cols[0], info.date)) {
+          for (const r of list) {
+            if (!R.occursOn(r.rule, info.date)) continue;
+            const col = colByTime(r.rule.time, byName);
+            if (col) add(col, r, '🔁', day);
+          }
+        }
+      }
+    }
   };
 
   /** Show the note behind a 🔁 / 📌 / 🏖 entry; its map is opened when it is another one. */

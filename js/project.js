@@ -502,7 +502,7 @@
     await MM.load.refresh(); // fresh from disk: the cache may still hold the map we came from as it was
     const r = await MM.routines.addToPlan(doc, path, { fill: true });
     if (doc !== S.doc) return; // another map was opened meanwhile
-    if (!r.added && !r.removed && JSON.stringify(doc.planned || []) === before) return;
+    if (!r.added && !r.removed && !r.updated && JSON.stringify(doc.planned || []) === before) return;
     MM.commit();
     await MM.storage.writeFile();
     if (r.added || r.removed) {
