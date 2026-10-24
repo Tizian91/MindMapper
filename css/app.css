@@ -1361,5 +1361,11 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
   .dlg { padding: 12px 14px; }
   .dlg-buttons { flex-wrap: wrap; }
   #views-dialog, #overview-dialog, #diary-dialog { box-sizing: border-box; width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; }
+  /* toolbar: one row that can be swiped sideways - every button stays reachable
+     (until the touch stage brings a short toolbar with a "⋯" menu) */
+  #toolbar { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; gap: 6px 10px; }
+  #toolbar::-webkit-scrollbar { display: none; }
+  #toolbar .tb-group { flex: none; }
+  #toolbar .tb-group:has(> .brand:only-child) { display: none; }
   .vw-head { padding: 8px 10px; gap: 6px; }
 }
