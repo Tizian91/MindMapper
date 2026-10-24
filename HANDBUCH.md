@@ -87,6 +87,17 @@ Fast alles in MindMapper dreht sich um Aufgaben: Auslastung, Pläne, Overview, R
 - Muss es **bis zu einem Tag fertig** sein (Bericht bis Freitag)? → **Projektaufgabe** (*Deadline*)
 - Dazu fast immer: **wie lange** dauert es? → *Estimate*. Ohne Schätzung kann MindMapper keine Zeit einplanen.
 
+### Jede Note kann eine Aufgabe werden
+
+Das Besondere an MindMapper ist die **freie Struktur**: Was eine Aufgabe ist, steckt allein in ihren **Metadaten** (Deadline, Termin, Schätzung, Repeat, Status, Priorität) – und die lassen sich **jeder Note** geben. Eine einfache Note, eine Überschrift, eine Outline oder eine To-do-Liste wird so jederzeit zur Projektaufgabe, zum Termin oder zur Routine, ohne dass du sie neu anlegen musst.
+
+**Beispiel:** Du notierst einen Gedanken als einfache Note – „Workshop für die neuen Studierenden?“. In den nächsten Tagen hängen sich weitere Notes daran: Themen, Raum, wer hilft mit. Irgendwann ist klar: Das ist kein Gedanke mehr, das ist eine Aufgabe.
+- **Einfach Details setzen:** Note markieren, im Panel *Estimate* `6h` und *Deadline* eintragen – fertig ist die Projektaufgabe. Sie erscheint im Overview und zählt in der Auslastung. Mit *Scheduled* statt Deadline wird sie zum Termin, mit *Repeat* zur Routine.
+- **Oder zur Task machen:** Rechtsklick → **Change type → Task**. Text, Details, Tags und alle Verbindungen bleiben erhalten (Einträge einer To-do-Liste werden zu Stichpunkten). Als Task zeigt sie ihre Details als Chips mit Klickmenü und bekommt Fortschritt und Untertasks.
+- **Untertasks:** Sollen die angehängten Notes als Untertasks mitzählen (geteilte Schätzung, Fortschritt ∑, Kapitel 12), mach sie ebenfalls zu Tasks – Untertasks entstehen nur zwischen Tasks. Beim Verschieben (`Ctrl` + Ziehen, **Move to map**) kommen die angehängten Notes aber in jedem Fall mit.
+
+Umgekehrt geht es genauso: Nimmst du die Details wieder heraus, ist die Note wieder ein einfacher Gedanke. Nur Bilder, Dateien und Zeichnungen behalten ihren Typ.
+
 ### Was wird aus meiner Note?
 
 Es gilt die **erste** Zeile, die passt:
