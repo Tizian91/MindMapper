@@ -55,15 +55,32 @@
     return h;
   }
 
+  // Touch screens and phones: submenus open in place ("‹ back" on top) instead of
+  // beside the menu, and the menu scrolls instead of reaching beyond the screen.
+  const drill = () => MM.render.coarse || window.matchMedia('(max-width: 600px)').matches;
+  let at = { x: 0, y: 0 };
+
   /** Open a menu at screen position (x, y). */
   M.open = function (list, x, y) {
     entries = list;
-    root.innerHTML = build(list, []);
-    root.hidden = false;
-    const r = root.getBoundingClientRect();
-    root.style.left = Math.max(4, Math.min(x, window.innerWidth - r.width - 4)) + 'px';
-    root.style.top = Math.max(4, Math.min(y, window.innerHeight - r.height - 4)) + 'px';
+    at = { x, y };
+    root.classList.toggle('menu-drill', drill());
+    show([]);
   };
+
+  /** Show the entries of `path` (array of indices; [] = the menu itself) and keep it on screen. */
+  function show(path) {
+    const parent = path.length ? entryAt(path.join('.')) : null;
+    root.innerHTML = (parent
+      ? `<div class="menu-item menu-back" data-back="${path.slice(0, -1).join('.')}"><span class="menu-check">‹</span>` +
+        `<span class="menu-label">${esc(MM.tr(parent.label))}</span></div><div class="menu-sep"></div>`
+      : '') + build(parent ? parent.submenu : entries, path);
+    root.hidden = false;
+    root.scrollTop = 0;
+    const r = root.getBoundingClientRect();
+    root.style.left = Math.max(4, Math.min(at.x, window.innerWidth - r.width - 4)) + 'px';
+    root.style.top = Math.max(4, Math.min(at.y, window.innerHeight - r.height - 4)) + 'px';
+  }
 
   M.close = function () {
     if (root) root.hidden = true;
@@ -80,7 +97,16 @@
   }
 
   function onClick(e) {
+    const back = e.target.closest('.menu-back');
+    if (back) {
+      show(back.dataset.back ? back.dataset.back.split('.').map(Number) : []);
+      return;
+    }
     const el = e.target.closest('.menu-item');
+    if (el && root.classList.contains('menu-drill') && el.classList.contains('has-sub') && !el.classList.contains('disabled')) {
+      show(el.dataset.path.split('.').map(Number)); // submenu in place
+      return;
+    }
     if (!el || el.classList.contains('disabled') || el.classList.contains('has-sub')) return;
     const it = entryAt(el.dataset.path);
     M.close();

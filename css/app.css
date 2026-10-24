@@ -848,6 +848,10 @@ input[type="range"] { flex: 1; }
 }
 .menu-sub.flip-x { left: auto; right: 100%; margin: 0 2px 0 0; }
 .menu-item.has-sub:hover > .menu-sub { display: block; }
+/* touch screens / phones (contextmenu.js): submenus in place, the menu scrolls instead of leaving the screen */
+.menu.menu-drill { max-height: calc(100vh - 8px); max-height: calc(100dvh - 8px); max-width: calc(100vw - 8px); overflow-y: auto; }
+.menu.menu-drill .menu-sub { display: none !important; }
+.menu-back { font-weight: 600; }
 
 /* ---- Connections -------------------------------------------------------- */
 
