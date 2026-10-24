@@ -123,6 +123,7 @@ html, body {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   height: 100vh;
+  height: 100dvh; /* phones: the visible height, without the browser bars */
 }
 #toolbar { grid-row: 1; }
 #filterbar { grid-row: 2; }
@@ -305,7 +306,7 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 
 /* ---- Overview ----------------------------------------------------------- */
 
-#overview-dialog { width: min(980px, 92vw); height: min(720px, 86vh); max-width: none; max-height: none; overflow: hidden; }
+#overview-dialog { width: min(980px, 92vw); height: min(720px, 86vh); height: min(720px, 86dvh); max-width: none; max-height: none; overflow: hidden; }
 .ov { display: flex; flex-direction: column; height: 100%; }
 .ov-head {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
@@ -1139,7 +1140,7 @@ dl.keys dd { margin: 0; color: var(--label); }
 
 /* ---- Views (tree / radial / bubble / treemap) ---------------------------- */
 
-#views-dialog { width: 96vw; height: 92vh; max-width: none; max-height: none; padding: 0; }
+#views-dialog { width: 96vw; height: 92vh; height: 92dvh; max-width: none; max-height: none; padding: 0; }
 .vw { display: flex; flex-direction: column; height: 100%; }
 .vw-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
 .vw-head h3 { margin: 0 8px 0 0; font-size: 15px; }
@@ -1212,7 +1213,7 @@ span.ov-caret { cursor: default; }
 .sb-diary:hover { background: var(--accent-soft); }
 
 /* reader */
-#diary-dialog { width: min(900px, 94vw); height: min(860px, 92vh); max-width: none; max-height: none; overflow: hidden;
+#diary-dialog { width: min(900px, 94vw); height: min(860px, 92vh); height: min(860px, 92dvh); max-width: none; max-height: none; overflow: hidden;
   display: none; flex-direction: column; }
 #diary-dialog[open] { display: flex; }
 .dy-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
@@ -1349,4 +1350,16 @@ button.dy-cal-day.current { background: var(--accent); color: #fff; }
 @media print {
   body.print-map > *:not(#map-print) { display: none !important; }
   body.print-map #map-print { display: block !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+
+/* ---- Small screens (phones): dialogs fit into the visible screen ---------------
+   dvh = height without the browser bars; dialogs without their own size scroll
+   inside instead of hiding their buttons below the screen edge. */
+dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow: auto; }
+.dlg { max-width: 100%; }
+@media (max-width: 600px) {
+  .dlg { padding: 12px 14px; }
+  .dlg-buttons { flex-wrap: wrap; }
+  #views-dialog, #overview-dialog, #diary-dialog { box-sizing: border-box; width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; }
+  .vw-head { padding: 8px 10px; gap: 6px; }
 }
