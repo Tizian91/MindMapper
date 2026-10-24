@@ -37,6 +37,7 @@ const FILES = [
   'js/editing.js',
   'js/actions.js',
   'js/interaction.js',
+  'js/touch.js',
   'js/draw.js',
   'js/panel.js',
   'js/contextmenu.js',

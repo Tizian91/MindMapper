@@ -948,7 +948,12 @@
     if (file && t.closest('[data-more]')) {
       const r = t.closest('[data-more]').getBoundingClientRect();
       fileMenu(file.dataset.file, r.left, r.bottom);
-    } else if (file) P.openMap(file.dataset.file);
+    } else if (file) {
+      // phone: the sidebar lies over the map - out of the way once a map is chosen
+      P.openMap(file.dataset.file).then((ok) => {
+        if (ok && S.settings.showProject && window.matchMedia('(max-width: 600px)').matches) MM.actions.toggleProject();
+      });
+    }
   }
 
   // ---- "New map" dialog ----------------------------------------------------------

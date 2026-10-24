@@ -41,6 +41,19 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 | Löschen | `Entf`; bei Tasks auch der Papierkorb an der Unterkante rechts (beim Überfahren / Markieren) |
 
 - **Rechtsklick** auf eine Note, eine Verbindung oder die Fläche öffnet ein Menü mit allen passenden Befehlen.
+- **Am Handy / Tablet (Finger):**
+
+  | Geste | Wirkung |
+  |---|---|
+  | Wischen (auch auf einer Note) | Map verschieben – Notes bleiben, wo sie sind |
+  | Zwei Finger auseinander / zusammen | Zoomen (um die Stelle zwischen den Fingern) |
+  | Antippen | wie ein Klick: markieren, Kästchen abhaken, Chip-Menü öffnen, leere Fläche = Markierung aufheben |
+  | Doppeltippen | Text bearbeiten (Tastatur erscheint) |
+  | Halten (kurzes Vibrieren) und loslassen | Kontextmenü – wie Rechtsklick |
+  | Halten und dann ziehen | Note verschieben; auf der leeren Fläche: Auswahlrahmen |
+  | Griffe und blaue Ankerpunkte | wie mit der Maus (Größe ändern, verbinden); an der markierten Note sind sie größer und immer sichtbar |
+
+  Auf schmalen Bildschirmen liegt die Seitenleiste **Project** als Schublade über der Map (schließt sich nach dem Öffnen einer Map) und das **Panel** als Blatt am unteren Rand; beide blendest du mit den Knöpfen *Project* / *Panel* ein und aus. Die Toolbar lässt sich seitlich wischen.
 - Das **Panel rechts** zeigt die Eigenschaften der Markierung: Typ, Form, Farben, Details. Ist nichts markiert, stehen dort die Einstellungen.
 - **Smart guides** und **Grid** helfen beim Ausrichten. `Alt` beim Ziehen schaltet das Einrasten aus.
 - **`Ctrl` beim Ziehen** nimmt alles mit, was unter der Note hängt: Notes, auf die ihre Pfeile zeigen (beliebig tief), bei einer Gruppe deren Inhalt, und verankerte Zeichnungen. `Ctrl` darf auch erst während des Ziehens gedrückt oder losgelassen werden – die Unter-Notes kommen dann dazu bzw. springen zurück.

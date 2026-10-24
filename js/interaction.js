@@ -92,6 +92,8 @@
     vp.addEventListener('dblclick', onDoubleClick);
     vp.addEventListener('wheel', onWheel, { passive: false });
     vp.addEventListener('contextmenu', onContextMenu);
+    // touch.js translates finger gestures into these mouse steps
+    Object.assign(I, { pointerDown: onPointerDown, pointerMove: onPointerMove, pointerUp: onPointerUp, doubleClick: onDoubleClick });
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 

@@ -9,6 +9,8 @@
  */
 (function (MM) {
   const R = (MM.render = {});
+  /** Touch screen (finger): bigger handles, anchor points without hovering. */
+  R.coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   const S = MM.state;
   let els = {};
 
@@ -517,6 +519,7 @@
 
   R.overlay = function () {
     const z = S.doc.view.zoom, k = 1 / z;
+    const fat = R.coarse ? 1.8 : 1; // handles a finger can hit
     const drag = S.drag;
     const mode = drag && drag.mode;
     let s = '';
@@ -525,7 +528,7 @@
     const selNodes = MM.selectedNodes();
     if (mode !== 'connect' && mode !== 'endpoint' && !MM.editing) {
       if (selNodes.length === 1) {
-        const n = selNodes[0], off = 9 * k, hs = 8 * k;
+        const n = selNodes[0], off = 9 * k * fat, hs = 8 * k * fat;
         const pos = {
           nw: [n.x - off, n.y - off], n: [n.x + n.w / 2, n.y - off], ne: [n.x + n.w + off, n.y - off],
           e: [n.x + n.w + off, n.y + n.h / 2], se: [n.x + n.w + off, n.y + n.h + off],
@@ -566,7 +569,7 @@
         for (const [end, p] of [['source', g.p1], ['target', g.p2]]) {
           const attached = e[end].node ? ' attached' : '';
           s += `<circle class="handle-endpoint${attached}" data-edge="${esc(e.id)}" data-end="${end}"` +
-            ` cx="${p.x}" cy="${p.y}" r="${6 * k}" stroke-width="${1.5 * k}"/>`;
+            ` cx="${p.x}" cy="${p.y}" r="${6 * k * fat}" stroke-width="${1.5 * k}"/>`;
         }
       }
     }
@@ -577,7 +580,8 @@
       anchorNode = drag.target && drag.target.node;
       activeAnchor = drag.target && drag.target.anchor;
     } else if (!mode && !MM.editing) {
-      anchorNode = S.hover;
+      // a finger does not hover: the anchor points of the selected note instead
+      anchorNode = S.hover || (R.coarse && selNodes.length === 1 && !selNodes[0].movedTo ? selNodes[0].id : null);
     }
     const an = anchorNode && MM.node(anchorNode);
     if (an) {
@@ -587,7 +591,7 @@
       for (const a of Object.values(MM.geo.anchors(an))) {
         const active = a.id === activeAnchor ? ' active' : '';
         s += `<circle class="anchor-dot${active}" data-node="${esc(an.id)}" data-anchor="${a.id}"` +
-          ` cx="${a.x}" cy="${a.y}" r="${(active ? 6 : 4.5) * k}" stroke-width="${1.5 * k}"/>`;
+          ` cx="${a.x}" cy="${a.y}" r="${(active ? 6 : 4.5) * k * fat}" stroke-width="${1.5 * k}"/>`;
       }
     }
 

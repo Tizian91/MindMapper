@@ -187,6 +187,7 @@
   async function init() {
     MM.render.init();
     MM.interaction.init();
+    MM.touch.init(); // finger gestures (phones, tablets)
     MM.panel.init();
     MM.menu.init();
     MM.filterbar.init();
