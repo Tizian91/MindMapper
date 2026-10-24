@@ -13,6 +13,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 - **Projektordner (empfohlen):** In der linken Seitenleiste **Project** → **Open folder…** einen Ordner wählen. Alle Maps darin erscheinen als Liste, Unterordner (z. B. `Weeks/`, `Months/`, `Days/`) werden angezeigt.
   - Maps aus dem Projektordner werden **automatisch gespeichert** (Einstellung „Auto-save project maps into their file“ im Panel rechts, wenn nichts markiert ist).
   - Nach einem Neustart fragt der Browser einmal nach der Erlaubnis: **Reconnect**.
+- **Rein lokal:** Diese Version (`index.html`) baut **keine Verbindung nach außen** auf – der Browser blockiert sie (Content-Security-Policy im Kopf von `index.html`). Es gibt keine Cloud-Anbindung, und Bilder aus dem Netz (Markdown `![…](https://…)`) werden nicht geladen; Links öffnest du weiterhin per Klick in einem neuen Tab.
 - **Sicherung im Browser:** Zusätzlich wird die offene Map ständig im Browser zwischengespeichert und beim nächsten Start wiederhergestellt.
 - **Arbeiten an zwei Rechnern** (z. B. synchronisierter Ordner): Ist die Datei auf der Platte neuer als die Kopie im Browser, lädt MindMapper die Datei. Hattest du lokal ungespeicherte Änderungen, wirst du gefragt.
 - **Schutz vor Überschreiben:** MindMapper merkt sich, in welchem Stand eine Map gelesen wurde. Wurde die Datei inzwischen woanders geändert (anderer Rechner, zweiter Tab, Sync-Programm), wird sie **nicht** einfach überschrieben:
