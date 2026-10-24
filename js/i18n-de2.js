@@ -31,6 +31,9 @@
     'From: {name}': 'Ab: {name}',
     'Size = estimated time (no estimate = {m}m, parents = sum)': 'Größe = geschätzte Zeit (ohne Schätzung = {m}m, Eltern = Summe)',
     'Click: go to the note · Wheel: zoom · Drag: move': 'Klick: zur Notiz · Mausrad: zoomen · Ziehen: verschieben',
+    'Click: go to the note · Wheel, − / + or two fingers: zoom · Drag: move': 'Klick: zur Notiz · Mausrad, − / + oder zwei Finger: zoomen · Ziehen: verschieben',
+    'Zoom in': 'Hineinzoomen',
+    'Zoom out': 'Herauszoomen',
     // ---- placeholders in empty notes (render.js / CSS) ----
     'Type…': 'Tippen…',
     'Title': 'Titel',

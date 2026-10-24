@@ -300,7 +300,8 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 ## 15. Views und Auto-Layout
 
 - Toolbar **Views** (oder Rechtsklick → **Show as**) zeigt die Map automatisch als **Tree**, **Radial mind map**, **Bubble map** oder **Treemap**. Grundlage sind die Pfeile (A → B: B ist Kind von A) und Gruppen.
-  - Größe = geschätzte Zeit, Farbe = Status. Klick auf ein Element springt zur Note.
+  - Größe = geschätzte Zeit, Farbe = Status. Klick (bzw. Antippen) auf ein Element springt zur Note – praktisch, um in großen Maps schnell an eine Stelle zu kommen.
+  - **Zoomen:** Mausrad, die Knöpfe **− / +** oben oder zwei Finger; **Fit** zeigt wieder alles. Verschieben durch Ziehen.
 - **Auto-layout:** Rechtsklick auf eine Note → **Auto-layout sub-notes**, auf die Fläche → **Auto-layout whole map**, oder **Apply to map** im Views-Dialog. Ordnet die echten Notes als Baum oder radial an – `Ctrl+Z` macht es rückgängig.
 
 ## 16. Dateien und Bilder

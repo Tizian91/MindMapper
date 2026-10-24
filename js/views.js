@@ -453,6 +453,7 @@
           </span>
           <span class="vw-root muted"></span>
           <button data-vw="whole" title="${esc(MM.tr('Show the whole map'))}">${MM.tr('Whole map')}</button>
+          <span class="seg seg-mini"><button data-vw="zoomOut" title="${esc(MM.tr('Zoom out'))}">−</button><button data-vw="zoomIn" title="${esc(MM.tr('Zoom in'))}">+</button></span>
           <button data-vw="fit" title="${esc(MM.tr('Fit to window'))}">${MM.tr('Fit')}</button>
           <button data-vw="apply" class="primary" title="${esc(MM.tr('Arrange the real notes like this (undo with Ctrl+Z)'))}">${MM.tr('Apply to map')}</button>
           <button data-vw="close" title="${esc(MM.tr('Close (Esc)'))}">✕</button>
@@ -469,6 +470,10 @@
       else if (d) state.dir = d.dataset.vwDir;
       else if (b && b.dataset.vw === 'whole') state.rootId = null;
       else if (b && b.dataset.vw === 'fit') return fit();
+      else if (b && (b.dataset.vw === 'zoomIn' || b.dataset.vw === 'zoomOut')) {
+        const r = svg.getBoundingClientRect();
+        return zoomAt(b.dataset.vw === 'zoomIn' ? 1 / 1.4 : 1.4, r.left + r.width / 2, r.top + r.height / 2);
+      }
       else if (b && b.dataset.vw === 'apply') {
         dlg.close();
         V.autoLayout(state.kind === 'radial' ? 'radial' : state.dir === 'down' ? 'down' : 'right', state.rootId);
@@ -478,13 +483,31 @@
       render();
     });
 
-    // click: jump to the note; wheel: zoom; drag: pan
-    let drag = null;
+    // click / tap: jump to the note; wheel or two fingers: zoom; drag: pan
+    let drag = null, pinch = null;
+    const fingers = new Map(); // pointerId -> { x, y }
+    const pinchState = () => {
+      const [a, b] = [...fingers.values()];
+      return { d: Math.max(Math.hypot(a.x - b.x, a.y - b.y), 1), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    };
     svg.addEventListener('pointerdown', (e) => {
-      drag = { x: e.clientX, y: e.clientY, vb: Object.assign({}, vb), moved: false };
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       svg.setPointerCapture(e.pointerId);
+      if (fingers.size === 2) {
+        drag = null; // two fingers: zoom, no jump
+        pinch = pinchState();
+        return;
+      }
+      drag = { x: e.clientX, y: e.clientY, vb: Object.assign({}, vb), moved: false };
     });
     svg.addEventListener('pointermove', (e) => {
+      if (fingers.has(e.pointerId)) fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && fingers.size === 2) {
+        const now = pinchState();
+        zoomAt(pinch.d / now.d, now.x, now.y, now.x - pinch.x, now.y - pinch.y);
+        pinch = now;
+        return;
+      }
       if (!drag) return;
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       if (Math.hypot(dx, dy) > 3) drag.moved = true;
@@ -492,7 +515,16 @@
       vb = Object.assign({}, drag.vb, { x: drag.vb.x - dx * k, y: drag.vb.y - dy * k });
       applyVB();
     });
+    const lift = (e) => {
+      fingers.delete(e.pointerId);
+      if (fingers.size < 2) pinch = null;
+    };
+    svg.addEventListener('pointercancel', (e) => {
+      lift(e);
+      drag = null;
+    });
     svg.addEventListener('pointerup', (e) => {
+      lift(e);
       const d = drag;
       drag = null;
       if (!d || d.moved) return;
@@ -504,12 +536,24 @@
     });
     svg.addEventListener('wheel', (e) => {
       e.preventDefault();
-      const r = svg.getBoundingClientRect();
-      const f = Math.exp(e.deltaY * 0.0015);
-      const px = vb.x + ((e.clientX - r.left) / r.width) * vb.w, py = vb.y + ((e.clientY - r.top) / r.height) * vb.h;
-      vb = { x: px - (px - vb.x) * f, y: py - (py - vb.y) * f, w: vb.w * f, h: vb.h * f };
-      applyVB();
+      zoomAt(Math.exp(e.deltaY * 0.0015), e.clientX, e.clientY);
     }, { passive: false });
+  }
+
+  /**
+   * Zoom the view by factor f (> 1 = out, < 1 = in), keeping screen point (cx, cy)
+   * where it is; dx / dy (screen px) also pan (two fingers moving together).
+   */
+  function zoomAt(f, cx, cy, dx = 0, dy = 0) {
+    const r = svg.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    // not further out than 8x the whole view, not closer than 3 % of it
+    const w = Math.max(bounds.w * 0.03, Math.min(vb.w * f, Math.max(bounds.w, bounds.h * r.width / r.height) * 8));
+    f = w / vb.w;
+    const k = vb.w / r.width;
+    const px = vb.x + (cx - r.left) * k, py = vb.y + (cy - r.top) * k;
+    vb = { x: px - (px - vb.x) * f - dx * k * f, y: py - (py - vb.y) * f - dy * k * f, w: vb.w * f, h: vb.h * f };
+    applyVB();
   }
 
   const applyVB = () => svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
@@ -552,7 +596,7 @@
       [...used].map((st) => `<span><i style="background:${MM.STATUSES[st].color}"></i>${esc(MM.tr(MM.STATUSES[st].label))}</span>`).join('') +
       (state.kind === 'bubble' || state.kind === 'treemap'
         ? `<span class="muted">${esc(MM.tr('Size = estimated time (no estimate = {m}m, parents = sum)', { m: DEFAULT_MIN }))}</span>` : '') +
-      `<span class="muted">${esc(MM.tr('Click: go to the note · Wheel: zoom · Drag: move'))}</span>`;
+      `<span class="muted">${esc(MM.tr('Click: go to the note · Wheel, − / + or two fingers: zoom · Drag: move'))}</span>`;
   }
 
   /** Open the views dialog. kind: tree | radial | bubble | treemap; rootId: subtree of that note. */
