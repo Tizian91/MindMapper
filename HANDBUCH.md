@@ -338,4 +338,4 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 
 - Alles bleibt lokal: Maps sind lesbare JSON-Dateien in deinem Ordner.
 - Undo/Redo gilt für die offene Map. Was in **andere** Maps geschrieben wurde (Move to map, Carry-over), nimmst du mit **Undo move** bzw. von Hand zurück. Ausnahme: Abgehakte 🔁/📌-Einträge und Termine werden beim Undo auch in den anderen Plänen zurückgenommen.
-- Ist dieselbe Map in zwei Tabs oder auf zwei Rechnern gleichzeitig offen, gewinnt die zuletzt gespeicherte Fassung.
+- Ist dieselbe Map in zwei Tabs oder auf zwei Rechnern gleichzeitig offen, wird nichts still überschrieben: Hat sich die Datei inzwischen woanders geändert, fragt MindMapper beim Speichern, welche Version bleiben soll (*Andere Version behalten*, *Beide behalten*, *Meine Version behalten*). Schreibzugriffe auf andere Maps und das Tagebuch brechen in diesem Fall mit einem Hinweis ab. Details in Kapitel 1 unter **Schutz vor Überschreiben**.
