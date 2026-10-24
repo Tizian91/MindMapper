@@ -331,7 +331,7 @@
     flushSave();
     const P = MM.project;
     view.book = book;
-    view.diary = P.status === 'ready' ? await P.readDiary(book) : DY.normalize(null, book);
+    view.diary = P.status === 'ready' ? await P.readDiary(book, { edit: true }) : DY.normalize(null, book);
     indexDiary(view.diary);
     if (S.settings.lastDiary !== book) {
       S.settings.lastDiary = book;

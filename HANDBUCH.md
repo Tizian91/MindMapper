@@ -15,6 +15,12 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
   - Nach einem Neustart fragt der Browser einmal nach der Erlaubnis: **Reconnect**.
 - **Sicherung im Browser:** Zusätzlich wird die offene Map ständig im Browser zwischengespeichert und beim nächsten Start wiederhergestellt.
 - **Arbeiten an zwei Rechnern** (z. B. synchronisierter Ordner): Ist die Datei auf der Platte neuer als die Kopie im Browser, lädt MindMapper die Datei. Hattest du lokal ungespeicherte Änderungen, wirst du gefragt.
+- **Schutz vor Überschreiben:** MindMapper merkt sich, in welchem Stand eine Map gelesen wurde. Wurde die Datei inzwischen woanders geändert (anderer Rechner, zweiter Tab, Sync-Programm), wird sie **nicht** einfach überschrieben:
+  - **Offene Map:** Beim nächsten Speichern fragt MindMapper, welche Version bleiben soll – deine hier oder die andere in der Datei:
+    - **Andere Version behalten:** Die Datei wird geladen, deine Änderungen werden verworfen.
+    - **Beide behalten:** Deine Version wird als Kopie daneben gespeichert (z. B. `2026-W44 (Konflikt 2026-10-24 1530).mindmap.json`), das Original bleibt unverändert, du arbeitest in der Kopie weiter.
+    - **Meine Version behalten:** Die Datei wird überschrieben, die anderen Änderungen gehen verloren.
+  - **Andere Maps** (Mit-Abhaken, Move to map, Carry-over, Overview, Umbenennen) und das **Tagebuch:** Statt zu überschreiben, kommt eine Fehlermeldung. Öffne die Map bzw. das Tagebuch neu und wiederhole den Schritt.
 
 ## 2. Grundbedienung
 

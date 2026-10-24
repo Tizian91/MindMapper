@@ -108,7 +108,7 @@ backend = {
 | # | Inhalt | Ergebnis |
 |---|---|---|
 | **1** | Speicher-Schnittstelle, `local`-Anbieter = heutiger Code – **umgesetzt 24.10.2026** (`js/fsys.js`, `P.backend`, `S.file.backend`; `list(folder)` liefert nur eine Ebene, die Rekursion und Filter bleiben in `project.js`) | keine sichtbare Änderung, alles läuft wie vorher (gründlich testen: Maps, Move to map, Carry-over, Umbenennen, Assets, Tagebuch, Termin-Sync) |
-| **2** | Konfliktschutz über Versionen (lokal) | R7 erledigt |
+| **2** | Konfliktschutz über Versionen (lokal) – **umgesetzt 24.10.2026** (`write(path, text, { expect })` → `ConflictError`; `S.file.version` für die offene Map mit Dialog, `versions` in `project.js` für alle anderen Schreibzugriffe) | R7 erledigt |
 | **3** | pCloud-Anbieter: Anmeldung, Ordnerwahl, alle Dateioperationen, Konfliktschutz | privater Ordner am PC über pCloud nutzbar |
 | **4** | Touch-Bedienung + schmale Ansicht | am Android-Handy bedienbar |
 | 5 (optional) | Offline am Handy: Änderungen ohne Netz merken und beim nächsten Netz hochladen | Bandraum ohne Empfang |

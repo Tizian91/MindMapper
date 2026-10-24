@@ -70,6 +70,7 @@
 
   async function connected() {
     P.status = 'ready';
+    versions.clear();
     await MM.storage.loadProjectSettings(); // capacity of this folder (leisure / work instance)
     await P.scan();
     // the last session's map came from this folder -> link it to its file again
@@ -92,10 +93,10 @@
    * overwrite the newer file with the old copy.
    */
   async function relinkRestored(path) {
-    let modified = 0;
+    let modified = 0, version = null;
     try {
       const st = await P.backend.stat(path);
-      if (st) modified = st.modified;
+      if (st) ({ modified, version } = st);
     } catch (err) { /* unreadable: keep the local copy */ }
     const newer = modified > (MM.storage.restoredTime || 0) + 2000;
     if (newer && (!S.dirty || confirm(tr('"{path}" was changed on disk after your last session here (e.g. on another computer).\n\nOK: load the file (recommended).\nCancel: keep the local copy - it will overwrite the file.', { path })))) {
@@ -110,6 +111,7 @@
     S.file.handle = null;
     S.file.backend = P.backend;
     S.file.path = path;
+    S.file.version = version; // the local copy may replace this state of the file (checked above)
   }
 
   P.scan = async function () {
@@ -164,12 +166,18 @@
 
   P.diaryPath = (name) => `${P.DIARY_FOLDER}/${P.sanitizeName(name)}.diary.json`;
 
-  /** A diary file (normalized), or a fresh one if it does not exist yet. */
-  P.readDiary = async function (name) {
+  /**
+   * A diary file (normalized), or a fresh one if it does not exist yet.
+   * opts.edit: read for the diary view, which writes it back - its version is checked then.
+   */
+  P.readDiary = async function (name, opts) {
     let raw = null;
     try {
       const f = await P.backend.read(P.diaryPath(name));
-      if (f) raw = JSON.parse(f.text);
+      if (f) {
+        if (opts && opts.edit) versions.set(P.diaryPath(name), f.version);
+        raw = JSON.parse(f.text);
+      }
     } catch (e) { /* missing or broken: start fresh */ }
     return MM.diary.normalize(raw, name);
   };
@@ -206,9 +214,30 @@
     return !!P.backend && !!path && (await P.backend.exists(path));
   };
 
-  /** Write a document (or any text) to a path of the project folder (folders are created). */
-  P.writeText = async function (path, text) {
-    return P.backend.write(path, text);
+  /**
+   * Version of each file as last read or written here (path -> version). Writing
+   * checks it, so a map changed elsewhere meanwhile (other computer, other tab,
+   * sync program) is not overwritten. The open map keeps its own in S.file.version.
+   */
+  const versions = new Map();
+  P.setVersion = (path, version) => versions.set(path, version);
+
+  /**
+   * Write a document (or any text) to a path of the project folder (folders are created).
+   * opts.fresh: a new file (checked with P.exists before) - no version to compare.
+   */
+  P.writeText = async function (path, text, opts) {
+    try {
+      const expect = opts && opts.fresh ? undefined : versions.get(path);
+      const r = await P.backend.write(path, text, { expect });
+      versions.set(path, r.version);
+      if (path === S.file.path) S.file.version = r.version; // our own write is no conflict
+      return r;
+    } catch (err) {
+      if (!MM.fsys.isConflict(err)) throw err;
+      // the old version stays: further writes fail as well until the file is read again
+      throw new Error(tr('"{path}" was changed elsewhere in the meantime (other computer, other tab). It was not overwritten - open it again and repeat the step.', { path }));
+    }
   };
 
   /**
@@ -274,7 +303,7 @@
       carry = await P.carryFrom(P.folderOf(path), t.prevName);
       if (carry) MM.templates.addCarryOver(doc, carry.data, carry.name, path);
     }
-    await P.writeText(path, JSON.stringify(doc, null, 2));
+    await P.writeText(path, JSON.stringify(doc, null, 2), { fresh: true });
     if (carry) await markMoved(carry, path);
     await P.scan();
     return path;
@@ -328,6 +357,7 @@
     try {
       const f = await P.backend.read(path);
       if (!f) return null;
+      versions.set(path, f.version);
       const text = f.text;
       return text.trim() ? MM.normalizeDoc(JSON.parse(text)) : MM.emptyDoc();
     } catch (err) {
@@ -475,7 +505,7 @@
     if (await P.exists(path)) {
       if (!confirm(tr('"{name}" already exists. Open it instead?', { name: fname }))) return null;
     } else {
-      await P.writeText(path, JSON.stringify(doc, null, 2));
+      await P.writeText(path, JSON.stringify(doc, null, 2), { fresh: true });
       if (carry) await markMoved(carry, path);
     }
     await P.scan();
@@ -518,9 +548,11 @@
       return false;
     }
 
+    let written;
     try {
-      await P.writeText(newPath, JSON.stringify(doc, null, 2));
+      written = await P.writeText(newPath, JSON.stringify(doc, null, 2), { fresh: true });
       await P.backend.remove(oldPath);
+      versions.delete(oldPath);
     } catch (err) {
       alert(tr('Could not rename the map: {err}', { err: err.message }));
       return false;
@@ -531,6 +563,7 @@
     if (wasOpen) {
       S.file.path = newPath;
       S.file.name = newPath.split('/').pop();
+      S.file.version = written.version;
     }
     P.history = P.history.map((p) => (p === oldPath ? newPath : p));
 
@@ -761,6 +794,7 @@
         S.dirty = false;
       }
       await P.backend.remove(path);
+      versions.delete(path);
       P.history = P.history.filter((p) => p !== path);
       await P.scan();
       MM.storage.autosave();

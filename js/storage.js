@@ -165,18 +165,33 @@
   /** The open map has a file to write to: a map of the project folder or a single file handle. */
   ST.hasFile = () => inProject() || !!S.file.handle;
 
-  /** Write the current map into its file (writes are queued, never overlap). */
+  /**
+   * Write the current map into its file (writes are queued, never overlap).
+   * A map of the project folder is only written if its file is still the
+   * version read here (S.file.version) - otherwise the user decides (askConflict).
+   */
   let writeQueue = Promise.resolve();
   ST.writeFile = function () {
     clearTimeout(fileTimer);
     if (!ST.hasFile()) return writeQueue;
     const { backend, path, handle } = S.file;
     const name = path ? path.split('/').pop() : handle.name;
+    const doc = S.doc;
     const json = ST.serialize();
     writeQueue = writeQueue.then(async () => {
+      // the map was reloaded / replaced meanwhile (e.g. "Reload" in the conflict dialog)
+      if (S.doc !== doc || S.file.path !== path || S.file.backend !== backend) return;
       try {
         if (backend && path) {
-          await backend.write(path, json);
+          try {
+            const r = await backend.write(path, json, { expect: S.file.version });
+            S.file.version = r.version;
+            MM.project.setVersion(path, r.version);
+          } catch (err) {
+            if (!MM.fsys.isConflict(err)) throw err;
+            await resolveConflict(backend, path, json);
+            return;
+          }
         } else {
           const w = await handle.createWritable();
           await w.write(json);
@@ -191,6 +206,70 @@
     });
     return writeQueue;
   };
+
+  // ---- Conflict: the file was changed elsewhere since it was read ----------------
+
+  /** Let the user decide what happens with the own version (json) of the map at `path`. */
+  async function resolveConflict(backend, path, json) {
+    const choice = await askConflict(path);
+    if (choice === 'reload') {
+      await ST.openPath(path);
+      MM.ui.flash(MM.tr('Reloaded {name} - your changes were discarded', { name: S.file.name }));
+      return;
+    }
+    let target = path;
+    if (choice === 'copy') {
+      const d = new Date(), p = (n) => String(n).padStart(2, '0');
+      const stamp = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}`;
+      const base = path.replace(/\.mindmap\.json$/i, '').replace(/\.json$/i, '');
+      for (let i = 1; ; i++) {
+        target = `${base} (${MM.tr('conflict')} ${stamp}${i > 1 ? ' ' + i : ''}).mindmap.json`;
+        if (!(await backend.exists(target))) break;
+      }
+    }
+    const r = await backend.write(target, json); // overwrite: on purpose, without a check
+    S.file.path = target;
+    S.file.name = target.split('/').pop();
+    S.file.version = r.version;
+    MM.project.setVersion(target, r.version);
+    S.dirty = false;
+    ST.autosave();
+    if (choice === 'copy') {
+      await MM.project.scan();
+      MM.ui.flash(MM.tr('Your version was saved as {name}; the original stays as it is', { name: S.file.name }));
+    }
+    MM.refresh();
+  }
+
+  /** Dialog: 'reload' | 'overwrite' | 'copy' (built in the current language each time). */
+  function askConflict(path) {
+    return new Promise((resolve) => {
+      const tr = MM.tr, esc = MM.render.esc;
+      const d = document.createElement('dialog');
+      d.className = 'conflict-dialog';
+      const btn = (cf, label, hint, cls) => `<button type="button" data-cf="${cf}"${cls ? ` class="${cls}"` : ''}>` +
+        `<b>${esc(tr(label))}</b><small>${esc(tr(hint))}</small></button>`;
+      d.innerHTML = `
+        <form method="dialog" class="dlg">
+          <h3>${esc(tr('"{name}" was changed elsewhere', { name: MM.project.mapName(path) }))}</h3>
+          <p>${esc(tr('Since you opened this map here, its file was changed elsewhere (another computer, another tab or a sync program). There are two versions now: yours here and the other one in the file. Which one do you want to keep?'))}</p>
+          <div class="conflict-buttons">
+            ${btn('reload', 'Keep the other version', 'Load the file, discard my changes')}
+            ${btn('copy', 'Keep both', 'Save mine as a copy next to it', 'primary')}
+            ${btn('overwrite', 'Keep my version', 'Overwrite the file, the other changes are lost')}
+          </div>
+        </form>`;
+      document.body.appendChild(d);
+      d.addEventListener('keydown', (e) => e.stopPropagation());
+      d.addEventListener('cancel', (e) => e.preventDefault()); // Esc: a decision is needed
+      d.querySelectorAll('[data-cf]').forEach((b) => b.addEventListener('click', () => {
+        d.close();
+        d.remove();
+        resolve(b.dataset.cf);
+      }));
+      d.showModal();
+    });
+  }
 
   ST.autosave = function () {
     const json = JSON.stringify({
@@ -251,6 +330,8 @@
     S.file.handle = path ? null : handle;
     S.file.backend = path ? b : null;
     S.file.path = path;
+    const st = path ? await b.stat(path) : null;
+    S.file.version = st ? st.version : null;
   }
 
   /** Directory to start the file pickers in (the local project folder). */
@@ -267,11 +348,15 @@
 
   ST.save = async function (saveAs) {
     MM.edit.finish();
+    if (!saveAs && inProject()) {
+      await ST.writeFile(); // with the conflict check; reports errors itself
+      if (!S.dirty) MM.ui.flash(MM.tr('Saved {name}', { name: S.file.name }));
+      MM.refresh();
+      return;
+    }
     const json = ST.serialize();
     try {
-      if (!saveAs && inProject()) {
-        await S.file.backend.write(S.file.path, json);
-      } else if (window.showSaveFilePicker) {
+      if (window.showSaveFilePicker) {
         let handle = S.file.handle;
         if (!handle || saveAs) {
           const opts = { suggestedName: S.file.name, types: FILE_TYPES };
@@ -353,6 +438,8 @@
     S.file.handle = null;
     S.file.backend = backend;
     S.file.path = path;
+    S.file.version = f.version;
+    MM.project.setVersion(path, f.version);
     afterOpen();
   };
 

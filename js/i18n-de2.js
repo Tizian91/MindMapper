@@ -216,6 +216,21 @@
     'Removed {n} entries of deleted or moved appointments / routines': '{n} Einträge gelöschter oder verschobener Termine/Routinen entfernt',
     'Show the note of this entry': 'Die Notiz zu diesem Eintrag zeigen',
     'The note of this entry does not exist any more': 'Die Notiz zu diesem Eintrag gibt es nicht mehr',
+    // ---- storage.js / project.js (conflict protection) ----
+    '"{name}" was changed elsewhere': '„{name}“ wurde woanders geändert',
+    'Since you opened this map here, its file was changed elsewhere (another computer, another tab or a sync program). There are two versions now: yours here and the other one in the file. Which one do you want to keep?':
+      'Seit du diese Map hier geöffnet hast, wurde ihre Datei woanders geändert (anderer Rechner, anderer Tab oder ein Sync-Programm). Es gibt jetzt zwei Versionen: deine hier und die andere in der Datei. Welche möchtest du behalten?',
+    'Keep the other version': 'Andere Version behalten',
+    'Load the file, discard my changes': 'Datei laden, meine Änderungen verwerfen',
+    'Keep both': 'Beide behalten',
+    'Save mine as a copy next to it': 'Meine Version als Kopie daneben speichern',
+    'Keep my version': 'Meine Version behalten',
+    'Overwrite the file, the other changes are lost': 'Datei überschreiben, die anderen Änderungen gehen verloren',
+    'conflict': 'Konflikt',
+    'Reloaded {name} - your changes were discarded': '{name} neu geladen – deine Änderungen wurden verworfen',
+    'Your version was saved as {name}; the original stays as it is': 'Deine Version wurde als {name} gespeichert; das Original bleibt, wie es ist',
+    '"{path}" was changed elsewhere in the meantime (other computer, other tab). It was not overwritten - open it again and repeat the step.':
+      '„{path}“ wurde inzwischen woanders geändert (anderer Rechner, anderer Tab) und deshalb nicht überschrieben – bitte neu öffnen und den Schritt wiederholen.',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);
