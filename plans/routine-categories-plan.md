@@ -12,7 +12,7 @@ Routinen sollen auch **motivieren**, nicht nur Zeit von der Kapazität abziehen.
 - Mit Schätzung zieht jede Routine Zeit von der Kapazität ab (`routines.js` `minutesOn`, `workload.js`).
 - Pläne: Routinen mit festem Tag → Tagesspalte; Wochenbudgets → Liste „Routines this week“.
 
-## Etappe A – Kategorien, Freizeit, Zettel, „x-mal pro Woche“ (umgesetzt 24.10.2026, Test im Browser ausstehend)
+## Etappe A – Kategorien, Freizeit, Zettel, „x-mal pro Woche“ (umgesetzt und getestet 24.10.2026)
 
 ### Kategorien
 - **Zuweisen:** Panel → Details, unter *Repeat* eine Zeile **Category** (Auswahl: *(none)*, vorhandene Kategorien, *New category…* → Name eintippen, sofort angelegt und gewählt). Gespeichert als `repeat.category` = ID der Kategorie (Umbenennen ändert nichts an den Routinen).
