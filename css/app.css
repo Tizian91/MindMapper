@@ -132,9 +132,16 @@ html, body {
 
 /* ---- Toolbar ------------------------------------------------------------ */
 
+/* always one row: when the window is too narrow it can be moved sideways
+   (finger, or the mouse wheel over the toolbar - main.js) instead of wrapping */
+#app { grid-template-columns: minmax(0, 1fr); } /* a grid item is at least as wide as its content otherwise */
 #toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  min-width: 0;
   align-items: center;
   gap: 6px 14px;
   padding: 6px 10px;
@@ -142,7 +149,10 @@ html, body {
   border-bottom: 1px solid var(--border);
 }
 
-.tb-group { display: flex; gap: 4px; align-items: center; }
+.tb-group { display: flex; flex: none; gap: 4px; align-items: center; }
+/* thin line between the groups (not before the group pushed to the right, it stands apart) */
+.tb-group + .tb-group:not(.tb-right) { border-left: 1px solid var(--border); padding-left: 10px; margin-left: -4px; }
+#toolbar::-webkit-scrollbar { display: none; }
 .tb-right { margin-left: auto; }
 .brand { font-weight: 700; font-size: 15px; color: var(--accent); margin-right: 4px; }
 
@@ -1372,11 +1382,9 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
   #views-dialog, #overview-dialog, #diary-dialog { box-sizing: border-box; width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; }
   /* toolbar: one row that can be swiped sideways - every button stays reachable
      (until the touch stage brings a short toolbar with a "⋯" menu) */
-  #app { grid-template-columns: minmax(0, 1fr); } /* a grid item is at least as wide as its content otherwise */
-  #toolbar { min-width: 0; max-width: 100vw; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; gap: 6px 10px; }
-  #toolbar::-webkit-scrollbar { display: none; }
-  #toolbar .tb-group { flex: none; }
+  #toolbar { gap: 6px 10px; }
   #toolbar .tb-group:has(> .brand:only-child) { display: none; }
+  #toolbar .tb-group:has(> .brand:only-child) + .tb-group { border-left: 0; padding-left: 0; margin-left: 0; }
   .vw-head { padding: 8px 10px; gap: 6px; }
 }
 

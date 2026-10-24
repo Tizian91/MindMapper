@@ -22,39 +22,37 @@
       <div class="tb-group">
         <span class="brand">MindMapper</span>
       </div>
+      <!-- groups by purpose, separated by thin lines: files | overview | editing | display | arranging … view | panel | app -->
       <div class="tb-group">
-        <button data-action="newDoc" title="New map">New</button>
-        <button data-action="open" title="Open… (Ctrl+O)">Open</button>
-        <button data-action="save" title="Save (Ctrl+S)">Save</button>
-        <button data-action="saveAs" title="Save as… (Ctrl+Shift+S)">Save as</button>
-        <button data-action="exportPdf" title="Map as PDF / print (Ctrl+P)">PDF</button>
+        <button data-action="fileMenu" id="file-btn" title="New map, open, save, save as, PDF / print">File ▾</button>
         <button data-action="toggleProject" data-toggle="showProject" title="Project folder with several maps">Project</button>
-        <button data-action="togglePanel" data-toggle="showPanel" title="Toggle properties panel">Panel</button>
+      </div>
+      <div class="tb-group">
         <button data-action="overview" title="Tasks of all maps in the project folder">Overview</button>
         <button data-action="views" title="Tree, radial, bubble and treemap view of this map (selected note = start)">Views</button>
       </div>
       <div class="tb-group">
         <button data-action="undo" title="Undo (Ctrl+Z)">↶</button>
         <button data-action="redo" title="Redo (Ctrl+Y)">↷</button>
-      </div>
-      <div class="tb-group">
         <button data-action="insertMenu" id="insert-btn" title="Insert a note (or right-click the canvas)">+ Insert ▾</button>
-        <button data-action="emoji" id="emoji-btn" title="Emoji / symbol (Ctrl+. or Ctrl+Shift+E)">☺</button>
         <button data-action="drawMenu" id="draw-btn" title="Draw a rectangle, ellipse, line or arrow">✎ Draw ▾</button>
-      </div>
-      <div class="tb-group">
-        <button data-action="toggleGuides" data-toggle="smartGuides" title="Snap to other notes (smart guides). Hold Alt while dragging to bypass.">Smart guides</button>
-        <button data-action="toggleGrid" data-toggle="grid" title="Snap to grid">Grid</button>
       </div>
       <div class="tb-group">
         <button data-action="toggleMeta" data-toggle="showMeta" title="Show deadline, estimate, priority and tags below notes">Details</button>
         <button data-action="toggleFilter" title="Filter notes by text, tags, priority, deadline">Filter</button>
       </div>
+      <div class="tb-group">
+        <button data-action="toggleGuides" data-toggle="smartGuides" title="Snap to other notes (smart guides). Hold Alt while dragging to bypass.">Smart guides</button>
+        <button data-action="toggleGrid" data-toggle="grid" title="Snap to grid">Grid</button>
+      </div>
       <div class="tb-group tb-right">
-        <button data-action="zoomOut" title="Zoom out (-)">−</button>
-        <button data-action="zoomReset" id="zoom-label" title="Reset zoom to 100%">100%</button>
-        <button data-action="zoomIn" title="Zoom in (+)">+</button>
         <button data-action="fit" title="Fit map to window (Shift+1)">Fit</button>
+        <button data-action="zoomMenu" id="zoom-label" title="Zoom: in, out, 100 %">100% ▾</button>
+      </div>
+      <div class="tb-group">
+        <button data-action="togglePanel" data-toggle="showPanel" title="Toggle properties panel">Panel</button>
+      </div>
+      <div class="tb-group">
         <button data-action="toggleTheme" id="theme-btn" title="Toggle theme (Light / Dark / Auto)">🌓</button>
         <button data-action="toggleLang" id="lang-btn" title="Switch language">EN</button>
         <button data-action="help" title="Handbook and example map">?</button>

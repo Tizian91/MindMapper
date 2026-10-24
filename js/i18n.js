@@ -11,15 +11,8 @@ window.MM = window.MM || {};
   I18N.translations = {
     de: {
       // Toolbar
-      tbNew: 'Neu',
-      tbNewTitle: 'Neue Map',
-      tbOpen: 'Öffnen',
-      tbOpenTitle: 'Öffnen… (Strg+O)',
-      tbSave: 'Speichern',
-      tbSaveTitle: 'Speichern (Strg+S)',
-      tbSaveAs: 'Speichern unter',
-      tbSaveAsTitle: 'Speichern unter… (Strg+Umschalt+S)',
-      tbPdfTitle: 'Map als PDF / drucken (Strg+P)',
+      tbFile: 'Datei ▾',
+      tbFileTitle: 'Neue Map, öffnen, speichern, speichern unter, PDF / drucken',
       tbProject: 'Projekt',
       tbProjectTitle: 'Projektordner mit mehreren Maps',
       tbPanel: 'Panel',
@@ -351,15 +344,8 @@ window.MM = window.MM || {};
     },
     en: {
       // Toolbar
-      tbNew: 'New',
-      tbNewTitle: 'New map',
-      tbOpen: 'Open',
-      tbOpenTitle: 'Open… (Ctrl+O)',
-      tbSave: 'Save',
-      tbSaveTitle: 'Save (Ctrl+S)',
-      tbSaveAs: 'Save as',
-      tbSaveAsTitle: 'Save as… (Ctrl+Shift+S)',
-      tbPdfTitle: 'Map as PDF / print (Ctrl+P)',
+      tbFile: 'File ▾',
+      tbFileTitle: 'New map, open, save, save as, PDF / print',
       tbProject: 'Project',
       tbProjectTitle: 'Project folder with several maps',
       tbPanel: 'Panel',
@@ -759,11 +745,7 @@ window.MM = window.MM || {};
     document.documentElement.lang = lang;
 
     const tbButtons = {
-      newDoc: { text: MM.t('tbNew'), title: MM.t('tbNewTitle'), aria: MM.t('tbNewTitle') },
-      open: { text: MM.t('tbOpen'), title: MM.t('tbOpenTitle'), aria: MM.t('tbOpenTitle') },
-      save: { text: MM.t('tbSave'), title: MM.t('tbSaveTitle'), aria: MM.t('tbSaveTitle') },
-      saveAs: { text: MM.t('tbSaveAs'), title: MM.t('tbSaveAsTitle'), aria: MM.t('tbSaveAsTitle') },
-      exportPdf: { title: MM.t('tbPdfTitle'), aria: MM.t('tbPdfTitle') },
+      fileMenu: { text: MM.t('tbFile'), title: MM.t('tbFileTitle'), aria: MM.t('tbFileTitle') },
       toggleProject: { text: MM.t('tbProject'), title: MM.t('tbProjectTitle'), aria: MM.t('tbProjectTitle') },
       togglePanel: { text: MM.t('tbPanel'), title: MM.t('tbPanelTitle'), aria: MM.t('tbPanelAria') },
       overview: { text: MM.t('tbOverview'), title: MM.t('tbOverviewTitle'), aria: MM.t('tbOverviewTitle') },
@@ -771,15 +753,12 @@ window.MM = window.MM || {};
       undo: { title: MM.t('tbUndoTitle'), aria: MM.t('tbUndoAria') },
       redo: { title: MM.t('tbRedoTitle'), aria: MM.t('tbRedoAria') },
       insertMenu: { text: MM.t('tbInsert'), title: MM.t('tbInsertTitle'), aria: MM.t('tbInsertTitle') },
-      emoji: { title: MM.t('tbEmojiTitle'), aria: MM.t('tbEmojiTitle') },
       drawMenu: { text: MM.t('tbDraw'), title: MM.t('tbDrawTitle'), aria: MM.t('tbDrawTitle') },
       toggleGuides: { text: MM.t('tbGuides'), title: MM.t('tbGuidesTitle'), aria: MM.t('tbGuidesTitle') },
       toggleGrid: { text: MM.t('tbGrid'), title: MM.t('tbGridTitle'), aria: MM.t('tbGridTitle') },
       toggleMeta: { text: MM.t('tbDetails'), title: MM.t('tbDetailsTitle'), aria: MM.t('tbDetailsTitle') },
       toggleFilter: { text: MM.t('tbFilter'), title: MM.t('tbFilterTitle'), aria: MM.t('tbFilterTitle') },
-      zoomOut: { title: MM.t('tbZoomOutTitle'), aria: MM.t('tbZoomOutAria') },
-      zoomReset: { title: MM.t('tbZoomResetTitle'), aria: MM.t('tbZoomResetAria') },
-      zoomIn: { title: MM.t('tbZoomInTitle'), aria: MM.t('tbZoomInAria') },
+      zoomMenu: { title: MM.tr('Zoom: in, out, 100 %'), aria: MM.tr('Zoom: in, out, 100 %') },
       fit: { text: MM.t('tbFit'), title: MM.t('tbFitTitle'), aria: MM.t('tbFitTitle') },
       help: { title: MM.t('tbHelpTitle'), aria: MM.t('tbHelpAria') },
     };

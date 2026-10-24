@@ -9,8 +9,9 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 ## 1. Starten und Speichern
 
 - **Starten:** `index.html` doppelklicken. Empfohlen sind **Edge** oder **Chrome** – nur dort kann MindMapper direkt in Dateien und Ordner schreiben.
-- **Einzelne Map:** **Open** / **Save** / **Save as** öffnen und speichern eine Datei `*.mindmap.json`.
-- **Als PDF / drucken:** Toolbar **PDF** oder `Ctrl+P`. Im Dialog wählst du **ganze Map**, **sichtbaren Ausschnitt** oder **markierte Notes**, Papier **A4 / A3** und **Quer-, Hochformat oder automatisch**; auf Wunsch stehen Name der Map und Datum oben. Alles wird **auf eine Seite** verkleinert. Für ein PDF im Druckdialog als Drucker „Als PDF speichern“ wählen. Gedruckt wird immer hell (auch im Darkmode); ein aktiver Filter „ausblenden“ gilt auch für den Druck.
+- **Menü File ▾** (ganz links in der Toolbar): **New map…** (mit offenem Projektordner: neue Map im Ordner, sonst eine leere, noch ungespeicherte Map), **Open file…** (`Ctrl+O`), **Save** (`Ctrl+S`), **Save as…** (`Ctrl+Shift+S`) und **Map as PDF / print…** (`Ctrl+P`).
+- **Einzelne Map ohne Projektordner** (z. B. in Firefox oder am Handy in der lokalen Version): **Open file…** / **Save** / **Save as…** öffnen und speichern eine Datei `*.mindmap.json`. **Save as…** legt auch eine Kopie einer Projekt-Map als Datei ab, z. B. zum Weitergeben.
+- **Als PDF / drucken:** **File ▾ → Map as PDF / print…** oder `Ctrl+P`. Im Dialog wählst du **ganze Map**, **sichtbaren Ausschnitt** oder **markierte Notes**, Papier **A4 / A3** und **Quer-, Hochformat oder automatisch**; auf Wunsch stehen Name der Map und Datum oben. Alles wird **auf eine Seite** verkleinert. Für ein PDF im Druckdialog als Drucker „Als PDF speichern“ wählen. Gedruckt wird immer hell (auch im Darkmode); ein aktiver Filter „ausblenden“ gilt auch für den Druck.
 - **Projektordner (empfohlen):** In der linken Seitenleiste **Project** → **Open folder…** einen Ordner wählen. Alle Maps darin erscheinen als Liste, Unterordner (z. B. `Weeks/`, `Months/`, `Days/`) werden angezeigt.
   - Maps aus dem Projektordner werden **automatisch gespeichert** (Einstellung „Auto-save project maps into their file“ im Panel rechts, wenn nichts markiert ist).
   - Nach einem Neustart fragt der Browser einmal nach der Erlaubnis: **Reconnect**.
@@ -35,7 +36,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 | Verschieben / Größe | Ziehen; Ecken und Kanten der Markierung ziehen |
 | Mehrere markieren | Rahmen aufziehen, oder `Shift` / `Ctrl` + Klick |
 | Ansicht verschieben | `Leertaste` + Ziehen oder mittlere Maustaste |
-| Zoomen | Mausrad; **Fit** bzw. `Shift+1` zeigt alles |
+| Zoomen | Mausrad, `+` / `-` oder der Knopf mit der Zoomstufe (z. B. **100% ▾**: hinein, heraus, 100 %); **Fit** bzw. `Shift+1` zeigt alles |
 | Kopieren / Einfügen / Duplizieren | `Ctrl+C` / `Ctrl+V` / `Ctrl+D` |
 | Rückgängig / Wiederholen | `Ctrl+Z` / `Ctrl+Y` |
 | Löschen | `Entf`; bei Tasks auch der Papierkorb an der Unterkante rechts (beim Überfahren / Markieren) |
@@ -352,7 +353,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 
 ## 17. Emoji
 
-`Ctrl+.` oder `Ctrl+Shift+E` (auch beim Schreiben), Knopf **☺** in der Toolbar, Rechtsklick → **Emoji…** oder **Insert → Emoji…**: ins Textfeld einfügen oder als eigene, große Note. Eine solche **Emoji-Note** verhält sich wie ein Bild: Das Zeichen wächst mit dem Rahmen, und sie lässt sich drehen (runder Griff, Rechtsklick → **Rotate**, am Handy zwei Finger). Steht der Cursor in einem **Eingabefeld des Panels** (z. B. Tags, Link, Name einer Routine-Kategorie), landet das Emoji in diesem Feld.
+`Ctrl+.` oder `Ctrl+Shift+E` (auch beim Schreiben), Rechtsklick → **Emoji…** (an der Stelle des Klicks) oder **Insert → Emoji…**: ins Textfeld einfügen oder als eigene, große Note. Am Handy kommen Emojis in einen Text einfach über die Handy-Tastatur. Eine solche **Emoji-Note** verhält sich wie ein Bild: Das Zeichen wächst mit dem Rahmen, und sie lässt sich drehen (runder Griff, Rechtsklick → **Rotate**, am Handy zwei Finger). Steht der Cursor in einem **Eingabefeld des Panels** (z. B. Tags, Link, Name einer Routine-Kategorie), landet das Emoji in diesem Feld.
 
 ## 18. Darstellung: Darkmode, Sprache, Panel
 

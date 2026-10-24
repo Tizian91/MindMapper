@@ -20,7 +20,7 @@
     root.addEventListener('contextmenu', (e) => e.preventDefault());
     root.addEventListener('mouseover', onHover);
     document.addEventListener('pointerdown', (e) => {
-      if (!root.hidden && !root.contains(e.target) && !e.target.closest('#insert-btn')) M.close();
+      if (!root.hidden && !root.contains(e.target) && !e.target.closest('#insert-btn, #file-btn, #zoom-label')) M.close();
     }, true);
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !root.hidden) {

@@ -265,6 +265,15 @@
     '{n} note(s) below made tasks as well': '{n} Note(s) darunter ebenfalls zu Tasks gemacht',
     '{n} note(s) made tasks': '{n} Note(s) zu Tasks gemacht',
     'Make tasks (with notes below)': 'Zu Tasks machen (mit Notes darunter)',
+    // ---- actions.js (toolbar "File" menu) ----
+    'New map…': 'Neue Map…',
+    'New empty map': 'Neue leere Map',
+    'Open file…': 'Datei öffnen…',
+    'Save': 'Speichern',
+    'Save as…': 'Speichern unter…',
+    'Map as PDF / print…': 'Map als PDF / drucken…',
+    'Zoom: in, out, 100 %': 'Zoom: hinein, heraus, 100 %',
+    'Fit map to window': 'Ganze Map einpassen',
     // ---- turning images (map and diary) ----
     'Rotate': 'Drehen',
     'Rotate right (90°)': 'Nach rechts drehen (90°)',

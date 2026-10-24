@@ -18,7 +18,7 @@
     });
     document.querySelector('[data-action="undo"]').disabled = !MM.history.undoStack.length;
     document.querySelector('[data-action="redo"]').disabled = !MM.history.redoStack.length;
-    document.getElementById('zoom-label').textContent = Math.round(S.doc.view.zoom * 100) + '%';
+    document.getElementById('zoom-label').textContent = Math.round(S.doc.view.zoom * 100) + '% ▾';
 
     const name = (S.file.path || S.file.name) + (S.dirty ? ' •' : '');
     document.getElementById('status-file').textContent = name;
@@ -197,12 +197,17 @@
     MM.filterbar.rebuild();
     MM.panel.applyLayout();
 
-    document.getElementById('toolbar').addEventListener('click', (e) => {
+    const toolbar = document.getElementById('toolbar');
+    toolbar.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-action]');
       if (btn && !btn.disabled) MM.actions[btn.dataset.action](btn.dataset.value);
     });
-    // ☺ must not end a running text edit: the emoji goes in at the caret
-    document.getElementById('emoji-btn').addEventListener('mousedown', (e) => e.preventDefault());
+    // a window too narrow for the toolbar: the mouse wheel moves it sideways (it never wraps)
+    toolbar.addEventListener('wheel', (e) => {
+      if (toolbar.scrollWidth <= toolbar.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      toolbar.scrollLeft += e.deltaY;
+    }, { passive: false });
     document.getElementById('status-hint').textContent = UI.defaultHint;
     document.getElementById('status-load').addEventListener('click', () => MM.overview.open('load'));
 

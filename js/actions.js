@@ -295,9 +295,41 @@
     MM.menu.open(MM.insertItems((type) => A.addNode(type), MM.viewCenter()), r.left, r.bottom + 2);
   };
 
-  /** Toolbar ☺: emoji picker below the button (into the edited / selected note, else as a note). */
+  /** Toolbar "100% ▾": the zoom steps (the wheel and two fingers zoom as well). */
+  A.zoomMenu = function () {
+    if (MM.menu.isOpen()) return MM.menu.close();
+    const r = document.getElementById('zoom-label').getBoundingClientRect();
+    MM.menu.open([
+      { label: 'Zoom in', shortcut: '+', action: A.zoomIn },
+      { label: 'Zoom out', shortcut: '−', action: A.zoomOut },
+      { label: '100 %', action: A.zoomReset },
+      '-',
+      { label: 'Fit map to window', shortcut: 'Shift+1', action: A.fit },
+    ], r.left, r.bottom + 2);
+  };
+
+  /** Emoji picker (into the edited / selected note, else as a note). */
   A.emoji = function () {
-    MM.interaction.openEmojiPicker(document.getElementById('emoji-btn').getBoundingClientRect());
+    MM.interaction.openEmojiPicker();
+  };
+
+  /**
+   * Toolbar "File": everything about files in one menu. "New map" makes a map of
+   * the project folder when one is open - otherwise an empty, unsaved map.
+   */
+  A.fileMenu = function () {
+    if (MM.menu.isOpen()) return MM.menu.close();
+    const r = document.getElementById('file-btn').getBoundingClientRect();
+    const inFolder = MM.project.status === 'ready';
+    MM.menu.open([
+      { label: inFolder ? 'New map…' : 'New empty map', action: () => (inFolder ? MM.project.showNewDialog() : A.newDoc()) },
+      { label: 'Open file…', shortcut: 'Ctrl+O', action: A.open },
+      '-',
+      { label: 'Save', shortcut: 'Ctrl+S', action: A.save },
+      { label: 'Save as…', shortcut: 'Ctrl+Shift+S', action: A.saveAs },
+      '-',
+      { label: 'Map as PDF / print…', shortcut: 'Ctrl+P', action: A.exportPdf },
+    ], r.left, r.bottom + 2);
   };
 
   /**
