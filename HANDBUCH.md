@@ -51,6 +51,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
   | Doppeltippen | Text bearbeiten (Tastatur erscheint) |
   | Halten (kurzes Vibrieren) und loslassen | Kontextmenü – wie Rechtsklick |
   | Halten und dann ziehen | Note verschieben; auf der leeren Fläche: Auswahlrahmen |
+  | Zwei Finger auf einem markierten Bild | Bild drehen und vergrößern / verkleinern |
   | Griffe und blaue Ankerpunkte | wie mit der Maus (Größe ändern, verbinden); an der markierten Note sind sie größer und immer sichtbar |
 
   Auf schmalen Bildschirmen liegt die Seitenleiste **Project** als Schublade über der Map (schließt sich nach dem Öffnen einer Map) und das **Panel** als Blatt am unteren Rand; beide blendest du mit den Knöpfen *Project* / *Panel* ein und aus. Die Toolbar lässt sich seitlich wischen.
@@ -307,6 +308,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 ## 16. Dateien und Bilder
 
 - **Bilder** per Drag & Drop, `Ctrl+V` oder **Insert → Image…**. Sie werden in der Map gespeichert.
+  - **Drehen:** Über einem markierten Bild sitzt ein runder Griff – ziehen dreht das Bild um seine Mitte (rastet bei 0°, 90°, 180°, 270° ein; mit `Shift` in 15°-Schritten). Oder Rechtsklick → **Rotate** → 90° nach rechts / links bzw. **Straighten** (gerade stellen). Am Handy: Bild antippen, dann mit **zwei Fingern** drehen und gleichzeitig größer / kleiner ziehen.
 - **Andere Dateien** (Excel, Word, PDF, …) auf die Fläche ziehen oder **Insert → File…**: Die Datei wird in den Unterordner `Assets/` des Projektordners kopiert, die Note verweist darauf.
   - Öffnen per Klick auf das Symbol, ↗ oder `Ctrl+Klick`. PDF, Text, Bilder usw. öffnen im Browser, alles andere wird heruntergeladen.
   - Rechtsklick: **Open file ↗**, **Replace file…**, **Show file path**. Löschen der Note löscht die Datei nicht.
@@ -340,9 +342,10 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
   - Wird eine Notiz danach geändert, gelöscht oder auf einen anderen Tag gelegt, steht das als ✎-Hinweis über dem Eintrag. Später hinzugekommene Einträge erscheinen unter **Nach dem Abschluss hinzugekommen**.
   - Auf der Map trägt die Notiz 🔒 im Kopf, nach einer Änderung zusätzlich **✎ geändert**.
   - **Wieder öffnen** (mit Rückfrage) verwirft die abgeschlossene Fassung.
-- **🖼 Sticker** (Leseansicht oben rechts) schaltet die Seite in den Gestaltungsmodus: **😀 Sticker** (Emoji), **🖼 Bild** und Zeichnungen (▭ ◯ ╱ ➚, Farbe daneben) frei auf die Seite setzen. Ziehen verschiebt, die Ecke ändert die Größe, `Entf` oder 🗑 löscht. **✓ Fertig** beendet den Modus. Sticker & Co. gehören zur Tagebuchseite (nicht zur Notiz in der Map), bleiben auch auf abgeschlossenen Seiten und werden mitgedruckt.
+- **🖼 Sticker** (Leseansicht oben rechts) schaltet die Seite in den Gestaltungsmodus: **😀 Sticker** (Emoji), **🖼 Bild** und Zeichnungen (▭ ◯ ╱ ➚, Farbe daneben) frei auf die Seite setzen. Ziehen verschiebt, die Ecke ändert die Größe, der runde Griff darüber dreht (mit `Shift` in 15°-Schritten), `Entf` oder 🗑 löscht. Am Handy: zwei Finger auf dem gewählten Sticker / Bild drehen und skalieren ihn. **✓ Fertig** beendet den Modus. Sticker & Co. gehören zur Tagebuchseite (nicht zur Notiz in der Map), bleiben auch auf abgeschlossenen Seiten und werden mitgedruckt.
   - **Wie eingeklebt:** Ein Sticker gehört zu dem Eintrag, auf dem er abgelegt wird (zwischen zwei Einträgen: zum oberen, über dem ersten: zur Seite). Rutscht der Eintrag später nach unten, z. B. weil darüber ein neuer Eintrag dazukommt, wandert der Sticker mit.
   - **Platz schaffen:** Im Gestaltungsmodus den **Kopf eines Eintrags** nach unten ziehen – darüber entstehen Leerzeilen (in ganzen Zeilen, zurück bis zum ursprünglichen Platz), z. B. für ein Bild zwischen zwei Einträgen.
+  - **Am Handy:** Die Seite behält ihre A4-Breite (gleicher Umbruch wie im Druck, Sticker bleiben an ihrem Platz) und wird als Ganzes auf Bildschirmbreite verkleinert – wie ein PDF. Mit einem Finger scrollen, mit **zwei Fingern** hineinzoomen (bis doppelte Größe).
   - **Auf der Linie:** Jeder Eintrag beginnt auf einer Linie der Linierung, Absätze und Überschriften haben Abstände in ganzen Zeilen. Die Seite ist mindestens so lang wie ihr tiefster Sticker, nichts wird abgeschnitten.
 - **🖨 Drucken / PDF:** diese Seite, das ganze Tagebuch oder ein Zeitraum. Für ein PDF im Druckdialog „Als PDF speichern“ wählen. Jede Tagebuchseite beginnt auf einem neuen Blatt.
 - Tagebucheinträge erscheinen nicht in Overview und Auslastung und werden beim Carry-over nicht übertragen.

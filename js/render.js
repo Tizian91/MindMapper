@@ -184,6 +184,7 @@
     div.style.top = n.y + 'px';
     div.style.width = n.w + 'px';
     div.style.height = n.h + 'px';
+    div.style.transform = n.type === 'image' && n.rotate ? `rotate(${n.rotate}deg)` : '';
     if (n.type === 'draw') return drawFrame(div, n);
     const isImage = n.type === 'image';
     const ins = isImage ? { x: 0, y: 0 } : MM.geo.contentInset(n.shape, n.w, n.h);
@@ -538,6 +539,12 @@
           const [x, y] = pos[d];
           s += `<rect class="handle-resize h-${d}" data-dir="${d}" x="${x - hs / 2}" y="${y - hs / 2}"` +
             ` width="${hs}" height="${hs}" stroke-width="${k}"/>`;
+        }
+        // images: a round handle above them turns them
+        if (n.type === 'image') {
+          const rx = n.x + n.w / 2, ry = n.y - off - 24 * k * fat;
+          s += `<line class="rotate-stem" x1="${rx}" y1="${n.y - off}" x2="${rx}" y2="${ry}" stroke-width="${k}"/>` +
+            `<circle class="handle-rotate" cx="${rx}" cy="${ry}" r="${6 * k * fat}" stroke-width="${1.5 * k}"/>`;
         }
       } else if (selNodes.length > 1) {
         const b = MM.geo.bbox(selNodes), p = 6 * k;

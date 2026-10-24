@@ -205,7 +205,7 @@
 
   let dialog = null;
   // edit: overlays can be placed; tool: drawing shape being drawn; sel: selected overlay id
-  const view = { book: '', diary: null, entries: [], days: [], day: '', month: null, edit: false, tool: null, sel: null };
+  const view = { book: '', diary: null, entries: [], days: [], day: '', month: null, edit: false, tool: null, sel: null, scale: 1 }; // scale: of the page on screen (phones)
 
   function build() {
     dialog = document.createElement('dialog');
@@ -227,7 +227,7 @@
       <div class="dy-pop dy-cal" hidden></div>
       <div class="dy-pop dy-design" hidden></div>
       <div class="dy-pop dy-print" hidden></div>
-      <div class="dy-scroll"><article class="dy-page"></article></div>`;
+      <div class="dy-scroll"><div class="dy-sheet"><article class="dy-page"></article></div></div>`;
     document.body.appendChild(dialog);
     dialog.addEventListener('click', onClick);
     dialog.querySelector('.dy-days').addEventListener('change', (e) => show(e.target.value));
@@ -239,6 +239,9 @@
     page.addEventListener('pointermove', onPagePointerMove);
     page.addEventListener('pointerup', onPagePointerUp);
     page.addEventListener('pointercancel', onPagePointerUp);
+    initPinch(dialog.querySelector('.dy-scroll'));
+    // the sheet follows the size of the (scaled) page
+    if (window.ResizeObserver) new ResizeObserver(() => sizeSheet()).observe(page);
     dialog.addEventListener('keydown', (e) => {
       e.stopPropagation(); // the canvas must not move notes meanwhile
       if (/^(SELECT|INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
@@ -257,7 +260,9 @@
     });
     // a narrower window wraps the text differently: put the entries on the lines again
     window.addEventListener('resize', () => {
-      if (dialog.open && view.day) layoutPage(dialog.querySelector('.dy-page'));
+      if (!dialog.open) return;
+      applyScale();
+      if (view.day) layoutPage(dialog.querySelector('.dy-page'));
     });
     dialog.addEventListener('close', () => {
       popup(null);
@@ -331,6 +336,7 @@
     flushSave();
     const P = MM.project;
     view.book = book;
+    userZoom = 1; // opened again: the page fits the width
     view.diary = P.status === 'ready' ? await P.readDiary(book, { edit: true }) : DY.normalize(null, book);
     indexDiary(view.diary);
     if (S.settings.lastDiary !== book) {
@@ -407,6 +413,7 @@
     }
     page.innerHTML = pageHTML(day);
     view.sel = null;
+    applyScale();
     layoutPage(page);
     watchHeights(page);
     dialog.querySelector('.dy-scroll').scrollTop = 0;
@@ -570,9 +577,10 @@
   const overlaysOf = (day) => (view.diary.pages[day] && view.diary.pages[day].overlays) || [];
 
   function overlayHTML(o) {
-    const pos = `left:calc(${o.x} * 100cqw);top:calc(${o.y} * 100cqw);width:calc(${o.w} * 100cqw);height:calc(${o.h} * 100cqw)`;
+    const pos = `left:calc(${o.x} * 100cqw);top:calc(${o.y} * 100cqw);width:calc(${o.w} * 100cqw);height:calc(${o.h} * 100cqw)` +
+      (o.rot ? `;transform:rotate(${o.rot}deg)` : '');
     const cls = `dy-ov dy-ov-${o.kind}${o.id === view.sel ? ' sel' : ''}`;
-    const handle = '<span class="dy-ov-handle"></span>';
+    const handle = '<span class="dy-ov-handle"></span><span class="dy-ov-rot"></span>';
     if (o.kind === 'sticker') {
       return `<div class="${cls}" data-ov="${esc(o.id)}" style="${pos};font-size:calc(${o.h} * 82cqw)">${esc(o.char)}${handle}</div>`;
     }
@@ -602,21 +610,120 @@
    */
   function layoutPage(page, print) {
     const L = parseFloat(getComputedStyle(page).lineHeight) || 25.6;
-    const top0 = page.getBoundingClientRect().top + page.clientTop;
+    const k = scaleOf(page); // screen px -> page px (the page may be scaled on phones)
+    const top0 = page.getBoundingClientRect().top + page.clientTop * k;
     page.style.minHeight = '';
     const entries = [...page.querySelectorAll('.dy-entry')];
     entries.forEach((s) => (s.style.marginTop = '0px'));
     for (const s of entries) {
       const body = s.querySelector('.dy-body');
-      const rest = (body.getBoundingClientRect().top - top0) % L;
+      const rest = ((body.getBoundingClientRect().top - top0) / k) % L;
       if (rest > 0.5 && L - rest > 0.5) s.style.marginTop = (L - rest) + 'px';
     }
     let bottom = 0;
-    page.querySelectorAll('.dy-ov').forEach((el) => (bottom = Math.max(bottom, el.getBoundingClientRect().bottom - top0)));
+    page.querySelectorAll('.dy-ov').forEach((el) => (bottom = Math.max(bottom, (el.getBoundingClientRect().bottom - top0) / k)));
     if (bottom) {
       const need = Math.ceil(bottom + parseFloat(getComputedStyle(page).paddingBottom));
-      page.style.minHeight = print ? need + 'px' : `max(100%, ${need}px)`;
+      page.style.minHeight = print ? need + 'px' : `max(var(--dy-minh, 100%), ${need}px)`;
     }
+  }
+
+  /** Scale of a page on screen (1 = as laid out; smaller on phones, larger when zoomed in). */
+  function scaleOf(page) {
+    return (page.offsetWidth && page.getBoundingClientRect().width / page.offsetWidth) || 1;
+  }
+
+  // ---- Phones: the page as a whole, scaled like a PDF -------------------------------
+  // The page keeps its A4 width (same line breaks as in print, stickers stay in
+  // place); on a narrow screen it is scaled down to fit, two fingers zoom in.
+  // The sheet around it gets the scaled size, so the scroll area fits.
+
+  let userZoom = 1; // 1 = fitting the width; set by two fingers
+
+  function applyScale() {
+    const scroll = dialog.querySelector('.dy-scroll'), page = dialog.querySelector('.dy-page');
+    const cs = getComputedStyle(scroll);
+    const availW = scroll.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const availH = scroll.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const fit = availW > 0 && page.offsetWidth ? Math.min(1, availW / page.offsetWidth) : 1; // not laid out yet: as it is
+    userZoom = Math.max(1, Math.min(userZoom, 2 / fit)); // at most twice the real size
+    const s = fit * userZoom;
+    view.scale = s;
+    page.style.setProperty('--dy-minh', Math.max(0, availH / s) + 'px'); // the page fills the visible area
+    page.style.transform = Math.abs(s - 1) < 0.001 ? '' : `scale(${s})`;
+    sizeSheet();
+  }
+
+  function sizeSheet() {
+    const sheet = dialog && dialog.querySelector('.dy-sheet'), page = sheet && sheet.firstElementChild;
+    if (!page) return;
+    const s = view.scale || 1;
+    sheet.style.width = page.offsetWidth * s + 'px';
+    sheet.style.height = page.offsetHeight * s + 'px';
+  }
+
+  /** Two fingers on the page: zoom in and out (the point between them stays put). */
+  function initPinch(scroll) {
+    const fingers = new Map();
+    let pinch = null, twist = null;
+    const state = () => {
+      const [a, b] = [...fingers.values()];
+      return { d: Math.max(Math.hypot(a.x - b.x, a.y - b.y), 1), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    };
+    scroll.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'touch') return;
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (fingers.size === 2) {
+        const o = view.edit && ovDrag && ovDrag.o && ovDrag.mode !== 'draw' ? ovDrag.o : null;
+        ovDrag = null; // a sticker drag of the first finger ends
+        const [a, b] = [...fingers.values()];
+        if (o) {
+          // the first finger is on the selected sticker / image: turn and resize it
+          twist = { o, a0: Math.atan2(b.y - a.y, b.x - a.x), d0: Math.max(Math.hypot(a.x - b.x, a.y - b.y), 1),
+            orig: { rot: o.rot || 0, x: o.x, y: o.y, w: o.w, h: o.h } };
+        } else {
+          pinch = Object.assign(state(), { zoom: userZoom });
+        }
+        e.stopPropagation();
+      }
+    }, true);
+    scroll.addEventListener('pointermove', (e) => {
+      if (!fingers.has(e.pointerId)) return;
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (twist && fingers.size === 2) {
+        e.stopPropagation();
+        const [a, b] = [...fingers.values()], k = twist.orig, o = twist.o;
+        o.rot = MM.snapAngle(k.rot + ((Math.atan2(b.y - a.y, b.x - a.x) - twist.a0) * 180) / Math.PI);
+        if (!o.rot) delete o.rot;
+        const f = Math.hypot(a.x - b.x, a.y - b.y) / twist.d0;
+        const w = Math.max(0.01, k.w * f), h = Math.max(0.01, k.h * f);
+        Object.assign(o, { x: k.x + (k.w - w) / 2, y: k.y + (k.h - h) / 2, w, h });
+        refreshOverlays();
+        return;
+      }
+      if (!pinch || fingers.size !== 2) return;
+      e.stopPropagation();
+      const now = state(), r = scroll.getBoundingClientRect();
+      const before = view.scale || 1;
+      userZoom = pinch.zoom * now.d / pinch.d;
+      applyScale();
+      const f = (view.scale || 1) / before;
+      const mx = now.x - r.left, my = now.y - r.top;
+      scroll.scrollLeft = (scroll.scrollLeft + mx) * f - mx;
+      scroll.scrollTop = (scroll.scrollTop + my) * f - my;
+    }, true);
+    const lift = (e) => {
+      fingers.delete(e.pointerId);
+      if (fingers.size < 2) pinch = null;
+      if (fingers.size < 2 && twist) {
+        anchorOverlay(twist.o); // stuck to the entry it now lies on
+        twist = null;
+        renderLayer();
+        save();
+      }
+    };
+    scroll.addEventListener('pointerup', lift, true);
+    scroll.addEventListener('pointercancel', lift, true);
   }
 
   /**
@@ -709,6 +816,8 @@
       entry: str(o.entry).slice(0, 80), // entry it is stuck to ('' = the page)
       x: num(o.x, -1, 2, 0), y: num(o.y, -1000, 1000, 0), w: num(o.w, 0.005, 3, 0.1), h: num(o.h, 0.005, 3, 0.1),
     };
+    const rot = Math.round(num(o.rot, 0, 359, 0));
+    if (rot) c.rot = rot; // turned around its middle, degrees clockwise
     if (o.kind === 'sticker') c.char = str(o.char).slice(0, 16);
     if (o.kind === 'image') c.asset = str(o.asset);
     if (o.kind === 'draw') {
@@ -768,9 +877,9 @@
   /** Page geometry: origin (screen) of the page box and its width unit in px (= 100cqw). */
   function pageUnit() {
     const page = dialog.querySelector('.dy-page');
-    const r = page.getBoundingClientRect(), cs = getComputedStyle(page);
-    const unit = page.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    return { left: r.left + page.clientLeft, top: r.top + page.clientTop, unit: unit || 1 };
+    const r = page.getBoundingClientRect(), cs = getComputedStyle(page), k = scaleOf(page);
+    const unit = (page.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)) * k; // screen px
+    return { left: r.left + page.clientLeft * k, top: r.top + page.clientTop * k, unit: unit || 1 };
   }
 
   /** Where new stickers / images go: centred in the visible part of the page. */
@@ -856,11 +965,18 @@
       const o = overlaysOf(view.day).find((x) => x.id === el.dataset.ov);
       if (!o) return;
       view.sel = o.id;
-      ovDrag = { mode: e.target.classList.contains('dy-ov-handle') ? 'resize' : 'move', o, start: p, orig: { x: o.x, y: o.y, w: o.w, h: o.h }, unit: g.unit, moved: false };
+      if (e.target.classList.contains('dy-ov-rot')) {
+        // round handle above it: turn around the middle (Shift: 15 degree steps)
+        const r = el.getBoundingClientRect(), c = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        ovDrag = { mode: 'rotate', o, c, a0: Math.atan2(e.clientY - c.y, e.clientX - c.x), orig: o.rot || 0, moved: false };
+      } else {
+        ovDrag = { mode: e.target.classList.contains('dy-ov-handle') ? 'resize' : 'move', o, start: p, orig: { x: o.x, y: o.y, w: o.w, h: o.h }, unit: g.unit, moved: false };
+      }
     } else if (head) {
       // head of an entry: dragging down pushes empty lines in above it (whole lines, so the text stays on the ruling)
       const id = head.closest('.dy-entry').dataset.entry;
-      const L = parseFloat(getComputedStyle(dialog.querySelector('.dy-page')).lineHeight) || 25.6;
+      const pg = dialog.querySelector('.dy-page');
+      const L = (parseFloat(getComputedStyle(pg).lineHeight) || 25.6) * scaleOf(pg); // one line on screen
       ovDrag = { mode: 'gap', id, startY: e.clientY, orig: gapOf(view.day, id), line: L, moved: false };
     } else if (view.tool) {
       ovDrag = { mode: 'draw', start: p, o: null, unit: g.unit, moved: false };
@@ -889,6 +1005,14 @@
       const spacer = dialog.querySelector(`.dy-gap[data-gap="${CSS.escape(ovDrag.id)}"]`);
       if (spacer) spacer.style.height = `calc(${lines} * var(--dy-line))`;
       layoutPage(dialog.querySelector('.dy-page'));
+      return;
+    }
+    if (ovDrag.mode === 'rotate') {
+      const a = Math.atan2(e.clientY - ovDrag.c.y, e.clientX - ovDrag.c.x);
+      ovDrag.o.rot = MM.snapAngle(ovDrag.orig + ((a - ovDrag.a0) * 180) / Math.PI, e.shiftKey);
+      if (!ovDrag.o.rot) delete ovDrag.o.rot;
+      ovDrag.moved = true;
+      refreshOverlays();
       return;
     }
     const g = pageUnit();

@@ -315,6 +315,16 @@
     MM.commit();
   };
 
+  /** Turn the selected images by `deg` degrees (null = straight again). */
+  A.rotateImages = function (deg) {
+    for (const n of MM.selectedNodes()) {
+      if (n.type !== 'image') continue;
+      n.rotate = deg === null ? 0 : MM.snapAngle((n.rotate || 0) + deg);
+      if (!n.rotate) delete n.rotate;
+    }
+    MM.commit();
+  };
+
   /** Context menu: the selected notes and everything below them (arrows) become tasks. */
   A.makeTasksWithSubNotes = function () {
     const sel = MM.selectedNodes().filter((n) => TASKABLE.has(n.type) || n.type === 'task');

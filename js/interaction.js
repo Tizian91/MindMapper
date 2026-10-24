@@ -175,6 +175,15 @@
       return;
     }
 
+    // rotate handle of an image: turn it around its middle (Shift: 15 degree steps)
+    if (t.classList.contains('handle-rotate')) {
+      const n = MM.selectedNodes()[0];
+      if (n) {
+        const c = { x: n.x + n.w / 2, y: n.y + n.h / 2 };
+        startDrag(e, { mode: 'rotate', id: n.id, c, a0: Math.atan2(p.y - c.y, p.x - c.x), orig: n.rotate || 0 });
+      }
+      return;
+    }
     // resize handle
     if (t.classList.contains('handle-resize')) {
       const n = MM.selectedNodes()[0];
@@ -373,6 +382,14 @@
       }
       case 'move': doMove(e, p); break;
       case 'resize': doResize(e, p); break;
+      case 'rotate': {
+        const n = MM.node(drag.id);
+        const a = Math.atan2(p.y - drag.c.y, p.x - drag.c.x);
+        n.rotate = MM.snapAngle(drag.orig + ((a - drag.a0) * 180) / Math.PI, e.shiftKey);
+        MM.render.nodes();
+        MM.render.overlay();
+        break;
+      }
       case 'draw': {
         if (!drag.id) {
           if (MM.geo.dist(p, drag.start) * S.doc.view.zoom < 4) return;
@@ -556,6 +573,7 @@
         } else MM.refresh();
         break;
       case 'resize':
+      case 'rotate':
         MM.commit();
         break;
       case 'draw': {

@@ -191,6 +191,17 @@ window.MM = window.MM || {};
     };
   };
 
+  /**
+   * Angle in degrees (0..359) for turning images: snaps to 0 / 90 / 180 / 270 when
+   * close; fine (Shift) = in steps of 15 degrees.
+   */
+  MM.snapAngle = function (deg, fine) {
+    const a = ((deg % 360) + 360) % 360;
+    if (fine) return (Math.round(a / 15) * 15) % 360;
+    for (const r of [0, 90, 180, 270, 360]) if (Math.abs(a - r) < 5) return r % 360;
+    return Math.round(a) % 360;
+  };
+
   /** Routine categories of the settings, cleaned up: [{ id, name, emoji, leisure }]. */
   MM.normalizeCategories = function (list) {
     const seen = new Set();
@@ -469,6 +480,9 @@ window.MM = window.MM || {};
         delete node.diary;
       }
       node.repeat = MM.normalizeRepeat(n.repeat);
+      // image notes can be turned: degrees clockwise around their middle
+      if (type === 'image' && n.rotate) node.rotate = ((Math.round(num(n.rotate, 0)) % 360) + 360) % 360;
+      else delete node.rotate;
       // list of a week plan for the routines of one category ('' = without category), see routines.js
       if (node.routineList !== undefined) node.routineList = str(node.routineList).slice(0, 40);
       for (const it of node.items) if (it.routine !== undefined) it.routine = str(it.routine); // entry created from a routine

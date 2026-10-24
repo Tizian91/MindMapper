@@ -11,7 +11,8 @@
  *                              (on the empty canvas: draw a selection frame)
  *   handles, anchor dots,      as with the mouse (resize, connect, draw tools)
  *   drawing tools
- *   two fingers                pinch = zoom around the fingers, move = pan
+ *   two fingers                pinch = zoom around the fingers, move = pan;
+ *                              on the selected image: turn and resize it
  */
 (function (MM) {
   const S = MM.state;
@@ -22,7 +23,7 @@
   const touches = new Map(); // pointerId -> { x, y }
   let mode = null;           // null | pending | held | pan | drag | direct | pinch | rest
   let start = null;          // the first finger: { e (pointerdown), x, y, timer }
-  let pan = null, pinch = null, lastTap = null;
+  let pan = null, pinch = null, twist = null, lastTap = null;
   let quietUntil = 0;        // the browser's own contextmenu / dblclick after a gesture are ignored
 
   const I = () => MM.interaction;
@@ -51,7 +52,7 @@
   function direct(t) {
     if (MM.editing && MM.editing.el.contains(t)) return true;
     if (S.tool || t.classList.contains('label-editor') || t.classList.contains('anchor-dot')) return true;
-    return !!(t.closest && t.closest('.handle-resize, .handle-endpoint'));
+    return !!(t.closest && t.closest('.handle-resize, .handle-endpoint, .handle-rotate'));
   }
 
   function down(e) {
@@ -96,6 +97,7 @@
     stop(e);
     const p = { x: e.clientX, y: e.clientY };
     if (mode === 'pinch') return doPinch();
+    if (mode === 'twist') return doTwist();
     if (mode === 'pending' && dist(p, start) > SLOP) {
       clearTimeout(start.timer);
       mode = 'pan';
@@ -128,6 +130,12 @@
     }
     stop(e);
     if (start) clearTimeout(start.timer);
+    if (mode === 'twist') {
+      MM.commit(); // the image was turned / resized
+      twist = null;
+      mode = touches.size ? 'rest' : null;
+      return;
+    }
     if (mode === 'pinch' || mode === 'rest') {
       if (touches.size === 1) mode = 'rest'; // the other finger is still down: it does nothing more
       else if (!touches.size) {
@@ -159,6 +167,11 @@
       return; // interaction.js treats pointercancel like pointerup
     }
     stop(e);
+    if (mode === 'twist') {
+      MM.commit(); // keep what was turned so far (one undo step)
+      twist = null;
+      mode = touches.size ? 'rest' : null;
+    }
     if (!touches.size) {
       mode = null;
       start = null;
@@ -184,6 +197,16 @@
 
   function startPinch() {
     if (start) clearTimeout(start.timer);
+    // two fingers on the selected image (the first one on it): turn and resize the image
+    const img = start && imageAt(start.e.target);
+    if (img && mode !== 'drag' && mode !== 'direct') {
+      const [a, b] = pts();
+      twist = { id: img.id, a0: Math.atan2(b.y - a.y, b.x - a.x), d0: Math.max(dist(a, b), 1),
+        orig: { rotate: img.rotate || 0, x: img.x, y: img.y, w: img.w, h: img.h } };
+      mode = 'twist';
+      start = null;
+      return;
+    }
     // a drag of the first finger ends where it is
     if ((mode === 'drag' || mode === 'direct') && S.drag && start) I().pointerUp(start.e);
     const [a, b] = pts();
@@ -192,6 +215,29 @@
     pinch = { d0: Math.max(dist(a, b), 1), zoom0: v.zoom, wx: (mid.x - v.x) / v.zoom, wy: (mid.y - v.y) / v.zoom };
     mode = 'pinch';
     start = null;
+  }
+
+  /** The selected image note under element t (only when it is the one selected note). */
+  function imageAt(t) {
+    const el = t && t.closest && t.closest('.node');
+    const n = el && MM.node(el.dataset.id);
+    return n && n.type === 'image' && S.selection.size === 1 && S.selection.has(n.id) ? n : null;
+  }
+
+  function doTwist() {
+    const [a, b] = pts();
+    const n = a && b && MM.node(twist.id);
+    if (!n) return;
+    const o = twist.orig;
+    const turn = ((Math.atan2(b.y - a.y, b.x - a.x) - twist.a0) * 180) / Math.PI;
+    n.rotate = MM.snapAngle(o.rotate + turn);
+    // resize around the middle, keeping the proportions
+    const f = dist(a, b) / twist.d0;
+    const w = Math.max(20, o.w * f), h = Math.max(20, (o.h * w) / o.w);
+    Object.assign(n, { x: Math.round(o.x + (o.w - w) / 2), y: Math.round(o.y + (o.h - h) / 2), w: Math.round(w), h: Math.round(h) });
+    MM.render.nodes();
+    MM.render.edges();
+    MM.render.overlay();
   }
 
   function doPinch() {

@@ -265,6 +265,11 @@
     '{n} note(s) below made tasks as well': '{n} Note(s) darunter ebenfalls zu Tasks gemacht',
     '{n} note(s) made tasks': '{n} Note(s) zu Tasks gemacht',
     'Make tasks (with notes below)': 'Zu Tasks machen (mit Notes darunter)',
+    // ---- turning images (map and diary) ----
+    'Rotate': 'Drehen',
+    'Rotate right (90°)': 'Nach rechts drehen (90°)',
+    'Rotate left (90°)': 'Nach links drehen (90°)',
+    'Straighten': 'Gerade stellen',
     // ---- export.js (map as PDF / print) ----
     'There is nothing to print.': 'Es gibt nichts zu drucken.',
     'Map as PDF / print': 'Map als PDF / drucken',
