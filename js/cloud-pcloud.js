@@ -86,7 +86,10 @@
 
   // ---- API -------------------------------------------------------------------------
 
-  const NOT_FOUND = [2002, 2005, 2009]; // parent folder / folder / file does not exist
+  // parent folder / folder / file does not exist. pCloud does not document every code
+  // ("stat" answers "File or folder not found." with one of its own), so the text counts too
+  const NOT_FOUND = [2002, 2005, 2009, 2055];
+  const NOT_FOUND_TEXT = /not found|does not exist/i;
   const AUTH = [1000, 2000, 2094, 2095]; // login required / failed, invalid token
 
   async function api(method, params, body) {
@@ -101,13 +104,14 @@
       if (AUTH.includes(data.result)) save(Object.assign({}, cfg, { token: '' }));
       const err = new Error(AUTH.includes(data.result)
         ? tr('pCloud login expired – please connect again')
-        : `pCloud: ${data.error || 'error ' + data.result}`);
+        : `pCloud: ${data.error || 'error'} (${data.result})`);
       err.code = data.result;
+      err.notFound = NOT_FOUND.includes(data.result) || NOT_FOUND_TEXT.test(data.error || '');
       throw err;
     }
     return data;
   }
-  const notFound = (err) => NOT_FOUND.includes(err && err.code);
+  const notFound = (err) => !!(err && err.notFound);
 
   /** Download a file's content (getfilelink: pCloud hands out a short-lived link). */
   async function download(full) {

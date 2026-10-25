@@ -30,7 +30,8 @@ async function fakeFetch(u, opts) {
   const nf = (code) => json({ result: code, error: 'not found' });
   switch (m) {
     case 'listfolder': return store.get(p) && store.get(p).folder ? json({ result: 0, metadata: tree(p, !!q.recursive, !!q.nofiles) }) : nf(2005);
-    case 'stat': return store.get(p) ? json({ result: 0, metadata: meta(p) }) : nf(2009);
+    // real pCloud: an undocumented code, recognised by its text
+    case 'stat': return store.get(p) ? json({ result: 0, metadata: meta(p) }) : json({ result: 2055, error: 'File or folder not found.' });
     case 'getfilelink': return store.get(p) ? json({ result: 0, hosts: ['c1.pcloud.com'], path: encodeURI(p) }) : nf(2009);
     case 'createfolderifnotexists':
       if (!store.get(parent(p))) return nf(2002);
