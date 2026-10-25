@@ -102,7 +102,8 @@
     const url = new URL(`https://${cfg.host}/${method}`);
     for (const [k, v] of Object.entries(params || {})) url.searchParams.set(k, v);
     url.searchParams.set('access_token', cfg.token);
-    const res = await fetch(url, Object.assign({ referrerPolicy: NO_REFERRER }, body ? { method: 'POST', body } : {}));
+    // never from the browser's cache: a cached "stat" hides a change made elsewhere (conflict check)
+    const res = await fetch(url, Object.assign({ referrerPolicy: NO_REFERRER, cache: 'no-store' }, body ? { method: 'POST', body } : {}));
     const data = await res.json();
     if (data.result !== 0) {
       // token no longer valid: forget it, "Connect pCloud…" logs in again (the folder stays)
@@ -125,7 +126,7 @@
    */
   async function download(full) {
     const link = await api('getfilelink', { path: full, forcedownload: 1 });
-    const res = await fetch('https://' + link.hosts[0] + link.path, { referrerPolicy: NO_REFERRER });
+    const res = await fetch('https://' + link.hosts[0] + link.path, { referrerPolicy: NO_REFERRER, cache: 'no-store' });
     if (!res.ok) throw new Error('pCloud download: ' + res.status);
     return res;
   }
