@@ -13,7 +13,7 @@ Private Maps (z. B. Übungsplan Band) am **Android-Handy** im Browser ansehen un
 ## Ausgangslage
 
 - Die App läuft über **GitHub Pages** (`https://tizian91.github.io/MindMapper/`, Adresse beim Umsetzen prüfen) und ist am PC als App installiert (PWA, `manifest.webmanifest`, `sw.js`).
-- Projektordner nutzen `showDirectoryPicker` (File System Access API) – **gibt es auf Android nicht**. Deshalb ist auf dem Handy heute nur „einzelne Datei“ möglich.
+- Projektordner nutzen `showDirectoryPicker` (File System Access API). Beim Planen angenommen: gibt es auf Android nicht. **Korrektur 25.10.2026:** Chrome auf Android kann es (Test auf dem Pixel 9a, Ordnerauswahl über die Android-Dateiansicht) – lokale Projektordner funktionieren also auch am Handy. pCloud bleibt für den Abgleich zwischen PC und Handy ohne Sync-App.
 - Direkte Dateizugriffe stecken fast nur in `project.js` (27 Stellen) und `storage.js` (17, davon Einzeldatei-Öffnen/Speichern), dazu je 1–2 in `files.js`, `transfer.js`, `actions.js`.
 
 ## Rein lokale Variante bleibt immer erhalten (Wunsch des Nutzers, 24.10.2026)
