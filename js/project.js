@@ -48,12 +48,18 @@
   P.choose = async function () {
     try {
       const b = await MM.fsys.local.pick();
+      const before = S.file.path;
       await leaveFolder();
       P.backend = b;
       if (P.cloud) P.cloud.setActive(false);
       S.settings.showProject = true;
       MM.saveSettings();
       await connected();
+      // the same folder chosen again (or one with that map): the map opens from there again
+      if (before && !S.file.path && P.find(before)) {
+        try { await MM.storage.openPath(before); } catch (err) { /* stays as it is */ }
+        P.render();
+      }
       MM.refresh();
     } catch (err) {
       if (err.name !== 'AbortError') alert(tr('Could not open folder: {err}', { err: err.message }));
@@ -229,8 +235,8 @@
     const out = [];
     for (const { kind, name } of await P.backend.list(prefix)) {
       if (name.startsWith('.')) continue;
-      // per-folder capacity settings, not a map
-      if (depth === 0 && kind === 'file' && name === MM.storage.PROJECT_SETTINGS_FILE) continue;
+      // per-folder capacity settings, not a map (also copies like "mindmapper.settings (1).json")
+      if (depth === 0 && kind === 'file' && (name === MM.storage.PROJECT_SETTINGS_FILE || /^mindmapper\.settings \(\d+\)\.json$/i.test(name))) continue;
       // Assets/ holds the files of data notes - never list it as maps
       if (depth === 0 && kind === 'dir' && MM.files && name === MM.files.ASSET_FOLDER) continue;
       // Diaries/ holds the diaries (own sidebar section), and a diary file is no map anywhere
@@ -329,7 +335,18 @@
    * Write a document (or any text) to a path of the project folder (folders are created).
    * opts.fresh: a new file (checked with P.exists before) - no version to compare.
    */
-  P.writeText = async function (path, text, opts) {
+  P.writeText = function (path, text, opts) {
+    // one write per file at a time: a second write must wait for the first, else it
+    // starts from the old version and takes the first one for a change from elsewhere
+    // (slow storage, big files - e.g. a diary with images on a phone)
+    const run = (writing.get(path) || Promise.resolve()).catch(() => {}).then(() => writeNow(path, text, opts));
+    writing.set(path, run);
+    run.catch(() => {}).then(() => { if (writing.get(path) === run) writing.delete(path); });
+    return run;
+  };
+  const writing = new Map(); // path -> the write in progress
+
+  async function writeNow(path, text, opts) {
     try {
       const known = opts && opts.fresh ? null : versions.get(path);
       const r = await P.backend.write(path, text, { expect: known ? known.v : undefined, expectHash: known && known.h });
@@ -342,7 +359,7 @@
       // the old version stays: further writes fail as well until the file is read again
       throw new Error(tr('"{path}" was changed elsewhere in the meantime (other computer, other tab). It was not overwritten - open it again and repeat the step.', { path }));
     }
-  };
+  }
 
   /**
    * Make sure the project folder may be written. Asks for the permission when
