@@ -874,7 +874,7 @@ input[type="range"] { flex: 1; }
 .edge-hit {
   fill: none;
   stroke: transparent;
-  stroke-width: 14;
+  stroke-width: var(--edge-hit, 14); /* screen pixels at every zoom (render.js applyView) */
   pointer-events: stroke;
   cursor: pointer;
 }

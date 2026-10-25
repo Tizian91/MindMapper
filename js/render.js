@@ -48,6 +48,8 @@
   R.applyView = function () {
     const v = S.doc.view;
     els.world.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.zoom})`;
+    // the invisible stroke that catches a click on a connection: 14 px on screen (a finger: 28) at every zoom
+    els.world.style.setProperty('--edge-hit', String((R.coarse ? 28 : 14) / v.zoom));
     const vp = els.viewport;
     vp.classList.toggle('show-grid', S.settings.grid);
     if (S.settings.grid) {

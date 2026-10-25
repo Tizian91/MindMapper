@@ -96,6 +96,8 @@
     ne: { x: SQ, y: -SQ }, se: { x: SQ, y: SQ }, sw: { x: -SQ, y: SQ }, nw: { x: -SQ, y: -SQ },
   };
 
+  G.QUARTER_MIN = 120; // side length from which a note gets the quarter anchors (n1, n2, …)
+
   /** Snap points on a node's outline: { id: {id, x, y, dir} }. */
   G.anchors = function (n) {
     const { x, y, w, h } = n, cx = x + w / 2, cy = y + h / 2;
@@ -121,8 +123,30 @@
       pts.se = { x: x + w - k, y: y + h };
       pts.sw = { x, y: y + h };
     }
+    // big notes with straight sides: two more anchors per side (at a quarter and three
+    // quarters), so connections do not all meet in the middle; a side shorter than
+    // 120 keeps three - a connection at a quarter point falls back to auto then
+    if (!['ellipse', 'diamond', 'hexagon', 'parallelogram', 'pill'].includes(n.shape)) {
+      if (w >= G.QUARTER_MIN) {
+        pts.n1 = { x: x + w / 4, y }; pts.n2 = { x: x + (3 * w) / 4, y };
+        pts.s1 = { x: x + w / 4, y: y + h }; pts.s2 = { x: x + (3 * w) / 4, y: y + h };
+      }
+      if (h >= G.QUARTER_MIN) {
+        pts.e1 = { x: x + w, y: y + h / 4 }; pts.e2 = { x: x + w, y: y + (3 * h) / 4 };
+        pts.w1 = { x, y: y + h / 4 }; pts.w2 = { x, y: y + (3 * h) / 4 };
+      }
+    }
     const out = {};
-    for (const id in pts) out[id] = { id, x: pts[id].x, y: pts[id].y, dir: G.ANCHOR_DIRS[id] };
+    for (const id in pts) out[id] = { id, x: pts[id].x, y: pts[id].y, dir: G.ANCHOR_DIRS[id] || G.ANCHOR_DIRS[id[0]] };
+    // a turned image / emoji: its anchors turn with it (around the middle, as it is drawn)
+    const rot = MM.canRotate && MM.canRotate(n) ? Number(n.rotate) || 0 : 0;
+    if (rot) {
+      const a = (rot * Math.PI) / 180, cs = Math.cos(a), sn = Math.sin(a);
+      for (const id in out) {
+        const p = out[id], px = p.x - cx, py = p.y - cy, d = p.dir;
+        out[id] = { id, x: cx + px * cs - py * sn, y: cy + px * sn + py * cs, dir: { x: d.x * cs - d.y * sn, y: d.x * sn + d.y * cs } };
+      }
+    }
     return out;
   };
 
@@ -145,6 +169,15 @@
     if (end.anchor && A[end.anchor]) return A[end.anchor];
     // auto: use the side that faces the other end
     const c = G.center(n);
+    if (MM.canRotate && MM.canRotate(n) && n.rotate) {
+      // turned: the side whose outgoing direction points most towards the other end
+      const u = G.unit(other.x - c.x, other.y - c.y);
+      let best = A.e;
+      for (const id of ['n', 'e', 's', 'w']) {
+        if (A[id].dir.x * u.x + A[id].dir.y * u.y > best.dir.x * u.x + best.dir.y * u.y) best = A[id];
+      }
+      return best;
+    }
     const dx = (other.x - c.x) / Math.max(n.w, 1), dy = (other.y - c.y) / Math.max(n.h, 1);
     const horizontal = axis ? axis === 'x' : Math.abs(dx) > Math.abs(dy);
     if (horizontal) return other.x > c.x ? A.e : A.w;
