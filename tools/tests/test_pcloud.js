@@ -24,7 +24,7 @@ async function fakeFetch(u, opts) {
   if (url.host === 'c1.pcloud.com') {
     if (fromPage) return { ok: false, status: 403, text: async () => '', blob: async () => new Blob([]) };
     const e = store.get(decodeURIComponent(url.pathname));
-    return { ok: !!e, status: e ? 200 : 404, text: async () => String(e.data), blob: async () => new Blob([e.data]) };
+    return { ok: !!e, status: e ? 200 : 404, text: async () => String(e.data), blob: async () => new Blob([e.data], { type: 'application/octet-stream' }) };
   }
   const m = url.pathname.slice(1), q = Object.fromEntries(url.searchParams);
   calls.push(m);
@@ -35,7 +35,8 @@ async function fakeFetch(u, opts) {
     case 'listfolder': return store.get(p) && store.get(p).folder ? json({ result: 0, metadata: tree(p, !!q.recursive, !!q.nofiles) }) : nf(2005);
     // real pCloud: an undocumented code, recognised by its text
     case 'stat': return store.get(p) ? json({ result: 0, metadata: meta(p) }) : json({ result: 2055, error: 'File or folder not found.' });
-    case 'getfilelink': if (fromPage) return json({ result: 7010, error: 'Invalid link referer.' });
+    // real pCloud refused links from a web page with 7010; pCloud's SDK asks for download links
+    case 'getfilelink': if (fromPage || q.forcedownload !== '1') return json({ result: 7010, error: 'Invalid link referer.' });
       return store.get(p) ? json({ result: 0, hosts: ['c1.pcloud.com'], path: encodeURI(p) }) : nf(2009);
     case 'createfolderifnotexists':
       if (!store.get(parent(p))) return nf(2002);
@@ -86,7 +87,8 @@ async function fakeFetch(u, opts) {
     catch (e) { out.push('conflict     | ' + MM.fsys.isConflict(e) + ', file: ' + (await B.read('Weeks/2026-W44.mindmap.json')).text); }
     out.push('missing      | read=' + (await B.read('x.json')) + ' stat=' + (await B.stat('x.json')) + ' blob=' + (await B.readBlob('Assets/x.png')) + ' exists=' + (await B.exists('Weeks/2026-W44.mindmap.json')));
     await B.writeBlob('Assets/pic.png', new Blob(['PNG']));
-    out.push('blob         | ' + (await (await B.readBlob('Assets/pic.png')).text()));
+    const pic = await B.readBlob('Assets/pic.png');
+    out.push('blob         | ' + (await pic.text()) + ' ' + pic.type + ' (PNG image/png - a download comes as octet-stream)');
     await B.rename('Weeks/2026-W44.mindmap.json', 'Archive/Old/2026-W44.mindmap.json');
     out.push('rename       | ' + JSON.stringify(await B.list('Archive/Old')) + ' weeks=' + JSON.stringify(await B.list('Weeks')));
     await B.remove('Archive/Old/2026-W44.mindmap.json');

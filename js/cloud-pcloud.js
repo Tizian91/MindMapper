@@ -118,9 +118,13 @@
   }
   const notFound = (err) => !!(err && err.notFound);
 
-  /** Download a file's content (getfilelink: pCloud hands out a short-lived link). */
+  /**
+   * Download a file's content (getfilelink: pCloud hands out a short-lived link).
+   * forcedownload: a link that shows a file is refused for web pages ("Invalid link
+   * referer", 7010) - a download link is what pCloud's own JavaScript SDK asks for.
+   */
   async function download(full) {
-    const link = await api('getfilelink', { path: full });
+    const link = await api('getfilelink', { path: full, forcedownload: 1 });
     const res = await fetch('https://' + link.hosts[0] + link.path, { referrerPolicy: NO_REFERRER });
     if (!res.ok) throw new Error('pCloud download: ' + res.status);
     return res;
@@ -129,6 +133,11 @@
   // ---- Backend ---------------------------------------------------------------------
 
   const split = (path) => String(path || '').split('/').map((s) => s.trim()).filter(Boolean);
+  const TYPES = {
+    pdf: 'application/pdf', txt: 'text/plain', csv: 'text/csv', md: 'text/markdown', json: 'application/json', log: 'text/plain',
+    png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp', avif: 'image/avif',
+    svg: 'image/svg+xml', mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', mp4: 'video/mp4', webm: 'video/webm', ogv: 'video/ogg',
+  };
   // version: content hash + time (the hash alone is a 64-bit number, beyond JavaScript's exact range)
   const versionOf = (m) => `${m.hash}:${m.modified}`;
 
@@ -189,7 +198,11 @@
 
     B.readBlob = async function (path) {
       if (!(await B.stat(path))) return null;
-      return (await download(full(path))).blob();
+      // a download comes as application/octet-stream: the type from the name, as for a local
+      // file (an image, a PDF or a video is shown in the browser instead of being saved)
+      const blob = await (await download(full(path))).blob();
+      const type = TYPES[(nameOf(path).match(/\.([^.]+)$/) || [])[1]?.toLowerCase()] || blob.type;
+      return type === blob.type ? blob : new Blob([blob], { type });
     };
 
     /** Create the folder (and the project folder itself) where needed. */
