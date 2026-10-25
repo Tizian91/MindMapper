@@ -1013,11 +1013,17 @@
         if (!(await MM.storage.confirmLeave('delete the copy'))) return;
         await MM.storage.openPath(path);
       }
+      const failed = [];
       for (const p of list) {
-        await P.backend.remove(p);
-        versions.delete(p);
+        try {
+          await P.backend.remove(p);
+          versions.delete(p);
+        } catch (err) {
+          failed.push(err.message);
+        }
       }
-      MM.ui.flash(tr('Deleted {n} copies', { n: list.length }));
+      if (failed.length) alert(tr('{n} of {all} copies could not be deleted: {err}\n\nTry again after "Reload folder" (⟳), or delete them on another device (e.g. the PC).', { n: failed.length, all: list.length, err: failed[0] }));
+      else MM.ui.flash(tr('Deleted {n} copies', { n: list.length }));
     } catch (err) {
       alert(tr('Could not delete the map: {err}', { err: err.message }));
     }

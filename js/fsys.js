@@ -164,7 +164,23 @@
     B.remove = async function (path) {
       const parts = split(path);
       const name = parts.pop();
-      await (await dirOf(parts, false)).removeEntry(name);
+      try {
+        await (await dirOf(parts, false)).removeEntry(name);
+      } catch (err) {
+        // Android, folder of another app (pCloud, Drive …): the handles keep the state they
+        // read, the app changed the folder since - "InvalidStateError". Read it again, retry.
+        if (err.name !== 'InvalidStateError') throw err;
+        const dir = await dirOf(parts, false);
+        for await (const n of dir.keys()) if (n === name) break;
+        try {
+          await dir.removeEntry(name);
+        } catch (err2) {
+          const fh = await dir.getFileHandle(name).catch(() => null);
+          if (!fh) return; // gone after all
+          if (typeof fh.remove !== 'function') throw err2;
+          await fh.remove();
+        }
+      }
     };
 
     /** Copy + delete (the API has no reliable move for files). */
