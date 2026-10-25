@@ -92,12 +92,17 @@
   const NOT_FOUND_TEXT = /not found|does not exist/i;
   const AUTH = [1000, 2000, 2094, 2095]; // login required / failed, invalid token
 
+  // pCloud refuses downloads (getfilelink) that come with the address of a web page
+  // ("Invalid link referer", 7010) - programs on a PC send none. The requests to pCloud
+  // go without it; pCloud also learns less about where they come from.
+  const NO_REFERRER = 'no-referrer';
+
   async function api(method, params, body) {
     if (!cfg.token) throw new Error(tr('not connected to pCloud'));
     const url = new URL(`https://${cfg.host}/${method}`);
     for (const [k, v] of Object.entries(params || {})) url.searchParams.set(k, v);
     url.searchParams.set('access_token', cfg.token);
-    const res = await fetch(url, body ? { method: 'POST', body } : {});
+    const res = await fetch(url, Object.assign({ referrerPolicy: NO_REFERRER }, body ? { method: 'POST', body } : {}));
     const data = await res.json();
     if (data.result !== 0) {
       // token no longer valid: forget it, "Connect pCloud…" logs in again (the folder stays)
@@ -116,7 +121,7 @@
   /** Download a file's content (getfilelink: pCloud hands out a short-lived link). */
   async function download(full) {
     const link = await api('getfilelink', { path: full });
-    const res = await fetch('https://' + link.hosts[0] + link.path);
+    const res = await fetch('https://' + link.hosts[0] + link.path, { referrerPolicy: NO_REFERRER });
     if (!res.ok) throw new Error('pCloud download: ' + res.status);
     return res;
   }

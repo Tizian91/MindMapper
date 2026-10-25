@@ -19,7 +19,10 @@ const putFile = (p, data) => store.set(p, { data, hash: String(94034765493373715
 const json = (o) => ({ ok: true, status: 200, json: async () => o });
 async function fakeFetch(u, opts) {
   const url = new URL(String(u));
+  // real pCloud: a download from a web page (with its address as referer) is refused
+  const fromPage = !opts || opts.referrerPolicy !== 'no-referrer';
   if (url.host === 'c1.pcloud.com') {
+    if (fromPage) return { ok: false, status: 403, text: async () => '', blob: async () => new Blob([]) };
     const e = store.get(decodeURIComponent(url.pathname));
     return { ok: !!e, status: e ? 200 : 404, text: async () => String(e.data), blob: async () => new Blob([e.data]) };
   }
@@ -32,7 +35,8 @@ async function fakeFetch(u, opts) {
     case 'listfolder': return store.get(p) && store.get(p).folder ? json({ result: 0, metadata: tree(p, !!q.recursive, !!q.nofiles) }) : nf(2005);
     // real pCloud: an undocumented code, recognised by its text
     case 'stat': return store.get(p) ? json({ result: 0, metadata: meta(p) }) : json({ result: 2055, error: 'File or folder not found.' });
-    case 'getfilelink': return store.get(p) ? json({ result: 0, hosts: ['c1.pcloud.com'], path: encodeURI(p) }) : nf(2009);
+    case 'getfilelink': if (fromPage) return json({ result: 7010, error: 'Invalid link referer.' });
+      return store.get(p) ? json({ result: 0, hosts: ['c1.pcloud.com'], path: encodeURI(p) }) : nf(2009);
     case 'createfolderifnotexists':
       if (!store.get(parent(p))) return nf(2002);
       if (!store.get(p)) store.set(p, { folder: true });
