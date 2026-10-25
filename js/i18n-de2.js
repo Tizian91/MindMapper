@@ -246,7 +246,7 @@
     'Delete {n} conflict copies of "{map}"?\n\nThe map itself stays.': '{n} Konfliktkopien von „{map}“ löschen?\n\nDie Map selbst bleibt.',
     'Deleted {n} copies': '{n} Kopien gelöscht',
     'Could not open the diary: {err}': 'Das Tagebuch konnte nicht geöffnet werden: {err}',
-    '"{name}" is empty or incomplete right now (a sync program may still be writing it). Try again in a moment.': '„{name}“ ist gerade leer oder unvollständig (vielleicht schreibt ein Sync-Programm noch daran). Gleich noch einmal versuchen.',
+    '"{name}" is empty or incomplete right now - a sync program may still be writing or downloading it. Try again later.': '„{name}“ ist gerade leer oder unvollständig – vielleicht schreibt oder lädt ein Sync-Programm sie noch. Später noch einmal versuchen.',
     '{n} of {all} copies could not be deleted: {err}\n\nTry again after "Reload folder" (⟳), or delete them on another device (e.g. the PC).': '{n} von {all} Kopien konnten nicht gelöscht werden: {err}\n\nNach „Ordner neu laden“ (⟳) noch einmal versuchen oder auf einem anderen Gerät (z. B. am PC) löschen.',
     'Folder is synced (pCloud, OneDrive …)': 'Ordner wird synchronisiert (pCloud, OneDrive …)',
     'Saves 15 s after the last change (and at once when you leave the map or the app), so the sync program does not keep conflict copies. Stored {where}.': 'Speichert 15 s nach der letzten Änderung (und sofort, wenn du die Map oder die App verlässt), damit das Sync-Programm keine Konfliktkopien anlegt. Gespeichert {where}.',

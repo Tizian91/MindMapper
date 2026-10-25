@@ -549,7 +549,10 @@
     clearTimeout(saveTimer);
     saveTimer = null;
     if (!now) {
-      saveTimer = setTimeout(() => save(true), 600);
+      // a folder of a sync program: after a longer pause, as the maps (storage.js SYNC_DELAY)
+      const P = MM.project;
+      const synced = S.settings.syncedFolder && P.backend && P.backend.kind === 'local';
+      saveTimer = setTimeout(() => save(true), synced ? MM.storage.SYNC_DELAY : 600);
       return false;
     }
     if (MM.project.status !== 'ready') return false;
@@ -567,6 +570,7 @@
   function flushSave() {
     if (saveTimer) save(true);
   }
+  DY.flush = flushSave; // leaving the app (storage.js initLifecycle)
 
   // ---- Page overlays: stickers, images, drawings ----------------------------------------
   //

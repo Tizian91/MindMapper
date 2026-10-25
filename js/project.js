@@ -543,7 +543,7 @@
       try {
         if (f.text.trim()) return { doc: JSON.parse(f.text), text: f.text, version: f.version };
       } catch (err) { /* incomplete: read again */ }
-      if (i >= 3) throw new Error(tr('"{name}" is empty or incomplete right now (a sync program may still be writing it). Try again in a moment.', { name: P.mapName(path) }));
+      if (i >= 3) throw new Error(tr('"{name}" is empty or incomplete right now - a sync program may still be writing or downloading it. Try again later.', { name: P.mapName(path) }));
       await new Promise((r) => setTimeout(r, P.READ_RETRY_MS * (i + 1)));
     }
   };

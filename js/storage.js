@@ -524,6 +524,7 @@
   ST.initLifecycle = function () {
     const leave = () => {
       ST.autosave();
+      if (MM.diary) MM.diary.flush();
       if (S.dirty && inProject()) ST.writeFile();
     };
     const back = () => {
