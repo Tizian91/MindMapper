@@ -398,7 +398,7 @@
     if (n.repeat) {
       const per = MM.routines.perWeek(n.repeat, Number(m.estimate) || 0);
       return MM.routines.isLeisure(n.repeat)
-        ? `<p class="hint">${tr('Leisure routine: about {h} per week, not taken off your capacity.', { h: L.hours(per) })}</p>`
+        ? `<p class="hint">${tr('Nice to have: about {h} per week, not counted towards your capacity.', { h: L.hours(per) })}</p>`
         : `<p class="hint">${tr('Routine: takes about {h} per week off your capacity.', { h: L.hours(per) })}</p>`;
     }
     // main task: how much of its estimate the sub-tasks cover
@@ -523,7 +523,7 @@
         `<span class="load-label">🔁 ${esc(r.title)}${cat ? ` <span class="muted">· ${esc(R.categoryTitle(cat))}</span>` : ''}` +
         `${hist ? `<br>${hist}` : ''}</span>` +
         `<span class="muted">${esc(R.label(r.rule, r.minutes))}` +
-        `${r.minutes ? '' : esc(tr(' – no duration (Estimate) set'))}${r.leisure ? esc(tr(' – leisure, not counted')) : ''}</span>` +
+        `${r.minutes ? '' : esc(tr(' – no duration (Estimate) set'))}${r.leisure ? esc(tr(' – nice to have, not counted')) : ''}</span>` +
         `<span class="load-val">${R.isWeekly(r.rule) ? tr('weekly') : next ? esc(fmtDate(iso(next))) : '–'}</span>` +
         `<span class="load-buf">${r.leisure ? '–' : L.hours(R.perWeek(r.rule, r.minutes)) + tr('/wk')}</span></div>`;
     }

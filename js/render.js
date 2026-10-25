@@ -320,8 +320,15 @@
         const check = el('span', it.moved ? 'todo-moved' : 'todo-check', it.moved ? '→' : undefined);
         check.setAttribute('role', 'checkbox');
         check.setAttribute('aria-checked', it.done);
-        const text = el('span', 'todo-text', it.text);
+        const text = el('span', 'todo-text');
         text.dataset.field = 'item';
+        // the 🔁 of a routine entry as a mark of its own, coloured the same on every device
+        // (emoji fonts differ): blue = takes time off the capacity, orange = leisure routine
+        const m = it.routine && !it.moved && MM.routines ? /^🔁 /.exec(it.text) : null;
+        if (m) {
+          const leisure = MM.routines.leisureOf(it.routine);
+          text.append(el('span', 'rt-mark' + (leisure ? ' leisure' : ''), '🔁'), document.createTextNode(it.text.slice(2)));
+        } else text.textContent = it.text;
         li.append(check, text);
         // 🔁 / 📌 / 🏖 entry of a plan: ↗ shows the note it came from
         if (it.routine && !it.moved) {

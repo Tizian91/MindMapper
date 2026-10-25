@@ -4,6 +4,15 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 
 > Tipp: Über den Knopf **?** oben rechts in der Toolbar öffnest du dieses Handbuch und die Beispiel-Map jederzeit wieder.
 
+## Vorwort: die Idee
+
+MindMapper ist eine Planungssoftware für Menschen, denen lineare Zeitpläne schwerfallen – Kreative, Forschende, Musikerinnen und Musiker, alle, die lieber in Zusammenhängen denken als in Listen. Ein Kalender verlangt, dass man schon weiß, was wann passiert. Hier fängt man anders an:
+
+- **Gedanken sortieren und Aufgaben ableiten – in einem.** Du legst Notes auf eine freie Fläche, verbindest sie mit Pfeilen, gruppierst sie. Was davon eine Aufgabe ist, bekommt Deadline und Schätzung und taucht von selbst in Tages- und Wochenplänen, in der Übersicht und in der Auslastung auf. Die Mindmap bleibt dabei die Quelle; Pläne und Listen sind nur andere Blicke darauf.
+- **Tagebuch an dem Ort, an dem der Tag geplant wurde.** Wer schon immer mal Tagebuch schreiben wollte und sich nie dazu aufraffen konnte: Ein Eintrag ist eine Notiz vom Typ *Diary entry* in der Map des Tages – dort, wo man ohnehin gerade ist. Das Tagebuch sammelt sie als Seiten, mit Linierung, Stickern und Bildern. Dasselbe funktioniert als **Laborbuch**: Seiten lassen sich abschließen und halten dann fest, was an diesem Tag galt.
+- **Zeitfresser, aufgeblähte Aufgaben und freie Zeit sehen.** Routinen und Termine ziehen ihre Zeit von der Tageskapazität ab, Projektaufgaben verteilen ihren Restaufwand bis zur Deadline. So sieht man, welche Woche schon voll ist, bevor sie anfängt, welche Aufgabe in Wirklichkeit aus fünf Aufgaben besteht, und wo noch Luft ist.
+- **Fast keine Regeln.** Welche Notes du anlegst, wie du sie anordnest, ob eine Map ein Wochenplan, ein Projekt oder ein Brainstorming ist – das entscheidest du. Vorlagen und Automatik helfen, zwingen aber nichts auf. Alles sind lesbare Dateien in deinem Ordner, ohne Konto und ohne Cloud; eine Cloud-Anbindung gibt es als eigene Version, wenn man sie will.
+
 ---
 
 ## 1. Starten und Speichern
@@ -25,6 +34,14 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
     - **Meine Version behalten:** Die Datei wird überschrieben, die anderen Änderungen gehen verloren.
   - **Andere Maps** (Mit-Abhaken, Move to map, Carry-over, Overview, Umbenennen) und das **Tagebuch:** Statt zu überschreiben, kommt eine Fehlermeldung. Öffne die Map bzw. das Tagebuch neu und wiederhole den Schritt.
   - **Nichts geht still verloren:** Konnte die offene Map nicht gespeichert werden, fragt MindMapper nach, bevor du eine andere Map öffnest oder den Ordner wechselst – mit dem Hinweis, dass du die Änderungen mit **File → Save as…** sichern kannst. Wählst du denselben Ordner erneut, bleibt die offene Map mit ihrer Datei verbunden.
+- **Synchronisierter Ordner** (pCloud, Dropbox, Hessenbox, OneDrive, Nextcloud …): Liegt der Projektordner in einem Ordner, den ein Sync-Programm abgleicht, setze im Panel (nichts markiert) das Häkchen **Folder is synced (pCloud, OneDrive …)**. Es gilt für diesen Ordner auf allen Geräten (gespeichert in `mindmapper.settings.json`).
+  - **Seltener schreiben:** Mit dem Häkchen schreibt MindMapper eine Map oder das Tagebuch erst **15 s nach der letzten Änderung** in die Datei (sonst nach gut einer Sekunde). Sync-Programme laden jede Schreibaktion hoch; kommt währenddessen die nächste, legen manche eine Konfliktkopie an. Verlässt du die App, wechselst die Map oder schließt den Tab, wird sofort gespeichert. Verschieben und Zoomen schreiben die Datei nie – nur echte Änderungen.
+  - **Zurückkommen:** Kehrst du zur App zurück (anderes Fenster, Handy entsperrt), prüft MindMapper, ob die offene Map inzwischen woanders geändert wurde. Hast du hier nichts Ungespeichertes, lädt es die neue Version still nach (Meldung „… wurde woanders geändert – neue Version geladen“); sonst greift der Schutz vor Überschreiben.
+  - **Gerätewechsel:** Vor dem Wechsel die App verlassen (das speichert), kurz warten, bis das Sync-Programm fertig ist, und auf dem anderen Gerät **⟳** drücken oder zurück ins Fenster gehen. Dieselbe Map auf zwei Geräten innerhalb weniger Sekunden zu bearbeiten, kann kein Sync-Programm sauber auflösen.
+  - **Konfliktkopien aufräumen:** Dateien wie `Üben.mindmap [conflicted 2].json` (pCloud), `… (conflicted copy …)` (Dropbox) oder `… (Konflikt 2026-10-25 1228)` (MindMappers *Beide behalten*) erscheinen nicht als eigene Maps, sondern als orangefarbenes **⚠ n** an ihrer Map in der Seitenleiste. Das Menü dahinter zeigt jede Kopie mit Uhrzeit und „gleicher Inhalt“, wenn sie dem Original gleicht: **Kopie öffnen** (nur zum Vergleichen), **Diese Version behalten…** (ersetzt die Map durch die Kopie; bei Plänen werden Routinen und Termine danach nachgetragen), **Kopie löschen…**, **Die n Kopien mit gleichem Inhalt löschen**, **Alle n Kopien löschen…**. Eine Kopie ohne Original bleibt eine normale Map.
+  - **Leere Dateien:** Zeigt ein Sync-Programm eine Datei schon an, bevor ihr Inhalt da ist, öffnet MindMapper sie nicht als leere Map, sondern meldet „… ist gerade leer oder unvollständig“. Später noch einmal versuchen.
+  - **Am Handy:** Ein Ordner, den die App eines Sync-Dienstes „offline verfügbar“ macht (z. B. die pCloud-App), ist kein normaler Ordner, sondern eine Warteschlange für Uploads. Änderungen kommen dort oft erst nach Minuten an, und Anlegen oder Löschen kann scheitern. Am Handy ist die **Cloud-Version** (unten) der verlässliche Weg; am PC ist ein Sync-Ordner ein ganz normaler Ordner.
+- **Cloud-Version mit pCloud:** Unter `https://mindmapper.tizian-arold.workers.dev/` läuft dieselbe App mit direkter pCloud-Anbindung – ohne Sync-Programm dazwischen. In der Seitenleiste **…** → **Connect pCloud…**, bei pCloud anmelden (die Zugangsdaten sieht nur pCloud; MindMapper bekommt einen Schlüssel, den du bei pCloud jederzeit zurückziehen kannst) und einen pCloud-Ordner wählen. PC und Handy arbeiten dann auf denselben Dateien; MindMapper prüft beim Speichern selbst, ob die Datei inzwischen woanders geändert wurde, und fragt dann. Auch dort lässt sich stattdessen ein lokaler Ordner öffnen (Chrome / Edge). Die lokale Version (`index.html`, GitHub Pages) hat keine Cloud-Anbindung und baut keine Verbindung nach außen auf.
 
 ## 2. Grundbedienung
 
@@ -33,7 +50,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
 | Note einfügen | Rechtsklick auf die leere Fläche → **Insert**, oder **+ Insert** in der Toolbar |
 | Text bearbeiten | Doppelklick, oder `Enter` / `F2` |
 | Verbundene Note anlegen | `Tab` (rechts neben der markierten Note) |
-| Verbinden | Maus über eine Note → blauen Punkt auf eine andere Note ziehen (auf die leere Fläche ziehen = neue Note) |
+| Verbinden | Maus über eine Note → blauen Punkt auf eine andere Note ziehen (auf die leere Fläche ziehen = neue Note). Ankerpunkte: drei je Seite, bei großen Notes (breiter oder höher als eine Standard-Task-Note) fünf. Bei gedrehten Bildern und Emoji-Notes drehen die Ankerpunkte mit. |
 | Verschieben / Größe | Ziehen; Ecken und Kanten der Markierung ziehen |
 | Mehrere markieren | Rahmen aufziehen, oder `Shift` / `Ctrl` + Klick |
 | Ansicht verschieben | `Leertaste` + Ziehen oder mittlere Maustaste |
@@ -54,9 +71,9 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
   | Halten (kurzes Vibrieren) und loslassen | Kontextmenü – wie Rechtsklick |
   | Halten und dann ziehen | Note verschieben; auf der leeren Fläche: Auswahlrahmen |
   | Zwei Finger auf einem markierten Bild / Emoji | drehen und vergrößern / verkleinern |
-  | Griffe und blaue Ankerpunkte | wie mit der Maus (Größe ändern, verbinden); an der markierten Note sind sie größer und immer sichtbar |
+  | Griffe und blaue Ankerpunkte | wie mit der Maus (Größe ändern, verbinden); an der markierten Note sind sie größer und immer sichtbar. Um jeden Griff liegt ein unsichtbarer, fingergroßer Trefferbereich; ein kleines Emoji oder Bild bekommt einen Mindestrahmen (gestrichelt), damit die Griffe nicht übereinanderliegen. Pfeile lassen sich auch weit herausgezoomt antippen. |
 
-  Auf schmalen Bildschirmen liegt die Seitenleiste **Project** als Schublade über der Map (schließt sich nach dem Öffnen einer Map) und das **Panel** als Blatt am unteren Rand; beide blendest du mit den Knöpfen *Project* / *Panel* ein und aus. Die Toolbar lässt sich seitlich wischen.
+  Auf schmalen Bildschirmen liegt die Seitenleiste **Project** als Schublade über der Map (schließt sich nach dem Öffnen einer Map) und das **Panel** als Blatt am unteren Rand; beide blendest du mit den Knöpfen *Project* / *Panel* ein und aus. Die Toolbar lässt sich seitlich wischen. Die **Overview** füllt am Handy den Bildschirm (auch quer – dort ist ihre Kopfzeile eine wischbare Zeile), die Zeilen sind zweizeilig.
 - Das **Panel rechts** zeigt die Eigenschaften der Markierung: Typ, Form, Farben, Details. Ist nichts markiert, stehen dort die Einstellungen.
 - **Smart guides** und **Grid** helfen beim Ausrichten. `Alt` beim Ziehen schaltet das Einrasten aus.
 - **`Ctrl` beim Ziehen** nimmt alles mit, was unter der Note hängt: Notes, auf die ihre Pfeile zeigen (beliebig tief), bei einer Gruppe deren Inhalt, und verankerte Zeichnungen. `Ctrl` darf auch erst während des Ziehens gedrückt oder losgelassen werden – die Unter-Notes kommen dann dazu bzw. springen zurück.
@@ -120,9 +137,9 @@ Es gilt die **erste** Zeile, die passt:
 
 | Gesetzt im Panel | Die Task ist … | Wirkung auf deine Zeit | Wo sie auftaucht |
 |---|---|---|---|
-| *Repeat* wöchentlich / monatlich | 🔁 **Routine** mit festen Tagen | zieht ihre *Estimate* an jedem ihrer Tage von der Kapazität ab | Tages- und Wochenplan (Spalte des Tages), Workload → *Routines* |
+| *Repeat* wöchentlich / monatlich | 🔁 **Routine** mit festen Tagen (blaues 🔁) | zieht ihre *Estimate* an jedem ihrer Tage von der Kapazität ab | Tages- und Wochenplan (Spalte des Tages), Workload → *Routines* |
 | *Repeat* *Time budget per week* / *Several times per week* | 🔁 **Routine** ohne feste Tage | der Wochenanteil wird auf die Arbeitstage der Woche verteilt | Wochenplan: Liste ihrer Kategorie (bzw. *Routines this week*) |
-| *Repeat* in einer **Freizeit-Kategorie** | 🔁 **Freizeit-Routine** | **keine** – nur zum Abhaken und Dranbleiben | wie oben; Workload-Seite ausgegraut |
+| *Repeat* in einer **Nice-to-have-Kategorie** | 🔁 **Nice-to-have-Routine** (orangefarbenes 🔁) | **keine** – wird nicht angerechnet, nur zum Abhaken und Dranbleiben | wie oben; Workload-Seite ausgegraut |
 | *Repeat* *Day(s) off / vacation* | 🏖 **Urlaub / frei** | Tag ohne Kapazität (oder weniger, wenn *Estimate* gesetzt) | 🏖-Eintrag im Plan |
 | *Scheduled* (Termin, optional Uhrzeit) | 📌 **Termin** | blockt die *Estimate* an genau diesem Tag – auch abgehakt | Tages- und Wochenplan, Overview, Workload (`−2 h 📌`), Konfliktmeldung |
 | *Deadline* + *Estimate* | **Projektaufgabe** | der Restaufwand wird auf die Tage bis zur Deadline verteilt | Overview, Matrix, Workload, Puffer, Statusleiste |
@@ -162,9 +179,9 @@ Oft bleibt für Projekte weniger Zeit als gedacht – weil viel Zeit in Kleinkra
 5. **Dranbleiben:** Die Routinen stehen in den Tages- und Wochenplänen zum Abhaken. Ihr **Verlauf** (▣ erledigt, □ verpasst) zeigt nach ein paar Wochen, was wirklich passiert und was nur im Plan steht.
 6. **Einmalige Zeitfresser** (Klausuraufsicht, Gutachten-Sitzung) als **Termin** mit Schätzung eintragen – dann stimmt die Kapazität auch in Ausnahmewochen, und MindMapper warnt, wenn ein Termin nicht mehr in den Tag passt.
 
-### Beispiel: Freizeit planen, ohne die Arbeitszeit zu belasten
+### Beispiel: Nice-to-have-Routinen, die nicht auf die Zeit angerechnet werden
 
-„Schlagzeug: Rhythmus-Übungen“ als *Several times per week*, **3×**, `30m`, Kategorie **Schlagzeug** (*Freizeit*): Der Wochenplan bekommt drei Kästchen auf dem Zettel „🥁 Schlagzeug“, von der Kapazität geht nichts ab, und die Serie („4 Wochen in Folge“) motiviert. Mehr dazu in Kapitel 14.
+„Schlagzeug: Rhythmus-Übungen“ als *Several times per week*, **3×**, `30m`, Kategorie **Schlagzeug** (*Nice to have*): Der Wochenplan bekommt drei Kästchen auf dem Zettel „🥁 Schlagzeug“, von der Kapazität geht nichts ab, und die Serie („4 Wochen in Folge“) motiviert. Dieselbe Bandprobe in einer Kategorie **ohne** das Häkchen zählt dagegen voll – so lässt sich derselbe Ordner für Arbeit oder für private Projekte nutzen. Mehr dazu in Kapitel 14.
 
 ## 6. Filter
 
@@ -178,6 +195,7 @@ Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Sta
 - **Rechtsklick auf eine Map** in der Seitenleiste (oder der **⋯**-Knopf, der beim Darüberfahren erscheint): **Open**, **Rename or move…**, **Move to folder**, **Delete map…**. Beim Umbenennen werden Links in allen anderen Maps automatisch angepasst.
 - **Links zwischen Maps:** Eine Note mit Link auf eine Map öffnet diese per ↗. Existiert die Map noch nicht, bietet MindMapper an, sie anzulegen.
 - **← Back** in der Seitenleiste springt zur vorher geöffneten Map zurück.
+- **⚠ n** an einer Map: Konfliktkopien eines Sync-Programms oder aus *Beide behalten* – vergleichen, eine Version behalten, aufräumen (Kapitel 1, **Synchronisierter Ordner**).
 
 ## 8. Tages-, Wochen- und Monatspläne
 
@@ -286,11 +304,12 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **Urlaub:** *Estimate* leer = ganzer Tag frei (keine Kapazität, Termine entfallen, 🏖 im Plan); *Estimate* z. B. `4h` = halber Tag frei.
 - Übersicht: **Overview → Workload** mit den Listen *Routines* und *Days off*.
 
-### Kategorien und Freizeit-Routinen
+### Kategorien und Nice-to-have-Routinen
 
 - **Kategorie zuweisen:** Unter *Repeat* gibt es die Auswahl **Category** – eine vorhandene Kategorie oder **New category…** (Name eintippen, fertig).
-- **Kategorien verwalten:** Panel, wenn nichts markiert ist → Abschnitt **Routine categories**: Name, **Emoji** (Knopf ☺, Rechtsklick entfernt es), Häkchen **leisure** (Freizeit), × löscht (die Routinen bleiben, nur ohne Kategorie). Gespeichert **pro Projektordner** in `mindmapper.settings.json` – Arbeits- und Privatordner haben eigene Kategorien.
-- **Freizeit:** Routinen einer Freizeit-Kategorie ziehen **keine** Zeit von der Kapazität ab. Sie stehen trotzdem in den Plänen und werden abgehakt – zur Motivation. Auf der Workload-Seite erscheinen sie ausgegraut („Freizeit, zählt nicht“).
+- **Kategorien verwalten:** Panel, wenn nichts markiert ist → Abschnitt **Routine categories**: Name, **Emoji** (Knopf ☺, Rechtsklick entfernt es), Häkchen **nice to have**, × löscht (die Routinen bleiben, nur ohne Kategorie). Gespeichert **pro Projektordner** in `mindmapper.settings.json` – Arbeits- und Privatordner haben eigene Kategorien.
+- **Nice to have:** Routinen einer Kategorie mit diesem Häkchen werden **nicht auf die Kapazität angerechnet** – sie sind eine Art automatische To-do-Liste für Dinge, die schön wären, aber keine Zeit blocken sollen. Sie stehen trotzdem in den Plänen und werden abgehakt, zur Motivation und für die Serie. Auf der Workload-Seite erscheinen sie ausgegraut („nice to have, zählt nicht“). Eine Routine ohne *Estimate* zählt ebenfalls nichts, weil es nichts abzuziehen gibt.
+- **Farbe des 🔁 im Plan:** **blau** = die Routine zieht Zeit von der Kapazität ab, **orange** = nice to have. Die Farbe ist auf PC und Handy gleich (die Emoji-Schriften der Systeme unterscheiden sich sonst).
 - **Zettel im Wochenplan:** Routinen ohne feste Tage (*Time budget per week*, *Several times per week*) stehen im Wochenplan auf einer Liste je Kategorie, z. B. „🥁 Bandprobe“ mit „Rhythmus (30m)“ ×3 – ein Kästchen pro Mal. Routinen ohne Kategorie stehen in **Routines this week**. Routinen mit festen Tagen bleiben in der Tagesspalte.
 - Ändert sich etwas (Anzahl pro Woche, andere Kategorie, Kategorie umbenannt oder gelöscht), passt sich der Wochenplan beim nächsten **Öffnen** an (ab heute): fehlende Kästchen kommen dazu, überzählige **offene** verschwinden, abgehakte bleiben.
 
@@ -348,7 +367,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
   - **Wie eingeklebt:** Ein Sticker gehört zu dem Eintrag, auf dem er abgelegt wird (zwischen zwei Einträgen: zum oberen, über dem ersten: zur Seite). Rutscht der Eintrag später nach unten, z. B. weil darüber ein neuer Eintrag dazukommt, wandert der Sticker mit.
   - **Platz schaffen:** Im Gestaltungsmodus den **Kopf eines Eintrags** nach unten ziehen – darüber entstehen Leerzeilen (in ganzen Zeilen, zurück bis zum ursprünglichen Platz), z. B. für ein Bild zwischen zwei Einträgen.
   - **Am Handy:** Die Seite behält ihre A4-Breite (gleicher Umbruch wie im Druck, Sticker bleiben an ihrem Platz) und wird als Ganzes auf Bildschirmbreite verkleinert – wie ein PDF. Mit einem Finger scrollen, mit **zwei Fingern** hineinzoomen (bis doppelte Größe).
-  - **Auf der Linie:** Jeder Eintrag beginnt auf einer Linie der Linierung, Absätze und Überschriften haben Abstände in ganzen Zeilen. Die Seite ist mindestens so lang wie ihr tiefster Sticker, nichts wird abgeschnitten.
+  - **Auf der Linie:** Jeder Eintrag beginnt auf einer Linie der Linierung, Absätze und Überschriften haben Abstände in ganzen Zeilen. Ragt ein Sticker unter den Text seines Eintrags, beginnt der nächste Eintrag erst darunter (in ganzen Zeilen). Die Seite ist mindestens so lang wie ihr tiefster Sticker, nichts wird abgeschnitten.
 - **🖨 Drucken / PDF:** diese Seite, das ganze Tagebuch oder ein Zeitraum. Für ein PDF im Druckdialog „Als PDF speichern“ wählen. Jede Tagebuchseite beginnt auf einem neuen Blatt.
 - Tagebucheinträge erscheinen nicht in Overview und Auslastung und werden beim Carry-over nicht übertragen.
 
@@ -368,4 +387,4 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 
 - Alles bleibt lokal: Maps sind lesbare JSON-Dateien in deinem Ordner.
 - Undo/Redo gilt für die offene Map. Was in **andere** Maps geschrieben wurde (Move to map, Carry-over), nimmst du mit **Undo move** bzw. von Hand zurück. Ausnahme: Abgehakte 🔁/📌-Einträge und Termine werden beim Undo auch in den anderen Plänen zurückgenommen.
-- Ist dieselbe Map in zwei Tabs oder auf zwei Rechnern gleichzeitig offen, wird nichts still überschrieben: Hat sich die Datei inzwischen woanders geändert, fragt MindMapper beim Speichern, welche Version bleiben soll (*Andere Version behalten*, *Beide behalten*, *Meine Version behalten*). Schreibzugriffe auf andere Maps und das Tagebuch brechen in diesem Fall mit einem Hinweis ab. Details in Kapitel 1 unter **Schutz vor Überschreiben**.
+- Ist dieselbe Map in zwei Tabs oder auf zwei Rechnern gleichzeitig offen, wird nichts still überschrieben: Hat sich die Datei inzwischen woanders geändert, fragt MindMapper beim Speichern, welche Version bleiben soll (*Andere Version behalten*, *Beide behalten*, *Meine Version behalten*). Schreibzugriffe auf andere Maps und das Tagebuch brechen in diesem Fall mit einem Hinweis ab. Details in Kapitel 1 unter **Schutz vor Überschreiben** und **Synchronisierter Ordner**.

@@ -296,7 +296,7 @@
       if (r.kind !== 'off') {
         // category: groups the routine on the week plan; a leisure category takes no capacity
         const cats = { '': MM.tr('(none)') };
-        for (const c of R.categories()) cats[c.id] = R.categoryTitle(c) + (c.leisure ? ' · ' + MM.tr('leisure') : '');
+        for (const c of R.categories()) cats[c.id] = R.categoryTitle(c) + (c.leisure ? ' · ' + MM.tr('nice to have') : '');
         cats.__new = MM.tr('New category…');
         h += `<div class="rp-line"><label class="rp-inline">${esc(MM.tr('Category'))} ${select('data-repeat="category"', R.category(r.category) ? r.category : '', cats)}</label></div>`;
       }
@@ -305,7 +305,7 @@
         <p class="hint">${esc(R.label(r, n.meta.estimate))}. ${r.kind === 'off'
     ? t('repeatOffHint')
     : R.isLeisure(r)
-      ? esc(MM.tr('Leisure: shown and checked off on the plans, but takes no time off the capacity.'))
+      ? esc(MM.tr('Nice to have: shown and checked off on the plans, but not counted towards the capacity.'))
       : r.kind === 'times'
         ? esc(MM.tr('Duration of each time = Estimate above. Takes its time off the capacity; week plans get a check box per time.'))
         : t(r.kind === 'budget' ? 'repeatBudgetHint' : 'repeatDurationHint')}</p>`;
@@ -413,13 +413,13 @@
     const rows = MM.routines.categories().map((c) => `<div class="cat-row">
         <button class="cat-emoji" data-cat-emoji-pick="${esc(c.id)}" title="${esc(tr('Choose an emoji (right-click: remove it)'))}">${esc(c.emoji || '☺')}</button>
         <input type="text" data-cat-name="${esc(c.id)}" value="${esc(c.name)}" maxlength="40">
-        <label class="check" title="${esc(tr('Leisure: its routines take no time off the capacity'))}"><input type="checkbox" data-cat-leisure="${esc(c.id)}" ${c.leisure ? 'checked' : ''}> ${esc(tr('leisure'))}</label>
+        <label class="check" title="${esc(tr('Nice to have: its routines are not counted towards the capacity'))}"><input type="checkbox" data-cat-leisure="${esc(c.id)}" ${c.leisure ? 'checked' : ''}> ${esc(tr('nice to have'))}</label>
         <button class="icon-btn" data-cat-delete="${esc(c.id)}" title="${esc(tr('Delete category'))}">×</button>
       </div>`).join('');
     return `<section><h3>${esc(tr('Routine categories'))}</h3>
       ${rows || `<p class="hint">${esc(tr('No categories yet.'))}</p>`}
       <button data-cat-add>${esc(tr('+ Category'))}</button>
-      <p class="hint">${esc(tr('Routines of a category share a list on the week plan. Leisure: shown and checked off, but no time off the capacity. Stored {where}.', { where: MM.storage.capacityLocation() }))}</p>
+      <p class="hint">${esc(tr('Routines of a category share a list on the week plan. Nice to have: its routines are not counted towards the capacity - just to check off and keep going. Stored {where}.', { where: MM.storage.capacityLocation() }))}</p>
     </section>`;
   }
 

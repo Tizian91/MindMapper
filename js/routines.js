@@ -51,6 +51,20 @@
   R.category = (id) => (id ? R.categories().find((c) => c.id === id) || null : null);
   /** Does the rule belong to a leisure category (no time off the capacity)? */
   R.isLeisure = (rule) => !!(rule && R.category(rule.category) && R.category(rule.category).leisure);
+  /**
+   * Is the routine behind a plan entry (item.routine = note id) a leisure one? The note
+   * is looked for in the open map, then in the other maps read so far (workload.js);
+   * null when it is not found (yet).
+   */
+  R.leisureOf = function (id) {
+    let n = MM.state.doc && MM.state.doc.nodes[id];
+    if (!n && MM.load && MM.load.docs) {
+      for (const doc of MM.load.docs().values()) {
+        if (doc && doc.nodes && doc.nodes[id]) { n = doc.nodes[id]; break; }
+      }
+    }
+    return n && n.repeat ? R.isLeisure(n.repeat) : null;
+  };
   /** "🥁 Band practice" */
   R.categoryTitle = (c) => (c ? (c.emoji ? c.emoji + ' ' : '') + c.name : 'Routines this week');
 

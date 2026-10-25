@@ -96,7 +96,7 @@
     ne: { x: SQ, y: -SQ }, se: { x: SQ, y: SQ }, sw: { x: -SQ, y: SQ }, nw: { x: -SQ, y: -SQ },
   };
 
-  G.QUARTER_MIN = 120; // side length from which a note gets the quarter anchors (n1, n2, …)
+  G.QUARTER_MIN = 260; // side length from which a note gets the quarter anchors (n1, n2, …): bigger than a standard task note (240)
 
   /** Snap points on a node's outline: { id: {id, x, y, dir} }. */
   G.anchors = function (n) {
@@ -124,8 +124,8 @@
       pts.sw = { x, y: y + h };
     }
     // big notes with straight sides: two more anchors per side (at a quarter and three
-    // quarters), so connections do not all meet in the middle; a side shorter than
-    // 120 keeps three - a connection at a quarter point falls back to auto then
+    // quarters), so connections do not all meet in the middle; a shorter side keeps
+    // three - a connection at a quarter point falls back to auto then
     if (!['ellipse', 'diamond', 'hexagon', 'parallelogram', 'pill'].includes(n.shape)) {
       if (w >= G.QUARTER_MIN) {
         pts.n1 = { x: x + w / 4, y }; pts.n2 = { x: x + (3 * w) / 4, y };

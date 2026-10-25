@@ -260,24 +260,24 @@
     '{n}× per week': '{n}× pro Woche',
     '× per week (a check box each on the week plan)': '× pro Woche (je ein Kästchen im Wochenplan)',
     '(none)': '(keine)',
-    'leisure': 'Freizeit',
+    'nice to have': 'nice to have',
     'New category…': 'Neue Kategorie…',
     'Category': 'Kategorie',
-    'Leisure: shown and checked off on the plans, but takes no time off the capacity.':
-      'Freizeit: steht in den Plänen und wird abgehakt, zieht aber keine Zeit von der Kapazität ab.',
+    'Nice to have: shown and checked off on the plans, but not counted towards the capacity.':
+      'Nice to have: steht in den Plänen und wird abgehakt, wird aber nicht auf die Kapazität angerechnet.',
     'Duration of each time = Estimate above. Takes its time off the capacity; week plans get a check box per time.':
       'Dauer pro Mal = Aufwand oben. Wird von der Kapazität abgezogen; Wochenpläne bekommen je Mal ein Kästchen.',
     'Choose an emoji (right-click: remove it)': 'Emoji wählen (Rechtsklick: entfernen)',
-    'Leisure: its routines take no time off the capacity': 'Freizeit: ihre Routinen ziehen keine Zeit von der Kapazität ab',
+    'Nice to have: its routines are not counted towards the capacity': 'Nice to have: ihre Routinen werden nicht auf die Kapazität angerechnet',
     'Delete category': 'Kategorie löschen',
     'Routine categories': 'Routine-Kategorien',
     'No categories yet.': 'Noch keine Kategorien.',
     '+ Category': '+ Kategorie',
-    'Routines of a category share a list on the week plan. Leisure: shown and checked off, but no time off the capacity. Stored {where}.':
-      'Routinen einer Kategorie stehen im Wochenplan auf einer gemeinsamen Liste. Freizeit: steht dort und wird abgehakt, zieht aber keine Kapazität ab. Gespeichert {where}.',
+    'Routines of a category share a list on the week plan. Nice to have: its routines are not counted towards the capacity - just to check off and keep going. Stored {where}.':
+      'Routinen einer Kategorie stehen im Wochenplan auf einer gemeinsamen Liste. Nice to have: ihre Routinen werden nicht auf die Kapazität angerechnet – nur zum Abhaken und Dranbleiben. Gespeichert {where}.',
     'Delete the category "{name}"?\n\nIts routines stay and get no category.': 'Kategorie „{name}“ löschen?\n\nIhre Routinen bleiben und haben dann keine Kategorie.',
-    'Leisure routine: about {h} per week, not taken off your capacity.': 'Freizeit-Routine: etwa {h} pro Woche, wird nicht von der Kapazität abgezogen.',
-    ' – leisure, not counted': ' – Freizeit, zählt nicht',
+    'Nice to have: about {h} per week, not counted towards your capacity.': 'Nice to have: etwa {h} pro Woche, wird nicht auf die Kapazität angerechnet.',
+    ' – nice to have, not counted': ' – nice to have, zählt nicht',
     'Last 8 weeks (oldest first): ▣ done · □ missed · ◌ this week, still open · · no entries':
       'Letzte 8 Wochen (älteste zuerst): ▣ erledigt · □ verpasst · ◌ diese Woche, noch offen · · keine Einträge',
     'Week of {d}': 'Woche ab {d}',
