@@ -26,6 +26,7 @@ try {
   MM.state = { doc: { view: { x: 0, y: 0, zoom: 1 } }, selection: new Set(['IMG']), drag: null, tool: null };
   MM.node = (id) => (id === 'IMG' ? img : null);
   MM.snapAngle = M.snapAngle;
+  MM.canRotate = M.canRotate; // images and emoji notes (state.js)
   MM.render = { applyView() {}, nodes() {}, edges() {}, overlay() {} };
   MM.commit = () => commits++; MM.refresh = () => {}; MM.storage = { scheduleAutosave() {} };
   MM.geo = { clamp: (v, a, b) => Math.max(a, Math.min(b, v)) };

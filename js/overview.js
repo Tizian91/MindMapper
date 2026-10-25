@@ -176,6 +176,9 @@
 
   const MIN_W = 520, MIN_H = 300;
 
+  /** Phones (narrow, or flat when turned sideways): the window fills the screen, it is neither moved nor resized (css). */
+  const small = () => window.matchMedia('(max-width: 600px), (max-height: 500px)').matches;
+
   /** Keep a rect inside the browser window (at least the head stays reachable). */
   function clampRect(r) {
     const vw = window.innerWidth, vh = window.innerHeight;
@@ -193,7 +196,7 @@
   /** Saved position / size, or the centered default. */
   function applyRect() {
     const saved = S.settings.overviewRect;
-    if (saved && isFinite(saved.x) && isFinite(saved.w)) {
+    if (saved && !small() && isFinite(saved.x) && isFinite(saved.w)) {
       setRect(clampRect(saved));
     } else {
       for (const k of ['margin', 'left', 'top', 'width', 'height']) dialog.style[k] = '';
@@ -214,7 +217,7 @@
     const head = dialog.querySelector('.ov-head');
     let drag = null;
     const start = (e, mode) => {
-      if (e.button !== 0) return;
+      if (e.button !== 0 || small()) return;
       e.preventDefault();
       drag = { mode, x0: e.clientX, y0: e.clientY, r0: currentRect(), el: e.currentTarget };
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -264,7 +267,10 @@
       el.addEventListener('pointercancel', stop);
     }
     window.addEventListener('resize', () => {
-      if (dialog && dialog.open && S.settings.overviewRect) setRect(clampRect(currentRect()));
+      if (!dialog || !dialog.open) return;
+      // turned sideways / back, or no own size: as on opening; else keep the window inside
+      if (small() || !S.settings.overviewRect) applyRect();
+      else setRect(clampRect(currentRect()));
     });
   }
 

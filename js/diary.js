@@ -625,11 +625,20 @@
     const top0 = page.getBoundingClientRect().top + page.clientTop * k;
     page.style.minHeight = '';
     const entries = [...page.querySelectorAll('.dy-entry')];
-    entries.forEach((s) => (s.style.marginTop = '0px'));
+    entries.forEach((s) => {
+      s.style.marginTop = '0px';
+      s.style.paddingBottom = '';
+    });
     for (const s of entries) {
       const body = s.querySelector('.dy-body');
       const rest = ((body.getBoundingClientRect().top - top0) / k) % L;
       if (rest > 0.5 && L - rest > 0.5) s.style.marginTop = (L - rest) + 'px';
+      // stickers stuck to the entry that reach below its text belong to it: the next
+      // entry starts below them (whole lines, so it stays on the ruling)
+      const end = s.getBoundingClientRect().bottom;
+      let low = end;
+      s.querySelectorAll(':scope > .dy-ov-layer > .dy-ov').forEach((el) => (low = Math.max(low, el.getBoundingClientRect().bottom)));
+      if (low - end > 0.5) s.style.paddingBottom = Math.ceil((low - end) / k / L) * L + 'px';
     }
     let bottom = 0;
     page.querySelectorAll('.dy-ov').forEach((el) => (bottom = Math.max(bottom, (el.getBoundingClientRect().bottom - top0) / k)));
@@ -661,6 +670,7 @@
     const s = fit * userZoom;
     view.scale = s;
     page.style.setProperty('--dy-minh', Math.max(0, availH / s) + 'px'); // the page fills the visible area
+    page.style.setProperty('--dy-k', String(1 / s)); // handles of the stickers keep their size on screen (css)
     page.style.transform = Math.abs(s - 1) < 0.001 ? '' : `scale(${s})`;
     sizeSheet();
   }

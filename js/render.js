@@ -532,21 +532,32 @@
     if (mode !== 'connect' && mode !== 'endpoint' && !MM.editing) {
       if (selNodes.length === 1) {
         const n = selNodes[0], off = 9 * k * fat, hs = 8 * k * fat;
+        // a finger: the frame is at least 56 px on screen, so the handles of a tiny emoji
+        // or image do not lie on top of each other (dashed where it is wider than the note)
+        const minS = R.coarse ? 56 * k : 0;
+        const ex = Math.max(0, (minS - n.w) / 2), ey = Math.max(0, (minS - n.h) / 2);
+        const bx = n.x - ex, by = n.y - ey, bw = n.w + 2 * ex, bh = n.h + 2 * ey;
+        if (ex || ey) {
+          s += `<rect class="sel-box" x="${bx}" y="${by}" width="${bw}" height="${bh}" stroke-width="${k}" stroke-dasharray="${4 * k} ${3 * k}"/>`;
+        }
         const pos = {
-          nw: [n.x - off, n.y - off], n: [n.x + n.w / 2, n.y - off], ne: [n.x + n.w + off, n.y - off],
-          e: [n.x + n.w + off, n.y + n.h / 2], se: [n.x + n.w + off, n.y + n.h + off],
-          s: [n.x + n.w / 2, n.y + n.h + off], sw: [n.x - off, n.y + n.h + off], w: [n.x - off, n.y + n.h / 2],
+          nw: [bx - off, by - off], n: [bx + bw / 2, by - off], ne: [bx + bw + off, by - off],
+          e: [bx + bw + off, by + bh / 2], se: [bx + bw + off, by + bh + off],
+          s: [bx + bw / 2, by + bh + off], sw: [bx - off, by + bh + off], w: [bx - off, by + bh / 2],
         };
+        const hit = 32 * k; // a finger: an invisible, larger area around each handle catches the touch
         for (const d of HANDLE_DIRS) {
           const [x, y] = pos[d];
+          if (R.coarse) s += `<rect class="handle-resize handle-hit" data-dir="${d}" x="${x - hit / 2}" y="${y - hit / 2}" width="${hit}" height="${hit}"/>`;
           s += `<rect class="handle-resize h-${d}" data-dir="${d}" x="${x - hs / 2}" y="${y - hs / 2}"` +
             ` width="${hs}" height="${hs}" stroke-width="${k}"/>`;
         }
         // images and symbols: a round handle above them turns them
         if (MM.canRotate(n)) {
-          const rx = n.x + n.w / 2, ry = n.y - off - 24 * k * fat;
-          s += `<line class="rotate-stem" x1="${rx}" y1="${n.y - off}" x2="${rx}" y2="${ry}" stroke-width="${k}"/>` +
-            `<circle class="handle-rotate" cx="${rx}" cy="${ry}" r="${6 * k * fat}" stroke-width="${1.5 * k}"/>`;
+          const rx = bx + bw / 2, ry = by - off - 24 * k * fat;
+          s += `<line class="rotate-stem" x1="${rx}" y1="${by - off}" x2="${rx}" y2="${ry}" stroke-width="${k}"/>`;
+          if (R.coarse) s += `<circle class="handle-rotate handle-hit" cx="${rx}" cy="${ry}" r="${hit / 2}"/>`;
+          s += `<circle class="handle-rotate" cx="${rx}" cy="${ry}" r="${6 * k * fat}" stroke-width="${1.5 * k}"/>`;
         }
       } else if (selNodes.length > 1) {
         const b = MM.geo.bbox(selNodes), p = 6 * k;

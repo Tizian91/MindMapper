@@ -1016,8 +1016,11 @@
       versions.set(path, { v: r.version, h: MM.fsys.hash(f.text) });
       await P.backend.remove(copy);
       versions.delete(copy);
-      if (open) await MM.storage.openPath(path);
       await P.scan();
+      if (open) {
+        await MM.storage.openPath(path);
+        await P.fillPlan(); // a plan: routines / appointments the replaced version had added
+      }
       MM.ui.flash(tr('"{map}" now has the content of the copy', { map: P.mapName(path) }));
     } catch (err) {
       alert(tr('Could not replace the map: {err}', { err: err.message }));

@@ -911,11 +911,12 @@ input[type="range"] { flex: 1; }
 /* ---- Overlay: handles, anchors, guides ---------------------------------- */
 
 .handle-resize { fill: var(--panel); stroke: var(--accent); pointer-events: all; }
+.handle-hit { fill: transparent; stroke: none; } /* touch: invisible, larger area around a handle */
 .h-nw, .h-se { cursor: nwse-resize; }
 .h-ne, .h-sw { cursor: nesw-resize; }
 .h-n, .h-s { cursor: ns-resize; }
 .h-e, .h-w { cursor: ew-resize; }
-.sel-box { fill: none; stroke: var(--accent); }
+.sel-box { fill: none; stroke: var(--accent); pointer-events: none; }
 
 .anchor-dot { fill: var(--panel); stroke: var(--accent); pointer-events: all; cursor: crosshair; }
 .anchor-dot:hover, .anchor-dot.active { fill: var(--accent); }
@@ -1386,12 +1387,44 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
   .dlg { padding: 12px 14px; }
   .dlg-buttons { flex-wrap: wrap; }
   #views-dialog, #overview-dialog, #diary-dialog { box-sizing: border-box; width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; }
+  /* overview: two-line rows - the map name and the "↗ map" button below the title */
+  .ov-row { grid-template-columns: 20px minmax(0, 1fr) auto; grid-template-areas: "s t c" "s n m" "s p p"; row-gap: 2px; }
+  .ov-row > .status-ico { grid-area: s; }
+  .ov-row > .ov-title { grid-area: t; }
+  .ov-row > .ov-chips { grid-area: c; }
+  .ov-row > .ov-progress { grid-area: p; }
+  .ov-row > .ov-derived-cell { grid-area: m; }
+  .ov-row > .ov-map { grid-area: n; text-align: left; }
+  /* workload: label and hours on one line, the bar below */
+  .load-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
+  .load-row > .load-label { grid-area: 1 / 1; }
+  .load-row > .load-bar { grid-area: 2 / 1; }
+  .load-row > .load-val { grid-area: 1 / 2; }
+  .load-row > .load-buf { grid-area: 2 / 2; }
   /* toolbar: one row that can be swiped sideways - every button stays reachable
      (until the touch stage brings a short toolbar with a "⋯" menu) */
   #toolbar { gap: 6px 10px; }
   #toolbar .tb-group:has(> .brand:only-child) { display: none; }
   #toolbar .tb-group:has(> .brand:only-child) + .tb-group { border-left: 0; padding-left: 0; margin-left: 0; }
   .vw-head { padding: 8px 10px; gap: 6px; }
+}
+
+/* ---- Phones, also turned sideways: the overview fills the screen -----------------
+   It is neither moved nor resized there (overview.js small()); its head wraps, and on a
+   flat screen it is one row that can be swiped sideways, so the list keeps the height. */
+@media (max-width: 600px), (max-height: 500px) {
+  #overview-dialog { box-sizing: border-box; width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; border-radius: 0; }
+  .ov-resize { display: none; }
+  .ov-head { cursor: auto; padding: 8px 10px; gap: 6px; }
+  .ov-head h3 { font-size: 14px; }
+  .ov-search { width: 120px; flex: 1 1 120px; }
+  .ov-head .ov-type, .ov-head .ov-status, .ov-head .ov-prio { max-width: 110px; flex: 1 1 90px; }
+  .ov-list { padding: 4px 8px 12px; }
+}
+@media (max-height: 500px) {
+  .ov-head { flex-wrap: nowrap; overflow-x: auto; }
+  .ov-head > * { flex: none; }
+  .ov-search { width: 140px; }
 }
 
 /* ---- Phones: the map gets the whole width --------------------------------------
@@ -1422,8 +1455,27 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
   background: #fff; border: 1.5px solid var(--accent); border-radius: 50%; cursor: grab; }
 .dy-editing .dy-ov.sel .dy-ov-rot { display: block; }
 @media (pointer: coarse) {
-  .dy-ov-rot { width: 22px; height: 22px; margin-left: -11px; top: -34px; }
-  .dy-ov-handle { width: 18px; height: 18px; right: -10px; bottom: -10px; }
+  /* The page is scaled down on phones (--dy-k = 1 / scale, diary.js applyScale): the
+     handles keep their size on screen, an invisible area of ~44 px around each catches
+     the finger, and a small sticker gets a frame of at least 56 px (the handles sit on
+     that frame), so they do not lie on top of each other. */
+  .dy-ov-rot {
+    width: calc(22px * var(--dy-k, 1)); height: calc(22px * var(--dy-k, 1)); margin-left: calc(-11px * var(--dy-k, 1));
+    top: calc(min(0px, 50% - 28px * var(--dy-k, 1)) - 36px * var(--dy-k, 1)); border-width: calc(1.5px * var(--dy-k, 1));
+  }
+  .dy-ov-handle {
+    width: calc(18px * var(--dy-k, 1)); height: calc(18px * var(--dy-k, 1));
+    right: calc(min(0px, 50% - 28px * var(--dy-k, 1)) - 10px * var(--dy-k, 1));
+    bottom: calc(min(0px, 50% - 28px * var(--dy-k, 1)) - 10px * var(--dy-k, 1));
+    border-width: calc(1.5px * var(--dy-k, 1)); border-radius: calc(3px * var(--dy-k, 1));
+  }
+  .dy-ov-handle::before, .dy-ov-rot::before { content: ''; position: absolute; inset: calc(-13px * var(--dy-k, 1)); }
+  .dy-editing .dy-ov { outline: none; }
+  .dy-editing .dy-ov::before {
+    content: ''; position: absolute; inset: min(0px, calc(50% - 28px * var(--dy-k, 1)));
+    outline: calc(1px * var(--dy-k, 1)) dashed rgba(0, 0, 0, 0.25);
+  }
+  .dy-editing .dy-ov.sel::before { outline: calc(1.5px * var(--dy-k, 1)) solid var(--accent); }
 }
 
 /* phones: the bars of the diary are one row that can be swiped sideways (like the toolbar) */
