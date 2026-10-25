@@ -265,6 +265,12 @@ button.primary:hover:not(:disabled) { background: var(--accent-hover); border-co
 }
 .sb-file:hover .sb-more, .sb-more:focus-visible { visibility: visible; }
 .sb-more:hover { background: var(--accent-soft); color: var(--text); }
+/* ⚠ n: conflict copies of this map (always visible) */
+.sb-copies {
+  flex: none; margin-left: 4px; padding: 0 5px; border: 1px solid #d08a00; border-radius: 8px;
+  background: #fff4dc; color: #8a5a00; font-size: 11px; line-height: 1.4;
+}
+.sb-copies:hover { background: #ffe7b0; }
 .sb-dir:hover, .sb-file:hover { background: var(--accent-soft); }
 .sb-file.active { background: var(--accent); color: #fff; }
 .sb-outside { border-top: 1px solid var(--border); padding-top: 8px; }

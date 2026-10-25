@@ -24,6 +24,7 @@ ELECTRON_RUN_AS_NODE=1 "/c/Users/<Name>/AppData/Local/Programs/Microsoft VS Code
 | `test_rotate.js` | Drehen: Einrasten, Speichern, zwei Finger auf dem Bild |
 | `test_symbol.js` | Emoji-Notes (Erkennung, Drehen) |
 | `test_totask.js` | „Zu Tasks machen (mit Notes darunter)“ |
+| `test_copies.js` | Konfliktkopien erkennen (pCloud, Dropbox, MindMapper) und an die Map hängen (`project.js copyOf`) |
 
 Einige Skripte rechnen mit dem heutigen Datum (Wochenpläne im Oktober/November 2026);
 liegen die Testdaten in der Vergangenheit, Daten im Skript anpassen.

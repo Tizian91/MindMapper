@@ -155,7 +155,9 @@
   ST.idb = idb;
 
   let autosaveTimer = null, fileTimer = null;
+  let edits = 0; // counts the changes, so a write only marks "saved" what it really wrote
   ST.scheduleAutosave = function () {
+    if (S.dirty) edits++;
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(ST.autosave, 800);
     // maps of a project folder are written straight back into their file
@@ -175,15 +177,20 @@
    * Write the current map into its file (writes are queued, never overlap).
    * A map of the project folder is only written if its file is still the
    * version read here (S.file.version) - otherwise the user decides (askConflict).
+   * Without a change (S.dirty) a map of the project folder is not written: panning
+   * or zooming alone would otherwise rewrite the file again and again, and a sync
+   * program (pCloud, OneDrive …) on two devices takes that for edits on both.
    */
   let writeQueue = Promise.resolve();
   ST.writeFile = function () {
     clearTimeout(fileTimer);
     if (!ST.hasFile()) return writeQueue;
+    if (inProject() && !S.dirty) return writeQueue;
     const { backend, path, handle } = S.file;
     const name = path ? path.split('/').pop() : handle.name;
     const doc = S.doc;
     const json = ST.serialize();
+    const gen = edits;
     writeQueue = writeQueue.then(async () => {
       // the map was reloaded / replaced meanwhile (e.g. "Reload" in the conflict dialog)
       if (S.doc !== doc || S.file.path !== path || S.file.backend !== backend) return;
@@ -204,7 +211,8 @@
           await w.write(json);
           await w.close();
         }
-        if (S.file.backend === backend && S.file.path === path && S.file.handle === handle) S.dirty = false;
+        // still dirty if it was changed again while writing (that change has its own write)
+        if (S.file.backend === backend && S.file.path === path && S.file.handle === handle && edits === gen) S.dirty = false;
         ST.autosave();
         MM.ui.update();
       } catch (err) {
@@ -458,6 +466,66 @@
     S.file.hash = MM.fsys.hash(f.text);
     MM.project.setVersion(path, f.version, S.file.hash);
     afterOpen();
+  };
+
+  // ---- Leaving / coming back (phone: other app; PC: other window) --------------------
+  // Leaving: write pending changes now, so a sync program can take them along.
+  // Coming back: was the open map changed elsewhere meanwhile? Then load it before
+  // it is edited here - instead of a conflict on the next save.
+
+  let checking = null, lastCheck = 0, lastScan = 0;
+
+  /** The open map's file changed elsewhere and nothing here is unsaved: load it (keeps the view). */
+  ST.checkFile = function () {
+    if (checking || !inProject() || Date.now() - lastCheck < 3000) return checking || Promise.resolve();
+    lastCheck = Date.now();
+    checking = (async () => {
+      await writeQueue;
+      if (S.dirty) {
+        await ST.writeFile(); // asks if the file was changed elsewhere as well
+        return;
+      }
+      const editing = () => !!(MM.editing || MM.edit.isLabelEditing());
+      if (editing()) { lastCheck = 0; return; } // a text is being typed: check again later
+      const { backend, path, version } = S.file;
+      const st = await backend.stat(path);
+      if (!st || st.version === version) return; // deleted: the next save asks
+      const f = await backend.read(path);
+      if (!f || S.dirty || editing() || S.file.path !== path || S.file.backend !== backend) return;
+      const hash = MM.fsys.hash(f.text);
+      if (hash !== S.file.hash) {
+        const view = S.doc.view;
+        ST.load(f.text.trim() ? JSON.parse(f.text) : MM.emptyDoc(), path.split('/').pop());
+        if (view) S.doc.view = view;
+        MM.refresh();
+        MM.ui.flash(MM.tr('{name} was changed elsewhere - loaded the new version', { name: MM.project.mapName(path) }));
+        MM.tasks.refreshExternal();
+      }
+      S.file.version = f.version;
+      S.file.hash = hash;
+      MM.project.setVersion(path, f.version, hash);
+      S.dirty = false;
+      ST.autosave();
+    })().catch((err) => console.warn('MindMapper: file check failed', err)).finally(() => { checking = null; });
+    return checking;
+  };
+
+  ST.initLifecycle = function () {
+    const leave = () => {
+      ST.autosave();
+      if (S.dirty && inProject()) ST.writeFile();
+    };
+    const back = () => {
+      if (document.visibilityState !== 'visible' || !MM.project.backend) return;
+      ST.checkFile();
+      if (Date.now() - lastScan > 30000) { // new maps (or copies) from the other device
+        lastScan = Date.now();
+        MM.project.scan();
+      }
+    };
+    document.addEventListener('visibilitychange', () => (document.visibilityState === 'hidden' ? leave() : back()));
+    window.addEventListener('pagehide', leave);
+    window.addEventListener('focus', back); // PC: back from another window (the tab stayed visible)
   };
 
   function afterOpen() {

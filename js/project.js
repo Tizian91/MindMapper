@@ -241,6 +241,7 @@
       if (name.startsWith('.')) continue;
       // per-folder capacity settings, not a map (also copies like "mindmapper.settings (1).json")
       if (depth === 0 && kind === 'file' && (name === MM.storage.PROJECT_SETTINGS_FILE || /^mindmapper\.settings \(\d+\)\.json$/i.test(name))) continue;
+      if (depth === 0 && kind === 'file' && P.copyOf(name) === MM.storage.PROJECT_SETTINGS_FILE) continue; // its sync copies too
       // Assets/ holds the files of data notes - never list it as maps
       if (depth === 0 && kind === 'dir' && MM.files && name === MM.files.ASSET_FOLDER) continue;
       // Diaries/ holds the diaries (own sidebar section), and a diary file is no map anywhere
@@ -252,9 +253,36 @@
         out.push({ kind: 'file', name, path: prefix + name });
       }
     }
+    // conflict copies hang at their map (sidebar: ⚠ n) - no maps of their own, so they are
+    // not counted twice in the overview / workload; a copy without its map stays a map
+    const byName = new Map(out.filter((e) => e.kind === 'file').map((e) => [e.name, e]));
+    const maps = out.filter((e) => {
+      const orig = e.kind === 'file' && byName.get(P.copyOf(e.name, true));
+      if (!orig || orig === e) return true;
+      (orig.copies = orig.copies || []).push({ name: e.name, path: e.path });
+      return false;
+    });
     const coll = new Intl.Collator(undefined, { numeric: true });
-    return out.sort((a, b) => (a.kind === b.kind ? coll.compare(a.name, b.name) : a.kind === 'dir' ? -1 : 1));
+    for (const e of maps) if (e.copies) e.copies.sort((a, b) => coll.compare(a.name, b.name));
+    return maps.sort((a, b) => (a.kind === b.kind ? coll.compare(a.name, b.name) : a.kind === 'dir' ? -1 : 1));
   }
+
+  /**
+   * File name of the original if `name` is a conflict copy, else null:
+   *   "W43.mindmap [conflicted 2].json"                      pCloud sync
+   *   "W43 (Konflikt 2026-10-25 1228).mindmap.json"          MindMapper ("Keep both")
+   *   "W43 (Name's conflicted copy 2026-10-25).mindmap.json" Dropbox
+   *   "W43 (1).mindmap.json"                                 downloads, some sync apps - only
+   *                                                          with loose (a map may be called so)
+   */
+  P.copyOf = function (name, loose) {
+    let m = /^(.+?) \[conflicted(?: \d+)?\](\.[^.\s]+)?$/i.exec(name);
+    if (m) return m[1] + (m[2] || '');
+    m = /^(.+?) \((?:conflict|konflikt) \d{4}-\d\d-\d\d \d{4}(?: \d+)?\)(\.mindmap\.json|\.json)$/i.exec(name) ||
+      /^(.+?) \([^()]*conflicted copy[^()]*\)(\.mindmap\.json|\.json)$/i.exec(name) ||
+      (loose && /^(.+?) \(\d{1,2}\)(\.mindmap\.json|\.json)$/i.exec(name));
+    return m ? m[1] + m[2] : null;
+  };
 
   // ---- Diaries (see diary.js) --------------------------------------------------
   // One file per diary: Diaries/<name>.diary.json with its look, page overlays and
@@ -445,9 +473,20 @@
     return null;
   };
 
+  /** Path of the map whose conflict copy `path` is (see list), or null. */
+  P.originalOf = function (path, entries = P.entries) {
+    for (const e of entries) {
+      if (e.copies && e.copies.some((c) => c.path === path)) return e.path;
+      const r = e.children && P.originalOf(path, e.children);
+      if (r) return r;
+    }
+    return null;
+  };
+
   function paths(entries, out = []) {
     for (const e of entries) {
       out.push(e.path);
+      if (e.copies) out.push(e.copies.length); // the sidebar shows their number
       if (e.children) paths(e.children, out);
     }
     return out;
@@ -496,7 +535,8 @@
 
   /** Open a map. Returns true if it is open afterwards. */
   P.openMap = async function (path, opts) {
-    const e = P.find(path);
+    const orig = P.originalOf(path);
+    const e = P.find(path) || (orig && { name: path.split('/').pop() });
     if (!e) return false;
     if (S.file.path === path) return true;
     const from = S.file.path;
@@ -509,6 +549,10 @@
     }
     if (from && !(opts && opts.noHistory)) P.history.push(from);
     P.render();
+    if (orig) { // a conflict copy: only to look at / compare - no carry-over, no routines
+      MM.ui.flash(tr('This is a conflict copy of "{map}" - keep or delete it with ⚠ next to the map', { map: P.mapName(orig) }));
+      return true;
+    }
     await P.offerCarry();
     await P.fillPlan();
     return true;
@@ -817,8 +861,9 @@
         if (!closed) h += tree(e.children, depth + 1);
       } else {
         const active = S.file.path === e.path ? ' active' : '';
+        const copies = e.copies ? `<button class="sb-copies" data-copies title="${esc(tr('{n} conflict copies of this map (e.g. from a sync program) - compare, keep one, clean up', { n: e.copies.length }))}">⚠ ${e.copies.length}</button>` : '';
         h += `<div class="sb-file${active}" data-file="${esc(e.path)}" style="--d:${depth}" title="${esc(e.path)}">` +
-          `<span class="sb-file-name">${esc(displayName(e.name))}</span>` +
+          `<span class="sb-file-name">${esc(displayName(e.name))}</span>${copies}` +
           `<button class="sb-more" data-more title="${esc(tr('Rename, move, delete…'))}">⋯</button></div>`;
       }
     }
@@ -904,6 +949,81 @@
     ], x, y);
   }
 
+  // ---- Conflict copies (see list / P.copyOf) ----------------------------------------
+
+  /** Menu of the ⚠ n button: each copy (time, same content?) with open / keep / delete. */
+  async function copiesMenu(path, x, y) {
+    const e = P.find(path);
+    if (!e || !e.copies) return;
+    const read = async (p) => { try { return await P.backend.read(p); } catch (err) { return null; } };
+    const orig = await read(path);
+    const hash = orig && MM.fsys.hash(orig.text);
+    const when = (v) => (v ? new Date(v).toLocaleString(undefined, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '?');
+    const ext = /\.mindmap\.json$|\.json$/i;
+    const items = [{ label: tr('This map: {when}', { when: when(orig && orig.version) }), action: () => P.openMap(path) }, '-'];
+    const dups = [];
+    for (const c of e.copies) {
+      const f = await read(c.path);
+      const dup = !!(f && hash && MM.fsys.hash(f.text) === hash);
+      if (dup) dups.push(c.path);
+      // what tells the copy apart: "[conflicted 2]", "(Konflikt 2026-10-25 1228)"
+      const tag = c.name.replace(ext, '').slice(P.copyOf(c.name, true).replace(ext, '').length).trim() || c.name;
+      items.push({
+        label: `${tag} · ${when(f && f.version)}${dup ? ' · ' + tr('same content') : ''}`,
+        submenu: [
+          { label: 'Open the copy', action: () => P.openMap(c.path) },
+          { label: 'Keep this version…', disabled: dup, action: () => keepCopy(path, c.path) },
+          '-',
+          { label: 'Delete the copy…', action: () => deleteCopies(path, [c.path]) },
+        ],
+      });
+    }
+    items.push('-');
+    if (dups.length) items.push({ label: tr('Delete the {n} copies with the same content', { n: dups.length }), action: () => deleteCopies(path, dups, true) });
+    items.push({ label: tr('Delete all {n} copies…', { n: e.copies.length }), action: () => deleteCopies(path, e.copies.map((c) => c.path)) });
+    MM.menu.open(items, x, y);
+  }
+
+  /** The copy becomes the map (its content replaces the file), the copy is removed. */
+  async function keepCopy(path, copy) {
+    if (!confirm(tr('Replace "{map}" with this copy?\n\nThe current content of "{map}" is lost, the copy is removed.', { map: P.mapName(path) }))) return;
+    const open = S.file.path === path || S.file.path === copy;
+    if (open && !(await MM.storage.confirmLeave('replace the map'))) return;
+    try {
+      const f = await P.backend.read(copy);
+      if (!f) throw new Error('not found: ' + copy);
+      const r = await P.backend.write(path, f.text); // on purpose, without a check
+      versions.set(path, { v: r.version, h: MM.fsys.hash(f.text) });
+      await P.backend.remove(copy);
+      versions.delete(copy);
+      if (open) await MM.storage.openPath(path);
+      await P.scan();
+      MM.ui.flash(tr('"{map}" now has the content of the copy', { map: P.mapName(path) }));
+    } catch (err) {
+      alert(tr('Could not replace the map: {err}', { err: err.message }));
+    }
+  }
+
+  /** Remove conflict copies (quiet: copies with the map's content - nothing is lost). */
+  async function deleteCopies(path, list, quiet) {
+    if (!list.length) return;
+    if (!quiet && !confirm(tr('Delete {n} conflict copies of "{map}"?\n\nThe map itself stays.', { n: list.length, map: P.mapName(path) }))) return;
+    try {
+      if (list.includes(S.file.path)) {
+        if (!(await MM.storage.confirmLeave('delete the copy'))) return;
+        await MM.storage.openPath(path);
+      }
+      for (const p of list) {
+        await P.backend.remove(p);
+        versions.delete(p);
+      }
+      MM.ui.flash(tr('Deleted {n} copies', { n: list.length }));
+    } catch (err) {
+      alert(tr('Could not delete the map: {err}', { err: err.message }));
+    }
+    await P.scan();
+  }
+
   async function moveTo(path, folder) {
     const name = displayName(path.split('/').pop());
     const newPath = (folder ? folder + '/' : '') + name + '.mindmap.json';
@@ -971,7 +1091,10 @@
       return;
     }
     const file = t.closest('[data-file]');
-    if (file && t.closest('[data-more]')) {
+    if (file && t.closest('[data-copies]')) {
+      const r = t.closest('[data-copies]').getBoundingClientRect();
+      copiesMenu(file.dataset.file, r.left, r.bottom);
+    } else if (file && t.closest('[data-more]')) {
       const r = t.closest('[data-more]').getBoundingClientRect();
       fileMenu(file.dataset.file, r.left, r.bottom);
     } else if (file) {

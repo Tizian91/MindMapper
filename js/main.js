@@ -220,6 +220,7 @@
     await MM.project.init(); // after the autosave, so the restored map can be linked to its file
     window.addEventListener('resize', () => MM.render.applyView());
     window.addEventListener('beforeunload', () => MM.storage.autosave());
+    MM.storage.initLifecycle(); // save when leaving, check the file when coming back
   }
 
   MM.ready = init(); // resolves once the last session (or the demo) is loaded
