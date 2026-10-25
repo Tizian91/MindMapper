@@ -1,5 +1,7 @@
 # MindMapper – Plan Cloud (pCloud, später OneDrive / Google Drive) + Handy (Touch)
 
+> **Stand 25.10.2026: Die Cloud-Anbindung ist wieder entfernt** (pCloud-Anbieter, `cloud.html`, Cloudflare). pCloud verweigert Web-Apps das Lesen von Dateien (`getfilelink`: „Invalid link referer“, 7010 – erkannt an der `Origin`, die ein Browser immer schickt). Entscheidung des Nutzers: Nur noch die lokale Version; PC und Handy verbinden sich über den Sync-Ordner eines beliebigen Cloud-Dienstes. Kein Code hält Schlüssel zu fremden Konten. Etappen 1 (Speicher-Schnittstelle `js/fsys.js`), 2 (Konfliktschutz) und 4 (Touch) bleiben; der Rest dieses Plans ist Geschichte.
+
 Stand: 23.10.2026, ergänzt 24.10.2026 (mehrere Cloud-Anbieter), mit dem Nutzer abgestimmt, **noch nicht umgesetzt**. Grundregeln des Projekts gelten weiter: Modell in `MM.state.doc` ändern → `MM.commit()`, keine Build-Tools, keine ES-Module, alles über `window.MM`, UI-Texte englisch mit deutscher Übersetzung. Keine fremden Bibliotheken (das pCloud-SDK wird nicht gebraucht, die REST-API reicht).
 
 ## Ziel

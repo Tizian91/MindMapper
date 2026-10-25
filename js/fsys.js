@@ -3,7 +3,7 @@
  * Storage backends of a project folder. project.js and storage.js never touch
  * file or folder handles directly, they go through a backend:
  *
- *   kind, name                      'local' (later 'pcloud', ...), name for the sidebar
+ *   kind, name                      'local', name for the sidebar
  *   list(folder)                    direct children: [{ kind: 'dir'|'file', name }]
  *   read(path)                      { text, version } or null if missing
  *   readBlob(path)                  Blob or null if missing
@@ -20,7 +20,7 @@
  *   access(ask)                     'granted' | 'prompt' | 'denied' (ask: request it if needed)
  *
  * Paths are relative to the project folder ("Weeks/2026-W43.mindmap.json").
- * version: lastModified for local files (later the hash for pCloud).
+ * version: lastModified of the file.
  */
 (function (MM) {
   const FS = (MM.fsys = {});

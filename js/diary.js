@@ -551,8 +551,7 @@
     if (!now) {
       // a folder of a sync program: after a longer pause, as the maps (storage.js SYNC_DELAY)
       const P = MM.project;
-      const synced = S.settings.syncedFolder && P.backend && P.backend.kind === 'local';
-      saveTimer = setTimeout(() => save(true), synced ? MM.storage.SYNC_DELAY : 600);
+      saveTimer = setTimeout(() => save(true), S.settings.syncedFolder && P.backend ? MM.storage.SYNC_DELAY : 600);
       return false;
     }
     if (MM.project.status !== 'ready') return false;

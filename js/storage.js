@@ -172,9 +172,7 @@
     // maps of a project folder are written straight back into their file
     if (inProject() && S.settings.autoSaveFile) {
       clearTimeout(fileTimer);
-      // only a local folder has a sync program in between (pCloud itself: the API checks)
-      const synced = S.settings.syncedFolder && S.file.backend.kind === 'local';
-      fileTimer = setTimeout(() => ST.writeFile(), synced ? ST.SYNC_DELAY : 1200);
+      fileTimer = setTimeout(() => ST.writeFile(), S.settings.syncedFolder ? ST.SYNC_DELAY : 1200);
     }
   };
 
@@ -312,7 +310,7 @@
     }
   };
 
-  /** Which project folder a map belongs to ("local:Planung", "pcloud:pCloud · MindMapper"), or null. */
+  /** Which project folder a map belongs to ("local:Planung"), or null. */
   ST.folderKey = (backend) => (backend ? `${backend.kind}:${backend.name}` : null);
 
   /** Restore the newest autosave. Resolves to false if there was nothing to restore. */

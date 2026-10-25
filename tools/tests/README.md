@@ -18,7 +18,6 @@ ELECTRON_RUN_AS_NODE=1 "/c/Users/<Name>/AppData/Local/Programs/Microsoft VS Code
 | `test_cat.js` | Routine-Kategorien, Freizeit, „x-mal pro Woche“, Zettel im Wochenplan |
 | `test_hist.js` | Verlauf und Serie der Routinen |
 | `test_fsys.js` | lokaler Speicher-Anbieter inkl. Konfliktschutz (Version + Inhalts-Hash) |
-| `test_pcloud.js` | pCloud-Anbieter gegen ein nachgebautes pCloud (Anmeldung, Dateien, Konflikt, Token) |
 | `test_queue.js` | eine Schreibaktion pro Datei zur Zeit (`project.js writeText`) |
 | `test_touch.js` | Finger-Gesten (`touch.js`) |
 | `test_rotate.js` | Drehen: Einrasten, Speichern, zwei Finger auf dem Bild |
