@@ -223,6 +223,7 @@ window.MM = window.MM || {};
       node_image: 'Bild',
       node_file: 'Datei',
       node_diary: 'Tagebucheintrag',
+      node_markdown: 'Markdown',
 
       // Shapes
       shape_rect: 'Rechteck',
@@ -557,6 +558,7 @@ window.MM = window.MM || {};
       node_image: 'Image',
       node_file: 'File',
       node_diary: 'Diary entry',
+      node_markdown: 'Markdown',
 
       // Shapes
       shape_rect: 'Rectangle',

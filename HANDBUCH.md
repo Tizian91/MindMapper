@@ -25,6 +25,12 @@ MindMapper ist eine Planungssoftware für Menschen, denen lineare Zeitpläne sch
   - Maps aus dem Projektordner werden **automatisch gespeichert** (Einstellung „Auto-save project maps into their file“ im Panel rechts, wenn nichts markiert ist).
   - Nach einem Neustart fragt der Browser einmal nach der Erlaubnis: **Reconnect**.
 - **Rein lokal:** Diese Version (`index.html`) baut **keine Verbindung nach außen** auf – der Browser blockiert sie (Content-Security-Policy im Kopf von `index.html`). Es gibt keine Cloud-Anbindung, und Bilder aus dem Netz (Markdown `![…](https://…)`) werden nicht geladen; Links öffnest du weiterhin per Klick in einem neuen Tab.
+- **Eigene Kopie – die sicherste Art:** Öffnest du MindMapper über eine Internetadresse (GitHub Pages oder die Cloud-Version), lädt der Browser das Programm jedes Mal frisch vom Server. Wer die Konten dahinter übernähme, könnte dort ein anderes Programm hinstellen. Eine Kopie auf deinem Rechner kann dagegen niemand aus der Ferne austauschen:
+  1. Auf GitHub im Repo **Code → Download ZIP**.
+  2. Die ZIP-Datei an einen beliebigen Ort entpacken, z. B. `Dokumente/MindMapper`.
+  3. Darin `index.html` per Doppelklick in Edge oder Chrome öffnen.
+
+  Der Ordner darf liegen, wo du willst – nur `index.html` bleibt darin neben ihren Unterordnern (`js/`, `css/`, `icons/`), allein funktioniert sie nicht. **Updates** kommen nicht von selbst: Für eine neue Version lädst du die ZIP-Datei erneut herunter und ersetzt den Programmordner. Deine Maps liegen im Projektordner, nicht im Programmordner – an ihnen ändert ein Update nichts.
 - **Sicherung im Browser:** Zusätzlich wird die offene Map ständig im Browser zwischengespeichert und beim nächsten Start wiederhergestellt.
 - **Arbeiten an zwei Rechnern** (z. B. synchronisierter Ordner): Ist die Datei auf der Platte neuer als die Kopie im Browser, lädt MindMapper die Datei. Hattest du lokal ungespeicherte Änderungen, wirst du gefragt.
 - **Schutz vor Überschreiben:** MindMapper merkt sich, in welchem Stand eine Map gelesen wurde. Wurde die Datei inzwischen woanders geändert (anderer Rechner, zweiter Tab, Sync-Programm), wird sie **nicht** einfach überschrieben:
@@ -90,11 +96,13 @@ MindMapper ist eine Planungssoftware für Menschen, denen lineare Zeitpläne sch
 | **Task** | Aufgabe mit Stichpunkten und immer sichtbaren Details (Status, Priorität, Deadline, Schätzung, Fortschritt) |
 | **Link** | Verweis auf eine andere Map oder eine Webadresse |
 | **Code** | Text in Festbreitenschrift |
+| **Markdown** | Formatierter Text: Tabellen, Überschriften, Listen, Kästchen, Links, Bilder – geschrieben mit ein paar Zeichen (siehe **Markdown-Zeichen** in Kapitel 16). Wächst mit ihrem Inhalt. Wie ein Tagebuch-Eintrag, nur ohne Tagebuch und Datum |
+| **Diary entry** | Tagebuch-Eintrag mit Tag und Uhrzeit, erscheint im gewählten Tagebuch (siehe Kapitel 16) |
 | **Group** | Rahmen – Notes darin werden mitbewegt |
 | **Image** | Bild (einfügen per Drag & Drop oder `Ctrl+V`); auch als **Overlay** über allem |
 | **File** | Datennote: eine beliebige Datei (siehe Kapitel 16) |
 
-Den Typ änderst du per Rechtsklick → **Change type** oder im Panel.
+Den Typ änderst du per Rechtsklick → **Change type** oder im Panel. Wird eine To-do-Liste, Outline oder Task zu **Markdown**, steht ihr Titel danach als Überschrift über ihrer Liste – To-do-Einträge als Kästchen, Outline-Punkte eingerückt.
 
 ## 4. Details: Status, Priorität, Deadline, Termin, Schätzung, Tags
 
@@ -434,7 +442,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **Tagebuch anlegen:** Seitenleiste → Bereich **Diaries** → **+**. Jedes Tagebuch ist eine Datei im Ordner `Diaries/` des Projektordners.
 - **Tagebuch löschen** geht bewusst nicht in der App (Schutz, z. B. fürs Laborbuch). Wer eines loswerden will, löscht im Explorer die Datei `Diaries/<Name>.diary.json` im Projektordner und klickt danach in der Seitenleiste auf **⟳** (Ordner neu einlesen). Damit verschwinden Gestaltung, Sticker und abgeschlossene Seiten. Die Einträge selbst sind Notizen in den Maps und bleiben dort, bis du sie löschst. Legst du später ein Tagebuch mit demselben Namen an, erscheinen sie wieder darin.
 - **Eintrag schreiben:** Rechtsklick → **Diary entry** (oder **Insert → Diary entry**). Im Panel Tagebuch, Tag und Uhrzeit wählen – neue Einträge landen im zuletzt benutzten Tagebuch, mit heutigem Datum und aktueller Uhrzeit.
-- **Inhalt** ist Markdown: Überschriften, fett, kursiv, Listen, Kästchen, Zitate, Code, Links und Tabellen – alle Zeichen im Abschnitt **Markdown im Tagebuch-Eintrag** unten. **Bilder** beim Schreiben mit `Ctrl+V` einfügen oder hineinziehen – sie werden in der Map gespeichert. Doppelklick bearbeitet den Text, `Ctrl+Enter` oder `Esc` beendet.
+- **Inhalt** ist Markdown: Überschriften, fett, kursiv, Listen, Kästchen, Zitate, Code, Links und Tabellen – alle Zeichen im Abschnitt **Markdown-Zeichen** unten. **Bilder** beim Schreiben mit `Ctrl+V` einfügen oder hineinziehen – sie werden in der Map gespeichert. Doppelklick bearbeitet den Text, `Ctrl+Enter` oder `Esc` beendet.
 - **Kopfzeile:** Zeigt ein Pfeil von einer anderen Note **auf** den Eintrag, erscheint diese Note im Tagebuch über dem Eintrag (Titel, Status, Fortschritt, Deadline, Tags), mehrere nebeneinander. Hängt sie über weitere Pfeile an einer Task, wird die oberste Task als **⤴ Haupttask** genannt. Liegt eine Note ohne eigenen Pfeil lose in einer Gruppe, geht die Suche über die Gruppe weiter (z. B. Subaufgabe → Gruppe → Note → Eintrag). Eine Task, die nur *in* derselben Gruppe liegt, ohne Pfeil auf die Gruppe, zählt nicht.
 - **Lesen:** Klick auf das Tagebuch in der Seitenleiste, oder **↗** / `Ctrl+Klick` am Eintrag (öffnet direkt dessen Seite). Eine Seite pro Tag, leere Tage fehlen. **←/→** blättern, Mausrad scrollt, die Auswahl oben springt zu einem Tag. **↗ Map** am Eintrag zeigt ihn in seiner Map.
 - **📅 Kalender** in der Leseansicht: Tage mit Einträgen sind anklickbar, abgeschlossene tragen 🔒.
@@ -451,9 +459,9 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **🖨 Drucken / PDF:** diese Seite, das ganze Tagebuch oder ein Zeitraum. Für ein PDF im Druckdialog „Als PDF speichern“ wählen. Jede Tagebuchseite beginnt auf einem neuen Blatt.
 - Tagebucheinträge erscheinen nicht in Overview und Auslastung und werden beim Carry-over nicht übertragen.
 
-### Markdown im Tagebuch-Eintrag
+### Markdown-Zeichen (Markdown-Note und Tagebuch-Eintrag)
 
-Ein Tagebuch-Eintrag ist reiner Text mit ein paar Zeichen für die Formatierung (*Markdown*). Beim Bearbeiten siehst du den Text mit diesen Zeichen in Schreibmaschinenschrift; danach zeigt die Note auf der Map eine Vorschau und das Tagebuch die fertige Seite. Markdown wirkt **nur in Tagebuch-Einträgen** – normale Notes und Outline-Notes zeigen ihren Text so, wie er getippt ist (eine Outline gliederst du mit `Enter` und `Tab`).
+Eine **Markdown-Note** und ein **Tagebuch-Eintrag** sind reiner Text mit ein paar Zeichen für die Formatierung (*Markdown*). Beim Bearbeiten (Doppelklick) siehst du den Text mit diesen Zeichen in Schreibmaschinenschrift; `Ctrl+Enter` oder `Esc` beendet, danach steht die fertige Formatierung da. Die Markdown-Note ist gut für eine schnelle Tabelle oder Liste auf der Map, die nicht ins Tagebuch soll – einfügen per Rechtsklick → **Markdown**. Markdown wirkt **nur in diesen beiden Typen** – normale Notes und Outline-Notes zeigen ihren Text so, wie er getippt ist (eine Outline gliederst du mit `Enter` und `Tab`).
 
 | Du schreibst | Ergebnis |
 |---|---|

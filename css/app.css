@@ -1209,6 +1209,10 @@ span.ov-caret { cursor: default; }
 .diary-body.editing { overflow: auto; white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 12px;
   -webkit-mask-image: none; mask-image: none; cursor: text; }
 .diary-body a { pointer-events: none; } /* on the map a click selects the note */
+/* Markdown note: the rendered text, edited as plain Markdown like a diary entry */
+.md-note { font-weight: 400; }
+.md-note a { pointer-events: none; }
+.md-note.editing { white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 12px; cursor: text; }
 .diary-empty, .dy-empty { color: var(--muted); font-style: italic; }
 
 /* rendered Markdown (map preview and reader) */

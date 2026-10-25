@@ -29,8 +29,11 @@ window.MM = window.MM || {};
   MM.NODE_TYPES = {
     text: 'Note', heading: 'Heading', todo: 'To-Do', outline: 'Outline', task: 'Task',
     link: 'Link', code: 'Code', group: 'Group', image: 'Image', file: 'File', draw: 'Drawing',
-    diary: 'Diary entry',
+    diary: 'Diary entry', markdown: 'Markdown',
   };
+
+  /** Notes whose text is Markdown (markdown.js): edited as plain text, shown rendered. */
+  MM.isMarkdown = (n) => !!n && (n.type === 'diary' || n.type === 'markdown');
 
   /** Types that can be created from an empty note (images and files need a file, drawings are drawn). */
   MM.TEXT_TYPES = Object.keys(MM.NODE_TYPES).filter((t) => t !== 'image' && t !== 'file' && t !== 'draw');
@@ -147,6 +150,8 @@ window.MM = window.MM || {};
     draw: { w: 120, h: 80, shape: 'none', text: '', style: { stroke: '#e53e3e', strokeWidth: 3, fill: 'none', opacity: 1 } },
     // diary entry (diary.js): head like a to-do list, warm paper colour
     diary: { w: 320, h: 220, shape: 'rect', text: '', style: { align: 'left', fill: '#fdf8ec', stroke: '#b7791f' } },
+    // Markdown note: tables, lists, headings … shown rendered, like a diary entry without the diary
+    markdown: { w: 320, h: 140, shape: 'rect', text: '', style: { align: 'left', fill: '#ffffff', stroke: '#718096' } },
     group: {
       w: 440, h: 300, shape: 'rounded', text: 'Group',
       style: { fill: '#f1f5f9', stroke: '#94a3b8', strokeStyle: 'dashed', align: 'left', bold: true },
@@ -270,7 +275,7 @@ window.MM = window.MM || {};
   /** Asset ids a note uses: its image, and images in the text of a diary entry. */
   MM.assetRefs = function (n) {
     const ids = n.imageId ? [n.imageId] : [];
-    if (n.type === 'diary' && MM.md) ids.push(...MM.md.assetIds(n.text));
+    if (MM.isMarkdown(n) && MM.md) ids.push(...MM.md.assetIds(n.text));
     return ids;
   };
 
@@ -297,12 +302,26 @@ window.MM = window.MM || {};
   /** Outline entry. `level` 0 = top level; `collapsed` hides its children. */
   MM.createBlock = (text, level) => ({ id: MM.uid('b'), text: text || '', level: level || 0, collapsed: false });
 
+  /**
+   * Text of a note as Markdown (for "Change type → Markdown"): its title as a heading
+   * and its list below it - to-do entries as check boxes, outline entries indented.
+   */
+  MM.toMarkdown = function (n) {
+    const lines = [];
+    if (n.type === 'todo') n.items.forEach((i) => lines.push(`- [${i.done ? 'x' : ' '}] ${i.text}`));
+    if (MM.hasBlocks(n)) n.blocks.filter((b) => b.text).forEach((b) => lines.push('  '.repeat(b.level) + '- ' + b.text));
+    const title = String(n.text || '').trim();
+    if (!lines.length) return n.text || '';
+    return (title ? `## ${title}\n\n` : '') + lines.join('\n');
+  };
+
   /** Change a note's type, carrying list content over where it makes sense. */
   MM.setNodeType = function (n, type) {
     if (n.type === type || !MM.NODE_TYPES[type]) return;
     if (type === 'image' || n.type === 'image' || type === 'file' || n.type === 'file') return;
     if (type === 'draw' || n.type === 'draw') return;
     if (type === 'diary' && !n.diary) n.diary = MM.newDiaryMeta();
+    if (type === 'markdown' && !MM.isMarkdown(n)) n.text = MM.toMarkdown(n);
     if (type === 'todo' && !n.items.length) {
       n.items = n.blocks.length
         ? n.blocks.filter((b) => b.text).map((b) => MM.createTodoItem(b.text))

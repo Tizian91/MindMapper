@@ -125,7 +125,8 @@
       n.type === 'task' ? [n.meta, n.tags, new Date().toDateString(), MM.tasks.info(n), n.repeat, MM.getLang(), MM.prioKey()] : 0,
       n.type === 'image' ? [n.imageId, !!S.doc.assets[n.imageId], st.fit] : 0,
       n.type === 'file' ? [n.file && n.file.path, n.file && n.file.size] : 0,
-      n.type === 'diary' ? [n.diary, MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id]), MM.diary.badge(n)] : 0]);
+      n.type === 'diary' ? [n.diary, MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id]), MM.diary.badge(n)] : 0,
+      n.type === 'markdown' ? [MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id])] : 0]);
     if (div._contentKey !== contentKey && !editing) {
       R.buildContent(div, n);
       div._contentKey = contentKey;
@@ -301,6 +302,17 @@
         : `<p class="diary-empty">${R.esc(MM.tr('Double-click to write (Markdown)'))}</p>`;
       wrap.append(head, body);
       c.append(wrap);
+      return;
+    }
+
+    if (n.type === 'markdown') {
+      // Markdown note: the rendered text is the note (tables, lists …); it grows with it
+      const body = el('div', 'md md-note');
+      body.dataset.field = 'text';
+      body.innerHTML = n.text.trim()
+        ? MM.md.render(n.text, (id) => S.doc.assets[id])
+        : `<p class="diary-empty">${R.esc(MM.tr('Double-click to write (Markdown)'))}</p>`;
+      c.append(body);
       return;
     }
 

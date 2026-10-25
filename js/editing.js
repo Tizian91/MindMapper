@@ -73,9 +73,9 @@
       ? div.querySelector(`li[data-${L.attr}="${CSS.escape(itemId)}"] ${L.textSel}`)
       : div.querySelector('[data-field="text"]');
     if (!target) return;
-    // a diary entry shows rendered Markdown - it is edited as the plain Markdown text
+    // a diary entry / Markdown note shows rendered Markdown - it is edited as the plain Markdown text
     const node = MM.node(nodeId);
-    const markdown = field === 'text' && node && node.type === 'diary';
+    const markdown = field === 'text' && MM.isMarkdown(node);
     if (markdown) target.textContent = node.text;
 
     MM.editing = { nodeId, field, itemId, el: target };
@@ -172,7 +172,7 @@
   async function onPaste(e) {
     const ed = MM.editing;
     const n = ed && MM.node(ed.nodeId);
-    if (!n || n.type !== 'diary' || ed.field !== 'text') return;
+    if (!MM.isMarkdown(n) || ed.field !== 'text') return;
     const dt = e.clipboardData || e.dataTransfer;
     const files = MM.images.filesFrom(dt);
     if (!files.length) return;
@@ -229,8 +229,8 @@
       if (blockKey(e, ed, n)) e.preventDefault();
       return;
     }
-    // code and diary entries: Enter = new line, Tab = indent, Ctrl+Enter = finish
-    if (n.type === 'code' || (n.type === 'diary' && ed.field === 'text')) {
+    // code, diary entries and Markdown notes: Enter = new line, Tab = indent, Ctrl+Enter = finish
+    if (n.type === 'code' || (MM.isMarkdown(n) && ed.field === 'text')) {
       if (e.key === 'Tab') {
         e.preventDefault();
         document.execCommand('insertText', false, '  ');
