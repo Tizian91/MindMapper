@@ -550,6 +550,7 @@ window.MM = window.MM || {};
       theme: 'auto',       // 'auto' | 'light' | 'dark'
       lang: 'en',          // 'en' | 'de'
       autoSaveFile: true,  // maps of a project folder are saved into their file automatically
+      syncedFolder: false, // the project folder is kept by a sync program: save less often (per folder)
       emojiRecent: [],     // last used emoji / symbols
       hoursPerDay: 8,      // workload capacity for work days (see workload.js)
       hoursPerWeekendDay: 0, // capacity for non-work days

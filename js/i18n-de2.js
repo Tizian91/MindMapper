@@ -245,6 +245,8 @@
     'Could not replace the map: {err}': 'Die Map konnte nicht ersetzt werden: {err}',
     'Delete {n} conflict copies of "{map}"?\n\nThe map itself stays.': '{n} Konfliktkopien von „{map}“ löschen?\n\nDie Map selbst bleibt.',
     'Deleted {n} copies': '{n} Kopien gelöscht',
+    'Folder is synced (pCloud, OneDrive …)': 'Ordner wird synchronisiert (pCloud, OneDrive …)',
+    'Saves 15 s after the last change (and at once when you leave the map or the app), so the sync program does not keep conflict copies. Stored {where}.': 'Speichert 15 s nach der letzten Änderung (und sofort, wenn du die Map oder die App verlässt), damit das Sync-Programm keine Konfliktkopien anlegt. Gespeichert {where}.',
     'This is a conflict copy of "{map}" - keep or delete it with ⚠ next to the map': 'Das ist eine Konfliktkopie von „{map}“ – behalten oder löschen über ⚠ neben der Map',
     'replace the map': 'die Map ersetzen',
     'delete the copy': 'die Kopie löschen',

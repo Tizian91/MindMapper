@@ -69,6 +69,7 @@
       f = await MM.project.backend.read(ST.PROJECT_SETTINGS_FILE);
     } catch (e) { /* treated like a missing file */ }
     if (!f) {
+      S.settings.syncedFolder = false; // not taken over from the folder before
       await ST.saveProjectSettings();
       return;
     }
@@ -78,6 +79,8 @@
       for (const k of ST.CAPACITY_KEYS) if (c[k] !== undefined) S.settings[k] = c[k];
       // routine categories belong to the folder: none in the file = none here (not those of another folder)
       S.settings.routineCategories = MM.normalizeCategories(data && data.routineCategories);
+      // a folder of a sync program: write its maps after a longer pause (see scheduleAutosave)
+      S.settings.syncedFolder = !!(data && data.synced);
       MM.saveSettings();
       MM.setPrioSystem(data && data.prioSystem, false);
     } catch (e) {
@@ -93,6 +96,7 @@
     try {
       await MM.project.writeText(ST.PROJECT_SETTINGS_FILE, JSON.stringify({
         version: 1, capacity, prioSystem: S.settings.prioSystem, routineCategories: S.settings.routineCategories || [],
+        synced: !!S.settings.syncedFolder,
       }, null, 2));
     } catch (e) {
       console.warn('MindMapper: could not write ' + ST.PROJECT_SETTINGS_FILE, e);
@@ -156,6 +160,11 @@
 
   let autosaveTimer = null, fileTimer = null;
   let edits = 0; // counts the changes, so a write only marks "saved" what it really wrote
+  // A folder kept by a sync program (pCloud, OneDrive …): write only after a pause of
+  // typing. The app uploads each write - a new one during the upload makes it take the
+  // file for changed on two devices and keep a "[conflicted]" copy. Leaving the app or
+  // the map writes at once (initLifecycle, confirmLeave).
+  ST.SYNC_DELAY = 15000;
   ST.scheduleAutosave = function () {
     if (S.dirty) edits++;
     clearTimeout(autosaveTimer);
@@ -163,7 +172,7 @@
     // maps of a project folder are written straight back into their file
     if (inProject() && S.settings.autoSaveFile) {
       clearTimeout(fileTimer);
-      fileTimer = setTimeout(() => ST.writeFile(), 1200);
+      fileTimer = setTimeout(() => ST.writeFile(), S.settings.syncedFolder ? ST.SYNC_DELAY : 1200);
     }
   };
 

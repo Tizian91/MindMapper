@@ -378,6 +378,8 @@
       <label class="check"><input type="checkbox" data-setting="grid" ${set.grid ? 'checked' : ''}> ${t('snapGridCheck')}</label>
       <div class="row"><label>${t('gridSize')}</label><input type="number" data-setting="gridSize" value="${set.gridSize}" min="4" max="200" step="1"></div>
       <label class="check"><input type="checkbox" data-setting="autoSaveFile" ${set.autoSaveFile ? 'checked' : ''}> ${t('autoSaveCheck')}</label>
+      ${MM.project && MM.project.status === 'ready' ? `<label class="check"><input type="checkbox" data-setting="syncedFolder" ${set.syncedFolder ? 'checked' : ''}> ${esc(MM.tr('Folder is synced (pCloud, OneDrive …)'))}</label>
+      <p class="hint">${esc(MM.tr('Saves 15 s after the last change (and at once when you leave the map or the app), so the sync program does not keep conflict copies. Stored {where}.', { where: MM.storage.capacityLocation() }))}</p>` : ''}
       <div class="row"><label>${t('mouseWheel')}</label>${select('data-setting="wheel"', set.wheel, { zoom: t('wheelZoom'), scroll: t('wheelScroll') })}</div>
     </section>
     <section><h3>${t('appearance')}</h3>
@@ -688,7 +690,7 @@
       S.settings[ds.setting] = el.type === 'checkbox' ? el.checked : value;
       MM.saveSettings();
       if (ds.setting === 'theme') MM.applyTheme();
-      if (MM.storage.CAPACITY_KEYS.includes(ds.setting)) MM.storage.saveProjectSettings();
+      if (MM.storage.CAPACITY_KEYS.includes(ds.setting) || ds.setting === 'syncedFolder') MM.storage.saveProjectSettings();
       return true;
     }
     if (ds.meta) {
