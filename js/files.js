@@ -64,15 +64,18 @@
 
   // ---- Paths -----------------------------------------------------------------
 
+  /** A file name that is allowed in a folder (no \ / : * ? " < > |, no leading dots). */
+  const safeName = (name) => String(name || 'file')
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/^\.+/, '')
+    .slice(-MAX_NAME) || 'file';
+
   /**
    * Pick a free path in Assets/ for a file name: "report.xlsx",
    * "report (2).xlsx", ... Never overwrites an existing asset.
    */
   async function freeAssetPath(name) {
-    const safe = String(name || 'file')
-      .replace(/[\\/:*?"<>|]/g, '-')
-      .replace(/^\.+/, '')
-      .slice(-MAX_NAME) || 'file';
+    const safe = safeName(name);
     const dot = safe.lastIndexOf('.');
     const base = dot > 0 ? safe.slice(0, dot) : safe;
     const suffix = dot > 0 ? safe.slice(dot) : '';
@@ -93,15 +96,35 @@
    * Throws a readable error when the file cannot be written.
    */
   F.store = async function (file) {
-    const path = await freeAssetPath(file.name || 'file');
-    try {
-      await MM.project.writeBlob(path, file);
-    } catch (err) {
-      // the browser usually names the real reason; add the path for context
-      throw new Error(path + ': ' + describeError(err));
+    // the file already is in Assets/ (chosen from there, or inserted twice): use it, no copy "(2)"
+    const own = ASSET_FOLDER + '/' + safeName(file.name);
+    let path = (await sameContent(own, file)) ? own : null;
+    if (!path) {
+      path = await freeAssetPath(file.name || 'file');
+      try {
+        await MM.project.writeBlob(path, file);
+      } catch (err) {
+        // the browser usually names the real reason; add the path for context
+        throw new Error(path + ': ' + describeError(err));
+      }
     }
-    return { path, name: file.name || path.split('/').pop(), size: file.size || 0, mime: file.type || '' };
+    // the name of the file in Assets/ ("report (2).pdf"), so the note shows which file it is
+    return { path, name: path.split('/').pop(), size: file.size || 0, mime: file.type || '' };
   };
+
+  /** Is the asset at `path` the same file (same size and bytes)? false if it is missing or unreadable. */
+  async function sameContent(path, file) {
+    try {
+      const have = await MM.project.backend.readBlob(path);
+      if (!have || have.size !== file.size) return false;
+      const [a, b] = await Promise.all([have.arrayBuffer(), file.arrayBuffer()]);
+      const x = new Uint8Array(a), y = new Uint8Array(b);
+      for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
 
   /** Readable message for File System Access API failures. */
   function describeError(err) {
