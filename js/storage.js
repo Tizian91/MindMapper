@@ -326,9 +326,12 @@
     if (!S.dirty) return true;
     if (inProject()) {
       await ST.writeFile();
-      return true;
+      if (!S.dirty) return true; // saved - otherwise (no permission, conflict …) ask below
     }
-    return confirm(MM.tr('Discard unsaved changes and {what}?', { what: MM.tr(what) }));
+    // the map belongs to no file (or could not be saved): its changes would be lost - say so plainly
+    return confirm(MM.tr('The open map "{name}" has changes that are not saved in any file.\n\nOK: discard them and {what}.\nCancel: keep them - save them with File → Save as… (or Ctrl+S).', {
+      name: S.file.path ? MM.project.mapName(S.file.path) : S.file.name.replace(/\.mindmap\.json$|\.json$/i, ''), what: MM.tr(what),
+    }));
   };
 
   /**

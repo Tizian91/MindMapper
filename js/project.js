@@ -49,7 +49,7 @@
     try {
       const b = await MM.fsys.local.pick();
       const before = S.file.path;
-      await leaveFolder();
+      if (!(await leaveFolder())) return;
       P.backend = b;
       if (P.cloud) P.cloud.setActive(false);
       S.settings.showProject = true;
@@ -79,6 +79,9 @@
    */
   async function leaveFolder() {
     if (S.file.backend && S.file.path) await MM.storage.writeFile();
+    // it could not be saved (e.g. no permission, changed elsewhere): ask, do not let go silently
+    if (S.file.backend && S.file.path && S.dirty &&
+      !confirm(tr('"{name}" could not be saved into its folder.\n\nOK: open the other folder anyway - the map stays on screen with its changes, but belongs to no folder (keep them with File → Save as…).\nCancel: stay in this folder.', { name: P.mapName(S.file.path) }))) return false;
     if (S.file.backend) {
       S.file.backend = null;
       S.file.path = null;
@@ -86,6 +89,7 @@
       S.file.hash = null;
     }
     P.history = [];
+    return true;
   }
 
   // ---- pCloud (cloud version only: cloud.html loads cloud-pcloud.js) ----------------
@@ -124,7 +128,7 @@
   P.choosePcloudFolder = async function () {
     const folder = await P.cloud.chooseFolder();
     if (!folder) return;
-    await leaveFolder();
+    if (!(await leaveFolder())) return;
     P.cloud.setFolder(folder);
     P.backend = P.cloud.restore();
     S.settings.showProject = true;
@@ -143,7 +147,7 @@
   P.disconnectPcloud = async function () {
     if (!confirm(tr('Disconnect pCloud?\n\nThis browser forgets the login and the folder. Your maps stay in pCloud. To revoke the access completely, remove MindMapper in pCloud under Settings → Apps.'))) return;
     const wasOpen = P.backend && P.backend.kind === 'pcloud';
-    if (wasOpen) await leaveFolder();
+    if (wasOpen && !(await leaveFolder())) return;
     P.cloud.disconnect();
     if (wasOpen) {
       P.backend = null;

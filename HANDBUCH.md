@@ -24,6 +24,7 @@ MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft
     - **Beide behalten:** Deine Version wird als Kopie daneben gespeichert (z. B. `2026-W44 (Konflikt 2026-10-24 1530).mindmap.json`), das Original bleibt unverändert, du arbeitest in der Kopie weiter.
     - **Meine Version behalten:** Die Datei wird überschrieben, die anderen Änderungen gehen verloren.
   - **Andere Maps** (Mit-Abhaken, Move to map, Carry-over, Overview, Umbenennen) und das **Tagebuch:** Statt zu überschreiben, kommt eine Fehlermeldung. Öffne die Map bzw. das Tagebuch neu und wiederhole den Schritt.
+  - **Nichts geht still verloren:** Konnte die offene Map nicht gespeichert werden, fragt MindMapper nach, bevor du eine andere Map öffnest oder den Ordner wechselst – mit dem Hinweis, dass du die Änderungen mit **File → Save as…** sichern kannst. Wählst du denselben Ordner erneut, bleibt die offene Map mit ihrer Datei verbunden.
 
 ## 2. Grundbedienung
 

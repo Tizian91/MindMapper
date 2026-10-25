@@ -265,6 +265,11 @@
     '{n} note(s) below made tasks as well': '{n} Note(s) darunter ebenfalls zu Tasks gemacht',
     '{n} note(s) made tasks': '{n} Note(s) zu Tasks gemacht',
     'Make tasks (with notes below)': 'Zu Tasks machen (mit Notes darunter)',
+    // ---- project.js / storage.js (changes that are not saved anywhere) ----
+    '"{name}" could not be saved into its folder.\n\nOK: open the other folder anyway - the map stays on screen with its changes, but belongs to no folder (keep them with File → Save as…).\nCancel: stay in this folder.':
+      '„{name}“ konnte nicht in ihren Ordner gespeichert werden.\n\nOK: trotzdem den anderen Ordner öffnen – die Map bleibt mit ihren Änderungen sichtbar, gehört aber zu keinem Ordner (sichern mit Datei → Speichern unter…).\nAbbrechen: in diesem Ordner bleiben.',
+    'The open map "{name}" has changes that are not saved in any file.\n\nOK: discard them and {what}.\nCancel: keep them - save them with File → Save as… (or Ctrl+S).':
+      'Die geöffnete Map „{name}“ hat Änderungen, die in keiner Datei gespeichert sind.\n\nOK: verwerfen und {what}.\nAbbrechen: behalten – sichern mit Datei → Speichern unter… (oder Strg+S).',
     // ---- actions.js (toolbar "File" menu) ----
     'New map…': 'Neue Map…',
     'New empty map': 'Neue leere Map',
