@@ -172,7 +172,9 @@
     // maps of a project folder are written straight back into their file
     if (inProject() && S.settings.autoSaveFile) {
       clearTimeout(fileTimer);
-      fileTimer = setTimeout(() => ST.writeFile(), S.settings.syncedFolder ? ST.SYNC_DELAY : 1200);
+      // only a local folder has a sync program in between (pCloud itself: the API checks)
+      const synced = S.settings.syncedFolder && S.file.backend.kind === 'local';
+      fileTimer = setTimeout(() => ST.writeFile(), synced ? ST.SYNC_DELAY : 1200);
     }
   };
 
@@ -465,9 +467,9 @@
   /** Load a map of the project folder (used by the project sidebar). */
   ST.openPath = async function (path) {
     const backend = MM.project.backend;
-    const f = await backend.read(path);
+    const f = await MM.project.readDoc(path); // an empty file is no empty map (see there)
     if (!f) throw new Error('not found: ' + path);
-    ST.load(f.text.trim() ? JSON.parse(f.text) : MM.emptyDoc(), path.split('/').pop());
+    ST.load(f.doc, path.split('/').pop());
     S.file.handle = null;
     S.file.backend = backend;
     S.file.path = path;
@@ -499,12 +501,12 @@
       const { backend, path, version } = S.file;
       const st = await backend.stat(path);
       if (!st || st.version === version) return; // deleted: the next save asks
-      const f = await backend.read(path);
+      const f = await MM.project.readDoc(path); // empty / cut off: throws, the map stays as it is
       if (!f || S.dirty || editing() || S.file.path !== path || S.file.backend !== backend) return;
       const hash = MM.fsys.hash(f.text);
       if (hash !== S.file.hash) {
         const view = S.doc.view;
-        ST.load(f.text.trim() ? JSON.parse(f.text) : MM.emptyDoc(), path.split('/').pop());
+        ST.load(f.doc, path.split('/').pop());
         if (view) S.doc.view = view;
         MM.refresh();
         MM.ui.flash(MM.tr('{name} was changed elsewhere - loaded the new version', { name: MM.project.mapName(path) }));

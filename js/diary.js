@@ -335,9 +335,16 @@
     if (!dialog) build();
     flushSave();
     const P = MM.project;
+    let diary;
+    try {
+      diary = P.status === 'ready' ? await P.readDiary(book, { edit: true }) : DY.normalize(null, book);
+    } catch (err) {
+      alert(tr('Could not open the diary: {err}', { err: err.message }));
+      return;
+    }
     view.book = book;
     userZoom = 1; // opened again: the page fits the width
-    view.diary = P.status === 'ready' ? await P.readDiary(book, { edit: true }) : DY.normalize(null, book);
+    view.diary = diary;
     indexDiary(view.diary);
     if (S.settings.lastDiary !== book) {
       S.settings.lastDiary = book;

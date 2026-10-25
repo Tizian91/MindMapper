@@ -17,7 +17,7 @@
   const tr = (s, v) => MM.tr(s, v);
 
   /** Client ID of the app registered at pCloud ("My applications") - public by design of the token flow. */
-  PC.CLIENT_ID = '';
+  PC.CLIENT_ID = 'H3ub5RB367h';
   /** Addresses the cloud version runs at (= registered redirect URI without the "/"). */
   PC.ORIGINS = ['https://mindmapper.tizian-arold.workers.dev'];
 

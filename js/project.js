@@ -308,18 +308,19 @@
 
   /**
    * A diary file (normalized), or a fresh one if it does not exist yet.
-   * opts.edit: read for the diary view, which writes it back - its version is checked then.
+   * opts.edit: read for the diary view, which writes it back - its version is checked then;
+   * a file that stays empty / cut off throws then (a fresh diary would be saved over it).
    */
   P.readDiary = async function (name, opts) {
-    let raw = null;
+    const edit = !!(opts && opts.edit);
+    let f = null;
     try {
-      const f = await P.backend.read(P.diaryPath(name));
-      if (f) {
-        if (opts && opts.edit) versions.set(P.diaryPath(name), { v: f.version, h: MM.fsys.hash(f.text) });
-        raw = JSON.parse(f.text);
-      }
-    } catch (e) { /* missing or broken: start fresh */ }
-    return MM.diary.normalize(raw, name);
+      f = await P.readDoc(P.diaryPath(name));
+    } catch (err) {
+      if (edit) throw err;
+    }
+    if (f && edit) versions.set(P.diaryPath(name), { v: f.version, h: MM.fsys.hash(f.text) });
+    return MM.diary.normalize(f && f.doc, name);
   };
 
   P.writeDiary = async function (data) {
@@ -519,15 +520,34 @@
     if (path === S.file.path) return S.doc;
     if (!P.find(path)) return null;
     try {
-      const f = await P.backend.read(path);
+      const f = await P.readDoc(path);
       if (!f) return null;
       versions.set(path, { v: f.version, h: MM.fsys.hash(f.text) });
-      const text = f.text;
-      return text.trim() ? MM.normalizeDoc(JSON.parse(text)) : MM.emptyDoc();
+      return MM.normalizeDoc(f.doc);
     } catch (err) {
       return null;
     }
   };
+
+  /**
+   * Read a map file: { doc, text, version }, or null if it is missing. MindMapper never
+   * writes an empty map file - an empty or cut-off one is still being written by someone
+   * else (Android: the folder of a sync app hands out a file during its upload). It is
+   * read again a few times; if it stays so, this throws - it is never taken for an empty
+   * map, which the next save would write over the real content.
+   */
+  P.readDoc = async function (path) {
+    for (let i = 0; ; i++) {
+      const f = await P.backend.read(path);
+      if (!f) return null;
+      try {
+        if (f.text.trim()) return { doc: JSON.parse(f.text), text: f.text, version: f.version };
+      } catch (err) { /* incomplete: read again */ }
+      if (i >= 3) throw new Error(tr('"{name}" is empty or incomplete right now (a sync program may still be writing it). Try again in a moment.', { name: P.mapName(path) }));
+      await new Promise((r) => setTimeout(r, P.READ_RETRY_MS * (i + 1)));
+    }
+  };
+  P.READ_RETRY_MS = 400;
 
   // ---- Maps ------------------------------------------------------------------------
 
