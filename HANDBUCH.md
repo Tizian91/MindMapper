@@ -2,7 +2,7 @@
 
 MindMapper ist ein Mindmap- und Planungswerkzeug, das komplett im Browser läuft – ohne Installation, ohne Konto, ohne Internet. Dieses Handbuch erklärt die wichtigsten Funktionen. Die Bezeichnungen der Oberfläche sind englisch und stehen hier **fett**.
 
-> Tipp: Über den Knopf **?** oben rechts in der Toolbar öffnest du dieses Handbuch und die Beispiel-Map jederzeit wieder.
+> Tipp: Über den Knopf **?** oben rechts in der Toolbar öffnest du dieses Handbuch und die Beispiel-Map jederzeit wieder. Das **Beispielprojekt** daneben zeigt die Planung in Aktion: Aufgaben mit Untertasks, eine aufgeblähte und eine überfällige Aufgabe, einen Termin, Routinen und Urlaub. **Speichere es zuerst** mit **File → Save as…** in einen Projektordner – am besten einen leeren Testordner, dann steht in der Übersicht nur das Beispiel. Erst dann zeigt die **Overview** seine Aufgaben, denn sie liest die Maps des Ordners. Die Statusleiste rechnet auch ungespeichert schon mit.
 
 ## Vorwort: die Idee
 
@@ -106,9 +106,44 @@ Den Typ änderst du per Rechtsklick → **Change type** oder im Panel.
 - Die Werte erscheinen als kleine **Chips** unter der Note (Toolbar **Details** blendet sie ein/aus).
 - **In Tasks** genügt ein Klick auf einen Chip: Es öffnet sich direkt ein Auswahlmenü (z. B. *Tomorrow*, *Next Monday*, *1h 30m*, *50 %*).
 - Status und Fortschritt hängen zusammen: 100 % → *Done*; *Done* → 100 %.
-- **Prioritätssystem pro Projektordner:** Im Panel ohne Markierung unter *Planungskapazität* → **Prioritäten**: **Stufen** (Niedrig … Dringend) oder **Eisenhower** (*Wichtig + dringend*, *Nur wichtig*, *Nur dringend*, *Weder noch*). Beide Werte werden getrennt gespeichert – beim Wechsel wird nichts umgerechnet und nichts gelöscht; Chips, Panel, Filter und Übersicht zeigen nur das gewählte System. Gespeichert in `mindmapper.settings.json` des Ordners.
+- **Priorität:** zwei Systeme zur Wahl – siehe unten **Prioritäten: Stufen oder Eisenhower**.
 - **Link** im Panel: eine Map des Projekts, eine Webadresse oder ein **Ordner / eine Datei auf dem PC** (`C:\Projekte\Abrechnung`, `\\server\share\Team`; „Als Pfad kopieren“ aus dem Explorer funktioniert auch). Der kleine **↗**-Knopf an der Note (oder `Ctrl+Klick`) öffnet ihn.
   - Ein Ordner öffnet sich als Dateiliste in einem neuen Browser-Tab. Den Windows-Explorer selbst darf der Browser nicht starten – dafür kopiert MindMapper den Pfad in die Zwischenablage: `Win+E`, `Ctrl+L`, `Ctrl+V`.
+
+### Estimate: wie viel Arbeit steckt darin – und warum das zählt
+
+**Estimate** (Schätzung) ist deine Einschätzung, wie viel **Arbeitszeit** eine Sache insgesamt braucht – nicht, wie lange sie im Kalender dauert. „Bericht schreiben: 6h“ heißt sechs Stunden Arbeit, egal ob sie an einem Tag oder verteilt über zwei Wochen anfallen.
+
+- **Eingabe:** im Panel unter **Details → Estimate** oder per Klick auf den ⏱-Chip einer Task: `90m`, `1h 30m`, `2h`, `1d` (= ein Arbeitstag, also so viele Stunden wie unter *Hours / work day* eingestellt; gespeichert werden die Stunden).
+- **Warum sie wichtig ist:** Die Schätzung ist die eine Zahl, aus der MindMapper alles Weitere rechnet. Ohne sie ist eine Aufgabe nur ein Eintrag in einer Liste – mit ihr weiß das Programm, ob deine Woche aufgeht:
+  - **Projektaufgabe** (*Deadline* + *Estimate*): Der Restaufwand wird auf die Tage bis zur Deadline verteilt und erscheint in der Auslastung (Kapitel 13).
+  - **Routine** oder **Termin** (*Repeat* / *Scheduled* + *Estimate*): Die Zeit wird an ihren Tagen von der Kapazität abgezogen – diese Stunden stehen für Projektarbeit nicht mehr zur Verfügung.
+  - **Restaufwand** = Schätzung × (1 − Fortschritt). Eine 6-h-Aufgabe mit 50 % zählt noch 3 h.
+  - **Statusleiste, Puffer, Matrix:** Alle drei rechnen damit. In der Eisenhower-Matrix ist die **Kreisfläche** die Schätzung – aufgeblähte Aufgaben fallen dort sofort auf.
+  - **Ohne Schätzung** zählt eine Aufgabe mit Deadline oder Termin **nicht** mit. Die Statusleiste meldet sie als „n without estimate“, damit nichts unbemerkt durchrutscht.
+- **Wie genau?** Grob genügt. Lieber etwas zu großzügig als zu knapp – eine Schätzung, die später nicht passt, korrigierst du einfach; die Planung rechnet sofort neu. Wird eine Aufgabe größer als ein, zwei Tage, lohnt es sich, sie in **Untertasks** zu zerlegen (Kapitel 12): Die Schätzung der Haupttask ist dann der Gesamtaufwand, die Untertasks teilen ihn auf.
+
+### Prioritäten: Stufen oder Eisenhower
+
+MindMapper kennt zwei Arten, Wichtigkeit festzuhalten. Pro Projektordner gilt eine davon.
+
+- **Umstellen:** Im Panel rechts, wenn **nichts markiert** ist (leere Fläche anklicken) → Abschnitt **Planning capacity** (*Planungskapazität*) → Auswahl **Priorities** (*Prioritäten*): **Levels (Low … Urgent)** oder **Eisenhower**. Gespeichert in `mindmapper.settings.json` des Ordners – ein Arbeitsordner kann Eisenhower nutzen, ein privater die Stufen.
+
+![Panel ohne Markierung: unter „Planning capacity“ wählt „Priorities“ das System](docs/handbuch/prioritaeten.png)
+
+- **Stufen** (*Levels*): eine Skala **None – Low – Medium – High – Urgent** (*Keine – Niedrig – Mittel – Hoch – Dringend*), farbig von grün bis rot. Schnell gesetzt, gut für viele kleine Aufgaben. Sortiert und gefiltert wird nach dieser Reihenfolge.
+- **Eisenhower:** Statt einer Stufe beantwortest du für jede Aufgabe zwei Fragen – **Ist es wichtig?** und **Ist es dringend?** Daraus entstehen vier Felder plus „noch offen“ (Tabelle unten). Die Namen beschreiben nur den Zustand, sie schreiben keine Handlung vor. Eisenhower hilft vor allem, wenn sich alles gleich dringend anfühlt: Es trennt *wichtig* von *dringend* und zeigt, welche wichtigen Aufgaben ständig liegen bleiben. Nur in diesem Modus gibt es in der Overview die **Matrix** (Kapitel 11).
+
+| Eisenhower-Feld | Bedeutung |
+|---|---|
+| **Important + urgent** (*Wichtig + dringend*) | zählt und drängt |
+| **Important only** (*Nur wichtig*) | zählt, hat aber noch Zeit – hier passiert die eigentliche Arbeit, wenn man sie einplant |
+| **Urgent only** (*Nur dringend*) | drängt, bringt dich aber nicht weiter |
+| **Neither** (*Weder noch*) | weder wichtig noch dringend |
+| **Not classified** (*Nicht eingeordnet*) | noch nicht entschieden |
+
+- **Setzen an der Note:** im Panel unter **Details → Priority** bzw. **Eisenhower**, bei Tasks auch per Klick auf den Chip. In der Matrix zusätzlich per Ziehen.
+- **Wechseln verliert nichts:** Stufe und Eisenhower-Feld werden getrennt gespeichert. Beim Umstellen wird nichts umgerechnet und nichts gelöscht; Chips, Panel, Filter und Übersicht zeigen nur das gewählte System. Stellst du zurück, ist die alte Einordnung wieder da.
 
 ## 5. Die Task: Projektaufgabe, Termin oder Routine
 
@@ -142,7 +177,7 @@ Es gilt die **erste** Zeile, die passt:
 | *Repeat* in einer **Nice-to-have-Kategorie** | 🔁 **Nice-to-have-Routine** (orangefarbenes 🔁) | **keine** – wird nicht angerechnet, nur zum Abhaken und Dranbleiben | wie oben; Workload-Seite ausgegraut |
 | *Repeat* *Day(s) off / vacation* | 🏖 **Urlaub / frei** | Tag ohne Kapazität (oder weniger, wenn *Estimate* gesetzt) | 🏖-Eintrag im Plan |
 | *Scheduled* (Termin, optional Uhrzeit) | 📌 **Termin** | blockt die *Estimate* an genau diesem Tag – auch abgehakt | Tages- und Wochenplan, Overview, Workload (`−2 h 📌`), Konfliktmeldung |
-| *Deadline* + *Estimate* | **Projektaufgabe** | der Restaufwand wird auf die Tage bis zur Deadline verteilt | Overview, Matrix, Workload, Puffer, Statusleiste |
+| *Deadline* + *Estimate* | **Projektaufgabe** | der Restaufwand wird auf die Tage bis zur Deadline verteilt | Overview, Matrix, Workload, Puffer, Statusleiste (Kapitel 11) |
 | nur *Estimate* | Aufwand **ohne Frist** | wird nicht verteilt, nur gemeldet („… h ohne Deadline“) | Overview, Hinweis auf der Workload-Seite |
 | nur *Deadline* | Frist **ohne Aufwand** | zählt nicht – Hinweis „without estimate“ | Overview |
 | nichts davon | offene Aufgabe | keine | Overview |
@@ -246,20 +281,72 @@ Alles, was MindMapper in Tages- und Wochenpläne von selbst einträgt oder ände
 
 ## 11. Overview: alle Aufgaben aller Maps
 
-Toolbar **Overview** sammelt die Aufgaben **aller Maps** des Projektordners:
-- **To-do-Listen** sind normalerweise reine Abhaklisten (wie ein Einkaufszettel) und erscheinen hier nicht. Sie zählen erst als Aufgabe, wenn sie eine **Schätzung**, eine **Deadline**, einen **Termin** oder eine **Priorität / Eisenhower-Einordnung** haben. Die Spalten der Tages-, Wochen- und Monatspläne haben ihre Deadline automatisch.
-- **By deadline:** gruppiert nach *Overdue*, *Today*, *Tomorrow*, *Next 7 days*, *Later*, *No deadline* – mit Zeitsummen und dem durchschnittlichen Fortschritt der Gruppe (**Ø**; auch bei *By task*).
-- **By task:** Haupttasks mit ihren Untertasks als aufklappbarer Baum.
-- **Workload:** Auslastung (siehe Kapitel 13).
-- **Matrix** (nur im Eisenhower-Modus): die vier Quadranten mit den Aufgaben als Kreisen.
-  - **Kreisfläche** = geschätzter Aufwand (gestrichelt = keine Schätzung), **Innenkreis** = Fortschritt. Große Kreise stehen vorne – aufgeblähte Aufgaben fallen so auf. Die Kopfzeile zeigt Anzahl und Stunden je Quadrant.
-  - **Oranger Rand:** Deadline in höchstens 3 Tagen; **roter Rand:** Deadline überschritten; **„!“:** Puffer bis zur Deadline zu knapp (rot = negativ, orange = unter 10 %).
-  - **Einordnen per Ziehen:** Kreis in einen Quadranten ziehen; zurück in **Nicht eingeordnet** hebt die Einordnung auf. Klappt auch für Maps, die gerade nicht offen sind. Der farbige Punkt an nicht eingeordneten Aufgaben zeigt ihre alte Stufe – nur als Erinnerung.
-  - **Untertasks** werden im Kontext ihrer Haupttask beurteilt: Sie stehen immer im Quadranten der obersten Haupttask, zusammen mit ihr in einem Rahmen (tiefere Ebenen flach darin). Ihre **eigene Einordnung** zeigt die Farbe des Kreises und das kleine **2×2-Symbol**; Klick darauf öffnet die Auswahl. Innerhalb des Rahmens stehen sie nach eigener Einordnung sortiert. Gezogen wird nur die Haupttask – der ganze Rahmen wandert mit, die Untertasks behalten ihre eigene Einordnung.
-  - Hinweis: Filter und Chips auf der Map zeigen bei Untertasks diese relative Einordnung.
-  - `Ctrl+Z` bzw. **Rückgängig** in der Matrix nimmt die letzte Einordnung zurück. Klick auf einen Kreis öffnet die Note.
+Toolbar **Overview** (*Übersicht*) sammelt die Aufgaben **aller Maps** des Projektordners in einem Fenster. Sie braucht einen geöffneten Ordner und liest die Maps, die darin gespeichert sind. Eine Map, die noch in keinem Ordner liegt (z. B. ein gerade geladenes Beispiel), fehlt dort, bis du sie mit **File → Save as…** in den Ordner speicherst. Oben wählst du die Ansicht – **By deadline**, **By task**, **Workload** und (nur im Eisenhower-Modus) **Matrix** –, daneben Suche und Filter. Unten am Bildschirmrand steht dauerhaft die **Statusleiste** mit der Kurzfassung.
+
+**Was zählt als Aufgabe?** Tasks und Notes mit Details. **To-do-Listen** sind normalerweise reine Abhaklisten (wie ein Einkaufszettel) und erscheinen hier nicht. Sie zählen erst als Aufgabe, wenn sie eine **Schätzung**, eine **Deadline**, einen **Termin** oder eine **Priorität / Eisenhower-Einordnung** haben. Die Spalten der Tages-, Wochen- und Monatspläne haben ihre Deadline automatisch.
+
+### By deadline: Was ist wann fällig?
+
+![By deadline: Gruppen nach Fälligkeit, je Zeile Status, Fortschritt, Chips und Map](docs/handbuch/overview-deadline.png)
+
+- **Gruppen:** *Overdue* (überfällig, rot), *Today* (orange), *Tomorrow*, *Next 7 days*, *Later*, *No deadline*.
+- **Kopf jeder Gruppe:** Anzahl der Aufgaben · ihre **Zeitsumme** · **Ø** durchschnittlicher Fortschritt.
+- **Jede Zeile:** Status-Symbol · Titel, darunter grau die Herkunft (**↳ Haupttask**, Anzahl Untertasks, wie viel der Schätzung schon aufgeteilt ist) · Fortschrittsbalken · Chips (Deadline, Schätzung, Priorität …) · **↗ map** (abgeleitete Map öffnen) · Name der Map.
+- **So liest du es:** Die Zeitsumme bei *Today* und *Tomorrow* sagt, ob die nächsten Tage überhaupt passen. Viel in *Overdue* heißt: Deadlines anpassen oder Arbeit streichen. *No deadline* sammelt, was nie drängt – gut für einen regelmäßigen Blick, ob etwas davon wichtig ist.
+
+### By task: Was gehört wozu?
+
+![By task: Haupttasks mit ihren Untertasks und wie viel der Schätzung schon verteilt ist](docs/handbuch/overview-task.png)
+
+- **Haupttasks mit ihren Untertasks** als aufklappbarer Baum (▾ klappt auf und zu), darunter *Other* für alles ohne Untertasks.
+- Unter einer Haupttask steht, wie weit ihre Schätzung schon in Untertasks zerlegt ist: „6h of 10h split up“, „sub-tasks 12h > 10h estimated“ (die Untertasks ergeben mehr als geschätzt).
+- **So liest du es:** Ein großer, noch nicht aufgeteilter Rest heißt: Hier ist noch unklar, was eigentlich zu tun ist. Der Fortschritt mit **∑** ist aus den Untertasks berechnet (Kapitel 12).
+
+### Workload: Geht die Woche auf?
+
+![Workload, oben: verplant / verfügbar je Woche und Tag, rechts die Zeit für Routinen 🔁 und Termine 📌. Rot: heute (Sonntag, 0 h) liegt schon die überfällige Aufgabe, und am Mittwoch passt der Termin nicht in den Tag](docs/handbuch/overview-workload-1.png)
+
+Die Seite rechnet aus Schätzung, Fortschritt, Deadline und Kapazität, wie voll deine Tage und Wochen sind. Wie genau gerechnet wird, steht in Kapitel 13.
+
+- **Abschnitte:** *Appointment conflicts* (nur wenn es welche gibt) · *Weeks* · *Days* · *Buffer until each deadline* · *Routines* · *Days off*.
+- **Jede Zeile:** Bezeichnung · **Balken** · **verplant / verfügbar** (z. B. `26 h / 32 h`) · rechts, was Routinen (🔁) und Termine (📌) schon von der Kapazität genommen haben.
+- **Farbe des Balkens:** **grün** = passt, **gelb** = über 85 % verplant, **rot** = mehr Arbeit als Zeit.
+- **Puffer:** Für jede Deadline: Passt die **gesamte** bis dahin fällige Arbeit in die Zeit von heute bis dahin? `+6 h` = Luft, `−3 h` = geht so nicht auf, auch wenn die einzelnen Tage noch grün sind.
+- **Routinen:** jede mit ihrer Regel, der nächsten Fälligkeit und den Stunden pro Woche. *Nice to have*-Routinen sind ausgegraut, sie zählen nicht.
+
+![Workload, unten: Puffer bis zu jeder Deadline (+ = Luft, − = geht nicht auf), Routinen mit Stunden pro Woche, Urlaub](docs/handbuch/overview-workload-2.png)
+
+- **So liest du es:** Zuerst auf rote Wochen und negative Puffer schauen – dort muss etwas weichen: eine Deadline verschieben, eine Schätzung ehrlicher machen, eine Routine streichen. Die rechte Spalte zeigt, wie viel deiner Zeit schon fest vergeben ist, bevor die erste Projektaufgabe dran ist.
+
+### Matrix: Wichtig oder nur dringend? (nur Eisenhower)
+
+![Matrix: Kreisfläche = Schätzung, Innenkreis = Fortschritt, Untertasks im Rahmen ihrer Haupttask](docs/handbuch/overview-matrix.png)
+
+- Die vier Quadranten mit den Aufgaben als **Kreisen**. Die Kopfzeile jedes Quadranten zeigt Anzahl und Stunden.
+- **Kreisfläche** = geschätzter Aufwand (gestrichelt = keine Schätzung), **Innenkreis** = Fortschritt. Große Kreise stehen vorne – aufgeblähte Aufgaben fallen so auf.
+- **Oranger Rand:** Deadline in höchstens 3 Tagen; **roter Rand:** Deadline überschritten; **„!“:** Puffer bis zur Deadline zu knapp (rot = negativ, orange = unter 10 %).
+- **Einordnen per Ziehen:** Kreis in einen Quadranten ziehen; zurück in **Not classified** hebt die Einordnung auf. Klappt auch für Maps, die gerade nicht offen sind. Der farbige Punkt an nicht eingeordneten Aufgaben zeigt ihre alte Stufe – nur als Erinnerung.
+- **Untertasks** werden im Kontext ihrer Haupttask beurteilt: Sie stehen immer im Quadranten der obersten Haupttask, zusammen mit ihr in einem Rahmen (tiefere Ebenen flach darin). Ihre **eigene Einordnung** zeigt die Farbe des Kreises und das kleine **2×2-Symbol**; Klick darauf öffnet die Auswahl. Innerhalb des Rahmens stehen sie nach eigener Einordnung sortiert. Gezogen wird nur die Haupttask – der ganze Rahmen wandert mit, die Untertasks behalten ihre eigene Einordnung. Filter und Chips auf der Map zeigen bei Untertasks diese relative Einordnung.
+- `Ctrl+Z` bzw. **Rückgängig** in der Matrix nimmt die letzte Einordnung zurück. Klick auf einen Kreis öffnet die Note.
+- **So liest du es:** Viele große Kreise in *Urgent only* heißt: Dringendes frisst die Zeit für Wichtiges. Ein voller Quadrant *Important only* ohne Fortschritt zeigt, was ständig verschoben wird.
+
+### Statusleiste: die Kurzfassung
+
+Unten am Rand steht immer, z. B.: `Today 6 h / 8 h · Week 26 h / 40 h · Buffer +6 h · 📌 conflict Thu 5 Nov · 2 without estimate`
+
+![Statusleiste: links die offene Map, rechts die Auslastung](docs/handbuch/statusleiste.png)
+
+- **Today / Week:** verplant / verfügbar für heute und diese Woche. *Today off 🏖* an einem freien Tag.
+- **Buffer:** der Puffer der **knappsten** Deadline – fährst du mit der Maus darüber, steht dort, welche es ist.
+- **📌 conflict:** Ein Termin passt nicht in die freie Zeit seines Tages.
+- **without estimate:** so viele Aufgaben mit Deadline oder Termin haben keine Schätzung und zählen deshalb nicht.
+- **Rot** wird die Leiste bei Überlast, negativem Puffer oder einem Konflikt. **Klick** öffnet die Workload-Seite.
+- Nach jeder Änderung meldet sie kurz die Auswirkung, z. B. `Plan: Week 44: 34 h → 38 h of 40 h`.
+
+### Bedienung des Fensters
+
 - Suche, Typ-, Status- und Prioritätsfilter, **Hide done**. Klick auf eine Zeile öffnet die Map und markiert die Note; **↗ map** öffnet eine abgeleitete Map.
-- **Fenster verschieben und skalieren:** an der Kopfzeile ziehen = verschieben; an den Rändern oder der Ecke unten rechts ziehen = Größe ändern. Doppelklick auf die Kopfzeile stellt Standardposition und -größe wieder her. Position und Größe werden im Browser gespeichert.
+- **Fenster verschieben und skalieren** (am PC): an der Kopfzeile ziehen = verschieben; an den Rändern oder der Ecke unten rechts ziehen = Größe ändern. Doppelklick auf die Kopfzeile stellt Standardposition und -größe wieder her. Am Handy füllt die Overview den Bildschirm.
 
 ## 12. Haupt- und Untertasks
 
@@ -274,10 +361,9 @@ Toolbar **Overview** sammelt die Aufgaben **aller Maps** des Projektordners:
 MindMapper berechnet aus **Schätzung**, **Fortschritt** und **Deadline**, wie viele Stunden pro Tag und Woche verplant sind:
 - Der **Restaufwand** (Schätzung × (1 − Fortschritt)) wird auf die Planungstage (Tage mit Kapazität) von heute bis zur Deadline verteilt, gewichtet nach den Stunden des Tages. Überfälliges zählt auf heute.
 - **Verfügbar** ist pro Planungstag: Stunden des Tages (Werktag oder Wochenende) − freie Zeit − Termine an dem Tag − Tagesanteil der Wochenbudgets. Heute zählt als ganzer Tag.
-- In der Workload-Seite steht **links die eingeplante, rechts die verfügbare Zeit** – für jeden Tag und jede Woche (ab heute).
+- In der Workload-Seite steht **links die eingeplante, rechts die verfügbare Zeit** – für jeden Tag und jede Woche (ab heute). Wie die Seite zu lesen ist: Kapitel 11.
 - **Puffer:** Für jede Deadline wird geprüft, ob die **gesamte** bis dahin fällige Arbeit in die verfügbare Zeit von heute bis zur Deadline passt („Until Fri 23 Oct: 26 h / 32 h → +6 h“). Ein negativer Puffer heißt: Die Planung geht so nicht auf – auch wenn die einzelnen Tage gleichmäßig verteilt noch passen.
-- **Statusleiste** unten: `Today 6 h / 8 h · Week 26 h / 40 h · Buffer +6 h` – rot bei Überlast, Klick öffnet die Workload-Seite.
-- Nach jeder Änderung meldet die Statusleiste kurz die Auswirkung, z. B. `Plan: Week 44: 34 h → 38 h of 40 h`.
+- **Statusleiste** unten: `Today 6 h / 8 h · Week 26 h / 40 h · Buffer +6 h` – wie sie zu lesen ist, steht in Kapitel 11.
 - Im Panel einer Note zeigt **Workload**, was diese Note zur Woche beiträgt und wie viel Puffer bis zu ihrer Deadline bleibt.
 - **Termine** (Scheduled) sind keine Projektarbeit: Wie Routinen ziehen sie ihre Schätzung von der **Kapazität ihres Tages** ab (Workload-Seite: `−2 h 📌`). Damit sinkt auch der Puffer aller späteren Deadlines. Abhaken ändert daran nichts, vergangene Termine zählen nicht mehr.
 - **Terminkonflikt:** Passt ein Termin nicht in die freie Zeit seines Tages (Urlaubstag, Tag mit 0 h, Tag schon voll mit Routinen/Terminen), wird das rot gemeldet: in der Statusleiste (`📌 conflict …`), oben auf der Workload-Seite und im Panel der Note.
@@ -348,13 +434,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **Tagebuch anlegen:** Seitenleiste → Bereich **Diaries** → **+**. Jedes Tagebuch ist eine Datei im Ordner `Diaries/` des Projektordners.
 - **Tagebuch löschen** geht bewusst nicht in der App (Schutz, z. B. fürs Laborbuch). Wer eines loswerden will, löscht im Explorer die Datei `Diaries/<Name>.diary.json` im Projektordner und klickt danach in der Seitenleiste auf **⟳** (Ordner neu einlesen). Damit verschwinden Gestaltung, Sticker und abgeschlossene Seiten. Die Einträge selbst sind Notizen in den Maps und bleiben dort, bis du sie löschst. Legst du später ein Tagebuch mit demselben Namen an, erscheinen sie wieder darin.
 - **Eintrag schreiben:** Rechtsklick → **Diary entry** (oder **Insert → Diary entry**). Im Panel Tagebuch, Tag und Uhrzeit wählen – neue Einträge landen im zuletzt benutzten Tagebuch, mit heutigem Datum und aktueller Uhrzeit.
-- **Inhalt** ist Markdown: `# Überschrift`, `**fett**`, `*kursiv*`, `~~durchgestrichen~~`, `- Liste` (eingerückt = Unterpunkt), `1. nummeriert`, `- [ ] Kästchen`, `> Zitat`, `` `Code` ``, `[Link](https://…)` und Tabellen:
-  ```
-  | Probe | Wert |
-  |-------|-----:|
-  | A     |  1,2 |
-  ```
-  **Bilder** beim Schreiben mit `Ctrl+V` einfügen oder hineinziehen – sie werden in der Map gespeichert. Doppelklick bearbeitet den Text, `Ctrl+Enter` oder `Esc` beendet.
+- **Inhalt** ist Markdown: Überschriften, fett, kursiv, Listen, Kästchen, Zitate, Code, Links und Tabellen – alle Zeichen im Abschnitt **Markdown im Tagebuch-Eintrag** unten. **Bilder** beim Schreiben mit `Ctrl+V` einfügen oder hineinziehen – sie werden in der Map gespeichert. Doppelklick bearbeitet den Text, `Ctrl+Enter` oder `Esc` beendet.
 - **Kopfzeile:** Zeigt ein Pfeil von einer anderen Note **auf** den Eintrag, erscheint diese Note im Tagebuch über dem Eintrag (Titel, Status, Fortschritt, Deadline, Tags), mehrere nebeneinander. Hängt sie über weitere Pfeile an einer Task, wird die oberste Task als **⤴ Haupttask** genannt. Liegt eine Note ohne eigenen Pfeil lose in einer Gruppe, geht die Suche über die Gruppe weiter (z. B. Subaufgabe → Gruppe → Note → Eintrag). Eine Task, die nur *in* derselben Gruppe liegt, ohne Pfeil auf die Gruppe, zählt nicht.
 - **Lesen:** Klick auf das Tagebuch in der Seitenleiste, oder **↗** / `Ctrl+Klick` am Eintrag (öffnet direkt dessen Seite). Eine Seite pro Tag, leere Tage fehlen. **←/→** blättern, Mausrad scrollt, die Auswahl oben springt zu einem Tag. **↗ Map** am Eintrag zeigt ihn in seiner Map.
 - **📅 Kalender** in der Leseansicht: Tage mit Einträgen sind anklickbar, abgeschlossene tragen 🔒.
@@ -370,6 +450,40 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
   - **Auf der Linie:** Jeder Eintrag beginnt auf einer Linie der Linierung, Absätze und Überschriften haben Abstände in ganzen Zeilen. Ragt ein Sticker unter den Text seines Eintrags, beginnt der nächste Eintrag erst darunter (in ganzen Zeilen). Die Seite ist mindestens so lang wie ihr tiefster Sticker, nichts wird abgeschnitten.
 - **🖨 Drucken / PDF:** diese Seite, das ganze Tagebuch oder ein Zeitraum. Für ein PDF im Druckdialog „Als PDF speichern“ wählen. Jede Tagebuchseite beginnt auf einem neuen Blatt.
 - Tagebucheinträge erscheinen nicht in Overview und Auslastung und werden beim Carry-over nicht übertragen.
+
+### Markdown im Tagebuch-Eintrag
+
+Ein Tagebuch-Eintrag ist reiner Text mit ein paar Zeichen für die Formatierung (*Markdown*). Beim Bearbeiten siehst du den Text mit diesen Zeichen in Schreibmaschinenschrift; danach zeigt die Note auf der Map eine Vorschau und das Tagebuch die fertige Seite. Markdown wirkt **nur in Tagebuch-Einträgen** – normale Notes und Outline-Notes zeigen ihren Text so, wie er getippt ist (eine Outline gliederst du mit `Enter` und `Tab`).
+
+| Du schreibst | Ergebnis |
+|---|---|
+| `# Titel`, `## Titel` … `###### Titel` | Überschrift, Ebene 1 bis 6 (Raute, Leerzeichen, Text) |
+| Zeile, `Enter`, nächste Zeile | der Zeilenumbruch bleibt |
+| eine leere Zeile dazwischen | neuer Absatz |
+| `**fett**` oder `__fett__` | **fett** |
+| `*kursiv*` oder `_kursiv_` | *kursiv* |
+| `~~weg~~` | durchgestrichen |
+| Text zwischen zwei Backticks, z. B. `npm start` | Code in Schreibmaschinenschrift |
+| drei Backticks allein in einer Zeile, darunter Code, dann wieder drei Backticks | Codeblock; Leerzeichen und Zeilen bleiben, wie sie sind |
+| `> Gedanke` | Zitat, eingerückt mit Balken |
+| `---` allein in einer Zeile | Trennlinie |
+| `- Punkt` (auch `*` oder `+`) | Aufzählung |
+| `1. Punkt` | nummerierte Liste |
+| zwei Leerzeichen vor `- Punkt` | Unterpunkt; `Tab` fügt beim Schreiben genau diese zwei Leerzeichen ein |
+| `- [ ] offen` · `- [x] erledigt` | Kästchen, leer bzw. abgehakt (nur Anzeige – abgehakt wird im Text mit `x`) |
+| `[Text](https://beispiel.de)` | Link, öffnet in einem neuen Tab (auch `mailto:`) |
+| Bild mit `Ctrl+V` einfügen oder hineinziehen | Bild, gespeichert in der Map; im Text steht dafür `![Bild](asset:…)` |
+
+**Tabellen** schreibst du Zeile für Zeile, die Spalten getrennt durch `|`:
+
+- Kopfzeile: `| Probe | Wert |`
+- darunter die Trennzeile: `|---|---:|` – sie macht aus den Zeilen eine Tabelle. Der Doppelpunkt richtet die Spalte aus: `:---` links, `:---:` mittig, `---:` rechts (gut für Zahlen).
+- dann die Zeilen: `| A | 1,2 |`, `| B | 3,4 |` – die Tabelle endet an der ersten Zeile ohne `|` oder einer leeren Zeile.
+
+**Gut zu wissen:**
+- Die Zeichen wirken nur am richtigen Platz: `#` und `-` am Zeilenanfang mit Leerzeichen danach, `**` direkt am Wort (`**so**`, nicht `** so **`).
+- Bilder aus dem Netz (`![…](https://…)`) lädt MindMapper nicht – füge sie lieber ein, dann liegen sie in der Map und sind auch offline und im Druck da.
+- HTML im Text wird nicht ausgeführt, sondern als Text gezeigt. Ein Eintrag kann also nie etwas anderes tun, als Text anzuzeigen.
 
 ## 17. Emoji
 

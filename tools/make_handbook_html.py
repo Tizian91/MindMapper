@@ -3,9 +3,14 @@
 Run after every change of HANDBUCH.md:  python tools/make_handbook_html.py .
 
 Only the Markdown the handbook uses: headings, paragraphs, > quotes, ---, tables,
-nested - / 1. lists, **bold**, *italic*, `code`, [links](url). No external library.
+nested - / 1. lists, **bold**, *italic*, `code`, [links](url), and images on a line of
+their own: ![caption](docs/handbuch/name.png) - embedded as data: URIs, so the page stays
+one file (the CSP allows data: images). A missing image is skipped with a warning.
+No external library.
 """
+import base64
 import html
+import os
 import re
 import sys
 
@@ -47,9 +52,26 @@ title = 'MindMapper – Handbuch'
 i = 0
 
 
+IMAGE = re.compile(r'^!\[([^\]]*)\]\(([^)\s]+)\)\s*$')
+MIME = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml'}
+
+
+def figure(caption, path):
+    """An image of the repo as <figure>, embedded; '' (and a warning) if it is missing."""
+    full = os.path.join(root, path)
+    mime = MIME.get(os.path.splitext(path)[1].lower())
+    if not mime or not os.path.isfile(full):
+        print('warning: image not found or no image type: ' + path)
+        return ''
+    data = base64.b64encode(open(full, 'rb').read()).decode('ascii')
+    cap = '<figcaption>%s</figcaption>' % inline(caption) if caption else ''
+    return '<figure><img src="data:%s;base64,%s" alt="%s" loading="lazy">%s</figure>' % (
+        mime, data, html.escape(caption), cap)
+
+
 def special(line):
     return (line.startswith('#') or line.strip() == '---' or line.startswith('>') or line.startswith('|')
-            or ITEM.match(line))
+            or ITEM.match(line) or IMAGE.match(line))
 
 
 while i < len(lines):
@@ -72,6 +94,10 @@ while i < len(lines):
         i += 1
     elif line.strip() == '---':
         out.append('<hr>')
+        i += 1
+    elif IMAGE.match(line):
+        im = IMAGE.match(line)
+        out.append(figure(im.group(1), im.group(2)))
         i += 1
     elif line.startswith('>'):
         quote = []
@@ -166,6 +192,9 @@ blockquote { margin: 1em 0; padding: 8px 16px; background: var(--quote); border-
 blockquote p { margin: 0.3em 0; }
 hr { border: 0; border-top: 1px solid var(--line); margin: 1.6em 0; }
 .table { overflow-x: auto; margin: 1em 0; }
+figure { margin: 1.2em 0; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+figcaption { margin-top: 6px; font-size: 0.88em; color: var(--muted); }
 table { border-collapse: collapse; width: 100%; font-size: 0.94em; }
 th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
 th { background: var(--th); }

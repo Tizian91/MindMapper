@@ -64,6 +64,7 @@ window.MM = window.MM || {};
       st_filterShown: 'Filter: {n} sichtbar',
       helpOpenHandbook: 'Handbuch öffnen',
       helpLoadExample: 'Beispiel-Map laden',
+      helpLoadProject: 'Beispielprojekt laden (Aufgaben, Routinen, Termine)',
 
       // Filterbar (dynamic part)
       fb_tagCount: '{n} Notiz(en)',
@@ -397,6 +398,7 @@ window.MM = window.MM || {};
       st_filterShown: 'filter: {n} shown',
       helpOpenHandbook: 'Open handbook (German)',
       helpLoadExample: 'Load example map',
+      helpLoadProject: 'Load example project (tasks, routines, appointments)',
 
       // Filterbar (dynamic part)
       fb_tagCount: '{n} note(s)',

@@ -11,3 +11,5 @@ plans/
 .nojekyll
 wrangler.jsonc
 tools/
+# screenshots of the handbook: embedded in HANDBUCH.html
+docs/

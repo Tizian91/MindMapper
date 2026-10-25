@@ -123,6 +123,9 @@
     opts = opts || {};
     MM.editing = null;
     const target = ed.el;
+    // read while it is still shown as edited (white-space: pre-wrap): afterwards the
+    // browser folds line breaks into spaces - a diary entry lost its lines and tables
+    const text = readText(target);
     target.removeEventListener('keydown', onKey);
     target.removeEventListener('input', onInput);
     target.removeEventListener('blur', onBlur);
@@ -132,7 +135,7 @@
     target.classList.remove('editing');
 
     const n = MM.node(ed.nodeId);
-    if (n && !opts.noWrite) writeText(ed, n, readText(target), true);
+    if (n && !opts.noWrite) writeText(ed, n, text, true);
 
     const div = MM.render.nodeEls.get(ed.nodeId);
     if (div) {

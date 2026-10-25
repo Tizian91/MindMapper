@@ -158,6 +158,107 @@
 
   MM.demoDoc = demoDoc;
 
+  /**
+   * Second example: a small creative project with everything the planning shows -
+   * main and sub-tasks, a bloated and an overdue task, an appointment, routines,
+   * days off, a plain to-do list and short notes that explain it. Dates are relative
+   * to today, so the Overview (By deadline, By task, Workload, Matrix) is always filled.
+   */
+  function projectDoc() {
+    const doc = MM.emptyDoc();
+    const p = (v) => String(v).padStart(2, '0');
+    const day = (n) => {
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    };
+    const add = (type, cx, cy, extra) => {
+      const n = MM.createNode(type, cx, cy, extra);
+      doc.nodes[n.id] = n;
+      return n;
+    };
+    const task = (cx, cy, text, meta, extra) => {
+      const n = add('task', cx, cy, Object.assign({ text, w: 260 }, extra));
+      n.meta = Object.assign(MM.emptyMeta(), meta);
+      return n;
+    };
+    const link = (a, b, style) => {
+      const e = MM.createEdge({ node: a.id, anchor: 'auto' }, { node: b.id, anchor: 'auto' }, style);
+      doc.edges[e.id] = e;
+      return e;
+    };
+    const sub = (a, b) => link(a, b, { route: 'elbow', endArrow: 'arrow' });
+    const hint = (cx, cy, text, w) => {
+      const n = add('text', cx, cy, { text, w: w || 260, h: 92 });
+      n.style.fill = '#fffbea';
+      n.style.stroke = '#d69e2e';
+      n.style.align = 'left';
+      return n;
+    };
+    const h = 60; // hours -> minutes
+
+    const root = add('heading', 0, -420, { text: 'Beispielprojekt: EP aufnehmen', w: 380 });
+    const guide = add('outline', -760, -460, { text: 'So probierst du es aus', w: 420 });
+    guide.blocks = [
+      'Zuerst: File → Save as… in einen Projektordner (am besten einen leeren Testordner)',
+      'Erst dann zeigt die Overview die Aufgaben – sie liest die Maps des Ordners',
+      'Toolbar „Overview“: By deadline, By task, Workload',
+      'Matrix: Panel (nichts markiert) → Priorities → Eisenhower',
+      'Statusleiste unten: heute, Woche, Puffer',
+      'Daten sind relativ zu heute – das Beispiel bleibt aktuell',
+    ].map((t) => MM.createBlock(t, 0));
+    guide.h = 230;
+
+    // main task with sub-tasks: 17 h of 20 h split up, one sub-task done
+    const songs = task(-700, -140, 'Songs fertig schreiben', { deadline: day(10), estimate: 20 * h, status: 'progress', priority: 'high', quadrant: 'important' });
+    const s1 = task(-990, 130, 'Song 1: Text überarbeiten', { deadline: day(4), estimate: 3 * h, status: 'done', progress: 100, priority: 'medium', quadrant: 'important' }, { w: 230 });
+    const s2 = task(-700, 130, 'Song 2: Bridge komponieren', { deadline: day(6), estimate: 6 * h, status: 'progress', progress: 40, priority: 'high', quadrant: 'important' }, { w: 230 });
+    const s3 = task(-410, 130, 'Song 3: Arrangement', { deadline: day(10), estimate: 8 * h, status: 'open', priority: 'medium', quadrant: 'important' }, { w: 230 });
+    [s1, s2, s3].forEach((n) => sub(songs, n));
+
+    // second main task: one sub-task is urgent, but not important
+    const session = task(-120, -140, 'Aufnahme-Session vorbereiten', { deadline: day(14), estimate: 6 * h, status: 'open', priority: 'high', quadrant: 'both' });
+    const studio = task(-240, 130, 'Studio buchen', { deadline: day(2), estimate: 30, status: 'open', priority: 'urgent', quadrant: 'urgent' }, { w: 210 });
+    const gear = task(0, 130, 'Equipment-Liste', { deadline: day(12), estimate: 1 * h, status: 'open', priority: 'low', quadrant: 'both' }, { w: 210 });
+    [studio, gear].forEach((n) => sub(session, n));
+
+    // a bloated task (big circle in the Matrix) and an overdue one
+    const web = task(380, -140, 'Website relaunchen', { deadline: day(21), estimate: 40 * h, status: 'open', priority: 'low', quadrant: 'neither' });
+    web.blocks = [MM.createBlock('40 h in einem Stück – zu groß?', 0), MM.createBlock('besser in Untertasks zerlegen', 0)];
+    const grant = task(380, 130, 'Förderantrag abschicken', { deadline: day(-2), estimate: 2 * h, status: 'blocked', priority: 'urgent', quadrant: 'both' });
+    const merch = task(380, 330, 'Merch-Ideen sammeln', { estimate: 3 * h, status: 'open', priority: 'medium', quadrant: 'important' });
+    // urgent, but it does not move the project forward
+    const reply = task(-120, -330, 'Rückmeldung an Veranstalter', { deadline: day(1), estimate: 30, status: 'open', priority: 'high', quadrant: 'urgent' }, { w: 240 });
+
+    // appointment: blocks its day
+    const rehearsal = task(820, -140, 'Bandprobe mit allen', { scheduled: day(3), scheduledTime: '19:00', estimate: 150, status: 'open', priority: 'medium', quadrant: 'both' });
+
+    // routines and days off: they take time off the capacity
+    const plan = task(820, 130, 'Wochenplanung', { estimate: 30, status: 'open' });
+    plan.repeat = MM.normalizeRepeat({ kind: 'weekly', every: 1, days: [1], time: '09:00' });
+    const practice = task(820, 330, 'Gitarre üben', { estimate: 45, status: 'open' });
+    practice.repeat = MM.normalizeRepeat({ kind: 'times', times: 3 });
+    const off = task(820, 530, 'Kurzurlaub', { status: 'none' });
+    off.repeat = MM.normalizeRepeat({ kind: 'off', from: day(17), until: day(18) });
+
+    // a plain checklist: no estimate / deadline, so it is no task in the Overview
+    const ideas = add('todo', -120, 380, { text: 'Ideen-Parkplatz', w: 260 });
+    ideas.items = ['Cover-Foto im Wald', 'Live-Session filmen', 'Release-Party?'].map((t) => MM.createTodoItem(t));
+
+    // short explanations
+    hint(-700, 380, 'Pfeil von Task zu Task = Untertask. Die Haupttask zeigt ihren Fortschritt als ∑ und wie viel der 20 h schon verteilt ist.', 300);
+    hint(380, 560, '40 h ohne Untertasks: in der Matrix ein großer Kreis. Überfällige Aufgaben stehen in By deadline ganz oben.', 300);
+    hint(1160, -140, 'Scheduled = Termin 📌: blockt 2 h 30 an seinem Tag.', 230);
+    hint(1160, 230, 'Repeat = Routine 🔁: zieht ihre Zeit von der Kapazität ab. Day(s) off = Urlaub 🏖.', 230);
+    hint(-120, 560, 'To-do-Listen ohne Schätzung oder Deadline sind reine Abhaklisten – sie zählen nicht als Aufgabe.', 280);
+
+    // only the heading links the parts: any connection from one task to another makes a sub-task
+    [songs, session, web, rehearsal, reply].forEach((n) => link(root, n, { route: 'curved' }));
+    link(session, ideas, { route: 'straight', lineStyle: 'dashed', endArrow: 'none' });
+    return doc;
+  }
+  MM.projectDoc = projectDoc;
+
   /** Toolbar "?": handbook (HANDBUCH.html, built from HANDBUCH.md) and the example map. */
   MM.actions.help = function () {
     if (MM.menu.isOpen()) return MM.menu.close();
@@ -181,7 +282,17 @@
           MM.actions.fit();
         },
       },
-    ], Math.max(4, r.right - 240), r.bottom + 2);
+      {
+        label: MM.t('helpLoadProject'),
+        action: async () => {
+          if (!(await MM.storage.confirmLeave('open the example map'))) return;
+          S.file = { handle: null, backend: null, name: 'Beispielprojekt.mindmap.json', path: null };
+          MM.storage.load(projectDoc(), S.file.name);
+          S.dirty = false;
+          MM.actions.fit();
+        },
+      },
+    ], Math.max(4, r.right - 280), r.bottom + 2);
   };
 
   async function init() {
