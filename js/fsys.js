@@ -17,6 +17,7 @@
  *                                   the time of a write a little later or round it)
  *   writeBlob(path, data)           File, Blob or ArrayBuffer; errors are thrown, not swallowed
  *   mkdir(folder), remove(path), rename(from, to), exists(path)
+ *   removeDir(folder)               a folder with everything in it
  *   access(ask)                     'granted' | 'prompt' | 'denied' (ask: request it if needed)
  *
  * Paths are relative to the project folder ("Weeks/2026-W43.mindmap.json").
@@ -180,6 +181,21 @@
           if (typeof fh.remove !== 'function') throw err2;
           await fh.remove();
         }
+      }
+    };
+
+    B.removeDir = async function (folder) {
+      const parts = split(folder);
+      const name = parts.pop();
+      if (!name) throw new Error('invalid folder: ' + folder);
+      try {
+        await (await dirOf(parts, false)).removeEntry(name, { recursive: true });
+      } catch (err) {
+        // Android, folder of another app: read the folder again and retry (see remove)
+        if (err.name !== 'InvalidStateError') throw err;
+        const dir = await dirOf(parts, false);
+        for await (const n of dir.keys()) if (n === name) break;
+        await dir.removeEntry(name, { recursive: true });
       }
     };
 

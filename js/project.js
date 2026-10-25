@@ -797,7 +797,8 @@
       if (e.kind === 'dir') {
         const closed = collapsed.has(e.path);
         h += `<div class="sb-dir${closed ? ' closed' : ''}" data-dir="${esc(e.path)}" style="--d:${depth}">` +
-          `<span class="sb-caret"></span>${esc(e.name)}</div>`;
+          `<span class="sb-caret"></span><span class="sb-dir-name">${esc(e.name)}</span>` +
+          (planFolder(e.path) ? '' : `<button class="sb-more" data-more title="${esc(tr('Delete folder…'))}">⋯</button>`) + '</div>';
         if (!closed) h += tree(e.children, depth + 1);
       } else {
         const active = S.file.path === e.path ? ' active' : '';
@@ -862,9 +863,72 @@
   /** Right click on a map in the sidebar: open, rename, move, delete. */
   function onContextMenu(e) {
     const file = e.target.closest('[data-file]');
-    if (!file) return;
+    const dir = !file && e.target.closest('[data-dir]');
+    if (!file && !dir) return;
     e.preventDefault();
-    fileMenu(file.dataset.file, e.clientX, e.clientY);
+    if (file) fileMenu(file.dataset.file, e.clientX, e.clientY);
+    else folderMenu(dir.dataset.dir, e.clientX, e.clientY);
+  }
+
+  // ---- Folders ----------------------------------------------------------------------
+  // Own folders can be deleted (a typo when creating a map). The folders of the plans
+  // (Days, Weeks, Months) stay: there only single maps are deleted.
+
+  const planFolder = (folder) => [MM.templates.DAY_FOLDER, MM.templates.WEEK_FOLDER, MM.templates.MONTH_FOLDER].includes(folder);
+
+  /** Menu of a folder in the sidebar (right click or its ⋯ button). */
+  function folderMenu(folder, x, y) {
+    MM.menu.open(planFolder(folder)
+      ? [{ label: tr('Folder of the plans - delete single maps instead'), disabled: true }]
+      : [{ label: 'Delete folder…', action: () => deleteFolder(folder) }], x, y);
+  }
+
+  /** Everything in a folder (also files the sidebar does not show): { maps, other }. */
+  async function countFolder(folder) {
+    let maps = 0, other = 0;
+    for (const { kind, name } of await P.backend.list(folder)) {
+      if (kind === 'dir') {
+        const c = await countFolder(folder + '/' + name);
+        maps += c.maps;
+        other += c.other;
+      } else if (/\.json$/i.test(name)) maps++;
+      else other++;
+    }
+    return { maps, other };
+  }
+
+  async function deleteFolder(folder) {
+    if (planFolder(folder)) return;
+    const name = folder.split('/').pop();
+    let c;
+    try {
+      c = await countFolder(folder);
+    } catch (err) {
+      alert(tr('Could not delete the folder: {err}', { err: err.message }));
+      return;
+    }
+    const question = !c.maps && !c.other
+      ? tr('Delete the empty folder "{name}"?', { name })
+      : tr('Delete the folder "{name}" with everything in it?\n\n{maps} map(s) and {other} other file(s) will be deleted. This cannot be undone.', { name, maps: c.maps, other: c.other });
+    if (!confirm(question)) return;
+    const inside = (p) => !!p && (p === folder || p.startsWith(folder + '/'));
+    try {
+      if (inside(S.file.path)) {
+        S.file = { handle: null, backend: null, name: 'Untitled.mindmap.json', path: null };
+        MM.storage.load(MM.emptyDoc(), S.file.name);
+        S.dirty = false;
+      }
+      await P.backend.removeDir(folder);
+      for (const p of [...versions.keys()]) if (inside(p)) versions.delete(p);
+      P.history = P.history.filter((p) => !inside(p));
+      for (const p of [...collapsed]) if (inside(p)) collapsed.delete(p);
+      MM.storage.autosave();
+      MM.ui.flash(tr('Deleted folder {name}', { name }));
+    } catch (err) {
+      alert(tr('Could not delete the folder: {err}', { err: err.message }));
+    }
+    await P.scan();
+    MM.refresh();
   }
 
   /** Menu of a map in the sidebar (right click or its ⋯ button). */
@@ -1021,6 +1085,11 @@
       return;
     }
     const dir = t.closest('[data-dir]');
+    if (dir && t.closest('[data-more]')) {
+      const r = t.closest('[data-more]').getBoundingClientRect();
+      folderMenu(dir.dataset.dir, r.left, r.bottom);
+      return;
+    }
     if (dir) {
       const p = dir.dataset.dir;
       if (collapsed.has(p)) collapsed.delete(p);

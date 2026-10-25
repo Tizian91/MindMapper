@@ -245,6 +245,13 @@
     'Could not replace the map: {err}': 'Die Map konnte nicht ersetzt werden: {err}',
     'Delete {n} conflict copies of "{map}"?\n\nThe map itself stays.': '{n} Konfliktkopien von „{map}“ löschen?\n\nDie Map selbst bleibt.',
     'Deleted {n} copies': '{n} Kopien gelöscht',
+    'Delete folder…': 'Ordner löschen…',
+    'Folder of the plans - delete single maps instead': 'Ordner der Pläne – stattdessen einzelne Maps löschen',
+    'Delete the empty folder "{name}"?': 'Den leeren Ordner „{name}“ löschen?',
+    'Delete the folder "{name}" with everything in it?\n\n{maps} map(s) and {other} other file(s) will be deleted. This cannot be undone.':
+      'Den Ordner „{name}“ mit allem darin löschen?\n\n{maps} Map(s) und {other} andere Datei(en) werden gelöscht. Das lässt sich nicht rückgängig machen.',
+    'Deleted folder {name}': 'Ordner {name} gelöscht',
+    'Could not delete the folder: {err}': 'Der Ordner konnte nicht gelöscht werden: {err}',
     'Could not open the diary: {err}': 'Das Tagebuch konnte nicht geöffnet werden: {err}',
     '"{name}" is empty or incomplete right now - a sync program may still be writing or downloading it. Try again later.': '„{name}“ ist gerade leer oder unvollständig – vielleicht schreibt oder lädt ein Sync-Programm sie noch. Später noch einmal versuchen.',
     '{n} of {all} copies could not be deleted: {err}\n\nTry again after "Reload folder" (⟳), or delete them on another device (e.g. the PC).': '{n} von {all} Kopien konnten nicht gelöscht werden: {err}\n\nNach „Ordner neu laden“ (⟳) noch einmal versuchen oder auf einem anderen Gerät (z. B. am PC) löschen.',

@@ -14,7 +14,12 @@ function dir(name) {
       if (!kids.has(n)) { if (!(o && o.create)) throw Object.assign(new Error('NotFound'), { name: 'NotFoundError' }); kids.set(n, file(n)); }
       return kids.get(n);
     },
-    async removeEntry(n) { kids.delete(n); },
+    // like the browser: a folder that is not empty only goes with { recursive: true }
+    async removeEntry(n, o) {
+      const k = kids.get(n);
+      if (k && k.kind === 'directory' && k.kids.size && !(o && o.recursive)) throw Object.assign(new Error('not empty'), { name: 'InvalidModificationError' });
+      kids.delete(n);
+    },
     async *entries() { for (const [n, h] of kids) yield [n, h]; },
   };
 }
@@ -61,6 +66,13 @@ function file(name) {
     out.push('hash         | ' + FS.hash('abc') + ' ' + FS.hash('abd') + ' ' + FS.hash('🥁'));
     out.push('list         | ' + JSON.stringify(await B.list('')) + ' ' + JSON.stringify(await B.list('Weeks')));
     out.push('missing      | read=' + (await B.read('x.json')) + ' stat=' + (await B.stat('x.json')) + ' list=' + JSON.stringify(await B.list('Nope')));
+    // an own folder (a typo) with a sub folder and a map in it
+    await B.write('Tippfehler/Unter/y.mindmap.json', '{}');
+    await B.mkdir('Leer');
+    await B.removeDir('Tippfehler');
+    await B.removeDir('Leer');
+    const top = (await B.list('')).map((e) => e.name).sort().join(',');
+    out.push('remove dir   | left: ' + top + ' (Days,Weeks - Tippfehler and Leer are gone)');
   } catch (e) { out.push('ERROR ' + e.stack); }
   fs.writeFileSync(process.argv[3], out.join('\n'));
 })();
