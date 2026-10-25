@@ -77,6 +77,7 @@
       S.file.backend = null;
       S.file.path = null;
       S.file.version = null;
+      S.file.hash = null;
     }
     P.history = [];
   }
@@ -212,6 +213,7 @@
     S.file.backend = P.backend;
     S.file.path = path;
     S.file.version = version; // the local copy may replace this state of the file (checked above)
+    S.file.hash = null;
   }
 
   P.scan = async function () {
@@ -275,7 +277,7 @@
     try {
       const f = await P.backend.read(P.diaryPath(name));
       if (f) {
-        if (opts && opts.edit) versions.set(P.diaryPath(name), f.version);
+        if (opts && opts.edit) versions.set(P.diaryPath(name), { v: f.version, h: MM.fsys.hash(f.text) });
         raw = JSON.parse(f.text);
       }
     } catch (e) { /* missing or broken: start fresh */ }
@@ -318,9 +320,10 @@
    * Version of each file as last read or written here (path -> version). Writing
    * checks it, so a map changed elsewhere meanwhile (other computer, other tab,
    * sync program) is not overwritten. The open map keeps its own in S.file.version.
+   * Entries: { v: version, h: FS.hash of the content } - the same content is no conflict.
    */
   const versions = new Map();
-  P.setVersion = (path, version) => versions.set(path, version);
+  P.setVersion = (path, version, hash) => versions.set(path, { v: version, h: hash || null });
 
   /**
    * Write a document (or any text) to a path of the project folder (folders are created).
@@ -328,10 +331,11 @@
    */
   P.writeText = async function (path, text, opts) {
     try {
-      const expect = opts && opts.fresh ? undefined : versions.get(path);
-      const r = await P.backend.write(path, text, { expect });
-      versions.set(path, r.version);
-      if (path === S.file.path) S.file.version = r.version; // our own write is no conflict
+      const known = opts && opts.fresh ? null : versions.get(path);
+      const r = await P.backend.write(path, text, { expect: known ? known.v : undefined, expectHash: known && known.h });
+      const h = MM.fsys.hash(text);
+      versions.set(path, { v: r.version, h });
+      if (path === S.file.path) Object.assign(S.file, { version: r.version, hash: h }); // our own write is no conflict
       return r;
     } catch (err) {
       if (!MM.fsys.isConflict(err)) throw err;
@@ -457,7 +461,7 @@
     try {
       const f = await P.backend.read(path);
       if (!f) return null;
-      versions.set(path, f.version);
+      versions.set(path, { v: f.version, h: MM.fsys.hash(f.text) });
       const text = f.text;
       return text.trim() ? MM.normalizeDoc(JSON.parse(text)) : MM.emptyDoc();
     } catch (err) {
@@ -664,6 +668,7 @@
       S.file.path = newPath;
       S.file.name = newPath.split('/').pop();
       S.file.version = written.version;
+      S.file.hash = (versions.get(newPath) || {}).h || null;
     }
     P.history = P.history.map((p) => (p === oldPath ? newPath : p));
 

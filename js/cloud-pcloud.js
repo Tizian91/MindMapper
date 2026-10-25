@@ -219,7 +219,9 @@
       const expect = opts && opts.expect;
       if (expect !== undefined && expect !== null) {
         const st = await B.stat(path);
-        if (!st || st.version !== expect) throw FS.conflict(path);
+        if (!st) throw FS.conflict(path); // deleted elsewhere
+        if (st.version !== expect &&
+          !(opts.expectHash && FS.hash(await (await download(full(path))).text()) === opts.expectHash)) throw FS.conflict(path);
       }
       return upload(path, new Blob([text], { type: 'application/json' }));
     };

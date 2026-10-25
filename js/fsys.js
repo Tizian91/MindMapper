@@ -8,9 +8,13 @@
  *   read(path)                      { text, version } or null if missing
  *   readBlob(path)                  Blob or null if missing
  *   stat(path)                      { version, modified } or null if missing
- *   write(path, text, { expect })   { version } - parent folders are created; with expect (the
+ *   write(path, text, { expect, expectHash })
+ *                                   { version } - parent folders are created; with expect (the
  *                                   version read before) a file changed or deleted since is not
- *                                   overwritten: ConflictError (FS.isConflict)
+ *                                   overwritten: ConflictError (FS.isConflict). expectHash (FS.hash of
+ *                                   the text read / written before): another version but the same
+ *                                   content is no conflict (some file systems, e.g. on Android, set
+ *                                   the time of a write a little later or round it)
  *   writeBlob(path, data)           File, Blob or ArrayBuffer; errors are thrown, not swallowed
  *   mkdir(folder), remove(path), rename(from, to), exists(path)
  *   access(ask)                     'granted' | 'prompt' | 'denied' (ask: request it if needed)
@@ -31,6 +35,17 @@
     return err;
   };
   FS.isConflict = (err) => !!err && err.name === 'ConflictError';
+
+  /** Short fingerprint of a text (FNV-1a, 32 bit) - to tell "same content" without keeping the text. */
+  FS.hash = function (text) {
+    let h = 0x811c9dc5;
+    const s = String(text);
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+    return (h >>> 0).toString(36) + ':' + s.length;
+  };
 
   // ---- Local folder (File System Access API, Edge / Chrome) ------------------------
 
@@ -110,7 +125,9 @@
       const expect = opts && opts.expect;
       if (expect !== undefined && expect !== null) {
         const f = await fileOrNull(path);
-        if (!f || f.lastModified !== expect) throw FS.conflict(path);
+        if (!f) throw FS.conflict(path); // deleted elsewhere
+        // another time stamp: still ours if the content is what was read / written here
+        if (f.lastModified !== expect && !(opts.expectHash && FS.hash(await f.text()) === opts.expectHash)) throw FS.conflict(path);
       }
       const fh = await fileHandle(path, true);
       const w = await fh.createWritable();

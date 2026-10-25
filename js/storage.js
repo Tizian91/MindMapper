@@ -190,9 +190,10 @@
       try {
         if (backend && path) {
           try {
-            const r = await backend.write(path, json, { expect: S.file.version });
+            const r = await backend.write(path, json, { expect: S.file.version, expectHash: S.file.hash });
             S.file.version = r.version;
-            MM.project.setVersion(path, r.version);
+            S.file.hash = MM.fsys.hash(json);
+            MM.project.setVersion(path, r.version, S.file.hash);
           } catch (err) {
             if (!MM.fsys.isConflict(err)) throw err;
             await resolveConflict(backend, path, json);
@@ -237,7 +238,8 @@
     S.file.path = target;
     S.file.name = target.split('/').pop();
     S.file.version = r.version;
-    MM.project.setVersion(target, r.version);
+    S.file.hash = MM.fsys.hash(json);
+    MM.project.setVersion(target, r.version, S.file.hash);
     S.dirty = false;
     ST.autosave();
     if (choice === 'copy') {
@@ -342,6 +344,7 @@
     S.file.path = path;
     const st = path ? await b.stat(path) : null;
     S.file.version = st ? st.version : null;
+    S.file.hash = null;
   }
 
   /** Directory to start the file pickers in (the local project folder). */
@@ -449,7 +452,8 @@
     S.file.backend = backend;
     S.file.path = path;
     S.file.version = f.version;
-    MM.project.setVersion(path, f.version);
+    S.file.hash = MM.fsys.hash(f.text);
+    MM.project.setVersion(path, f.version, S.file.hash);
     afterOpen();
   };
 
