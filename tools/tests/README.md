@@ -28,6 +28,7 @@ ELECTRON_RUN_AS_NODE=1 "/c/Users/<Name>/AppData/Local/Programs/Microsoft VS Code
 | `test_lists.js` | Listen *Overdue* / *Open tasks*: nur Haupttasks, Horizont, Sortierung, Nachführen, vergangene Pläne bleiben (`tasklists.js`) |
 | `test_assets.js` | Datei in `Assets/` ablegen: dieselbe Datei wird wiederverwendet, keine Kopie „(2)“ (`files.js store`) |
 | `test_copies.js` | Konfliktkopien erkennen (pCloud, Dropbox, MindMapper) und an die Map hängen (`project.js copyOf`) |
+| `test_revert.js` | Datei auf einen älteren Stand zurückgesetzt (Sync-Programm): fragen statt still laden (`storage.js checkFile`, Konfliktdialog) |
 
 Einige Skripte rechnen mit dem heutigen Datum (Wochenpläne im Oktober/November 2026);
 liegen die Testdaten in der Vergangenheit, Daten im Skript anpassen.

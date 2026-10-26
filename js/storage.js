@@ -191,6 +191,19 @@
    * program (pCloud, OneDrive …) on two devices takes that for edits on both.
    */
   let writeQueue = Promise.resolve();
+
+  // Contents the open map's file had here (path -> FS.hash, oldest first). The file back at
+  // one of them is no change from elsewhere but a sync program setting it back - pCloud
+  // then keeps the newer version as a conflict copy, and every next write as well.
+  const seen = new Map();
+  ST.remember = function (path, hash) {
+    if (!path || !hash) return;
+    const list = (seen.get(path) || []).filter((h) => h !== hash);
+    list.push(hash);
+    seen.set(path, list.slice(-30));
+  };
+  const wasHere = (path, hash) => (seen.get(path) || []).includes(hash);
+
   ST.writeFile = function () {
     clearTimeout(fileTimer);
     if (!ST.hasFile()) return writeQueue;
@@ -210,6 +223,7 @@
             S.file.version = r.version;
             S.file.hash = MM.fsys.hash(json);
             MM.project.setVersion(path, r.version, S.file.hash);
+            ST.remember(path, S.file.hash);
           } catch (err) {
             if (!MM.fsys.isConflict(err)) throw err;
             await resolveConflict(backend, path, json);
@@ -235,7 +249,8 @@
 
   /** Let the user decide what happens with the own version (json) of the map at `path`. */
   async function resolveConflict(backend, path, json) {
-    const choice = await askConflict(path);
+    const f = await backend.read(path).catch(() => null);
+    const choice = await askConflict(path, !!f && wasHere(path, MM.fsys.hash(f.text)));
     if (choice === 'reload') {
       await ST.openPath(path);
       MM.ui.flash(MM.tr('Reloaded {name} - your changes were discarded', { name: S.file.name }));
@@ -257,6 +272,7 @@
     S.file.version = r.version;
     S.file.hash = MM.fsys.hash(json);
     MM.project.setVersion(target, r.version, S.file.hash);
+    ST.remember(target, S.file.hash);
     S.dirty = false;
     ST.autosave();
     if (choice === 'copy') {
@@ -266,20 +282,28 @@
     MM.refresh();
   }
 
-  /** Dialog: 'reload' | 'overwrite' | 'copy' (built in the current language each time). */
-  function askConflict(path) {
+  /**
+   * Dialog: 'reload' | 'overwrite' | 'copy' (built in the current language each time).
+   * reverted: the file is back at a version it had here before (see seen).
+   */
+  function askConflict(path, reverted) {
     return new Promise((resolve) => {
       const tr = MM.tr, esc = MM.render.esc;
       const d = document.createElement('dialog');
       d.className = 'conflict-dialog';
       const btn = (cf, label, hint, cls) => `<button type="button" data-cf="${cf}"${cls ? ` class="${cls}"` : ''}>` +
         `<b>${esc(tr(label))}</b><small>${esc(tr(hint))}</small></button>`;
+      const name = MM.project.mapName(path);
+      const head = reverted ? `
+          <h3>${esc(tr('"{name}" was set back to an older version', { name }))}</h3>
+          <p>${esc(tr('Its file has a version again that it already had here before - your newer changes are not in it. Usually a sync program (e.g. pCloud) did that and kept your version as a conflict copy (⚠ next to the map).'))}</p>
+          <p>${esc(tr('Choose a version, then wait until the sync program is done and clean up the copies before you go on - otherwise every next save may become another copy.'))}</p>` : `
+          <h3>${esc(tr('"{name}" was changed elsewhere', { name }))}</h3>
+          <p>${esc(tr('Since you opened this map here, its file was changed elsewhere (another computer, another tab or a sync program). There are two versions now: yours here and the other one in the file. Which one do you want to keep?'))}</p>`;
       d.innerHTML = `
-        <form method="dialog" class="dlg">
-          <h3>${esc(tr('"{name}" was changed elsewhere', { name: MM.project.mapName(path) }))}</h3>
-          <p>${esc(tr('Since you opened this map here, its file was changed elsewhere (another computer, another tab or a sync program). There are two versions now: yours here and the other one in the file. Which one do you want to keep?'))}</p>
+        <form method="dialog" class="dlg">${head}
           <div class="conflict-buttons">
-            ${btn('reload', 'Keep the other version', 'Load the file, discard my changes')}
+            ${reverted ? btn('reload', 'Load the older version', 'Discard my newer changes here') : btn('reload', 'Keep the other version', 'Load the file, discard my changes')}
             ${btn('copy', 'Keep both', 'Save mine as a copy next to it', 'primary')}
             ${btn('overwrite', 'Keep my version', 'Overwrite the file, the other changes are lost')}
           </div>
@@ -474,6 +498,7 @@
     S.file.version = f.version;
     S.file.hash = MM.fsys.hash(f.text);
     MM.project.setVersion(path, f.version, S.file.hash);
+    ST.remember(path, S.file.hash);
     afterOpen();
   };
 
@@ -502,6 +527,14 @@
       const f = await MM.project.readDoc(path); // empty / cut off: throws, the map stays as it is
       if (!f || S.dirty || editing() || S.file.path !== path || S.file.backend !== backend) return;
       const hash = MM.fsys.hash(f.text);
+      if (hash !== S.file.hash && wasHere(path, hash)) {
+        // set back to an older version (sync program): do not load it silently - ask
+        const json = ST.serialize();
+        writeQueue = writeQueue.then(() => resolveConflict(backend, path, json))
+          .catch((err) => MM.ui.flash(MM.tr('Could not save {name}: {err}', { name: S.file.name, err: err.message })));
+        await writeQueue;
+        return;
+      }
       if (hash !== S.file.hash) {
         const view = S.doc.view;
         ST.load(f.doc, path.split('/').pop());
@@ -513,6 +546,7 @@
       S.file.version = f.version;
       S.file.hash = hash;
       MM.project.setVersion(path, f.version, hash);
+      ST.remember(path, hash);
       S.dirty = false;
       ST.autosave();
     })().catch((err) => console.warn('MindMapper: file check failed', err)).finally(() => { checking = null; });

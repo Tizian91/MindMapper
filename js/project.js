@@ -317,7 +317,10 @@
       const r = await P.backend.write(path, text, { expect: known ? known.v : undefined, expectHash: known && known.h });
       const h = MM.fsys.hash(text);
       versions.set(path, { v: r.version, h });
-      if (path === S.file.path) Object.assign(S.file, { version: r.version, hash: h }); // our own write is no conflict
+      if (path === S.file.path) { // our own write is no conflict
+        Object.assign(S.file, { version: r.version, hash: h });
+        MM.storage.remember(path, h);
+      }
       return r;
     } catch (err) {
       if (!MM.fsys.isConflict(err)) throw err;

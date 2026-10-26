@@ -229,6 +229,13 @@
     'Save mine as a copy next to it': 'Meine Version als Kopie daneben speichern',
     'Keep my version': 'Meine Version behalten',
     'Overwrite the file, the other changes are lost': 'Datei überschreiben, die anderen Änderungen gehen verloren',
+    '"{name}" was set back to an older version': '„{name}“ wurde auf einen älteren Stand zurückgesetzt',
+    'Its file has a version again that it already had here before - your newer changes are not in it. Usually a sync program (e.g. pCloud) did that and kept your version as a conflict copy (⚠ next to the map).':
+      'Ihre Datei hat wieder einen Stand, den sie hier schon einmal hatte – deine neueren Änderungen fehlen darin. Meist war das ein Sync-Programm (z. B. pCloud): Es hat deine Version als Konfliktkopie abgelegt (⚠ neben der Map).',
+    'Choose a version, then wait until the sync program is done and clean up the copies before you go on - otherwise every next save may become another copy.':
+      'Wähle eine Version. Warte dann, bis das Sync-Programm fertig ist, und räume die Kopien auf, bevor du weiterarbeitest – sonst wird womöglich jedes weitere Speichern wieder eine Kopie.',
+    'Load the older version': 'Älteren Stand laden',
+    'Discard my newer changes here': 'Meine neueren Änderungen hier verwerfen',
     'conflict': 'Konflikt',
     'Reloaded {name} - your changes were discarded': '{name} neu geladen – deine Änderungen wurden verworfen',
     '{name} was changed elsewhere - loaded the new version': '{name} wurde woanders geändert – neue Version geladen',
