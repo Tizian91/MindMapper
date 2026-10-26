@@ -161,7 +161,7 @@
       if (name.startsWith('.')) continue;
       // per-folder capacity settings, not a map (also copies like "mindmapper.settings (1).json")
       if (depth === 0 && kind === 'file' && (name === MM.storage.PROJECT_SETTINGS_FILE || /^mindmapper\.settings \(\d+\)\.json$/i.test(name))) continue;
-      if (depth === 0 && kind === 'file' && P.copyOf(name) === MM.storage.PROJECT_SETTINGS_FILE) continue; // its sync copies too
+      if (depth === 0 && kind === 'file' && P.originsOf(name).includes(MM.storage.PROJECT_SETTINGS_FILE)) continue; // its sync copies too
       // Assets/ holds the files of data notes - never list it as maps
       if (depth === 0 && kind === 'dir' && MM.files && name === MM.files.ASSET_FOLDER) continue;
       // Diaries/ holds the diaries (own sidebar section), and a diary file is no map anywhere
@@ -174,10 +174,12 @@
       }
     }
     // conflict copies hang at their map (sidebar: ⚠ n) - no maps of their own, so they are
-    // not counted twice in the overview / workload; a copy without its map stays a map
+    // not counted twice in the overview / workload; a copy without its map stays a map.
+    // A copy of a copy ("W43.mindmap [conflicted] [conflicted 2].json") hangs at the map
+    // itself - at another copy it would be hidden with it, or a map once that copy is gone
     const byName = new Map(out.filter((e) => e.kind === 'file').map((e) => [e.name, e]));
     const maps = out.filter((e) => {
-      const orig = e.kind === 'file' && byName.get(P.copyOf(e.name, true));
+      const orig = e.kind === 'file' && P.originsOf(e.name, true).reverse().map((n) => byName.get(n)).find(Boolean);
       if (!orig || orig === e) return true;
       (orig.copies = orig.copies || []).push({ name: e.name, path: e.path });
       return false;
@@ -202,6 +204,16 @@
       /^(.+?) \([^()]*conflicted copy[^()]*\)(\.mindmap\.json|\.json)$/i.exec(name) ||
       (loose && /^(.+?) \(\d{1,2}\)(\.mindmap\.json|\.json)$/i.exec(name));
     return m ? m[1] + m[2] : null;
+  };
+
+  /**
+   * The originals of a copy of a copy …, nearest first:
+   *   "W43.mindmap [conflicted] [conflicted].json" -> ["W43.mindmap [conflicted].json", "W43.mindmap.json"]
+   */
+  P.originsOf = function (name, loose) {
+    const out = [];
+    for (let n = P.copyOf(name, loose); n && out.length < 20 && !out.includes(n); n = P.copyOf(n, loose)) out.push(n);
+    return out;
   };
 
   // ---- Diaries (see diary.js) --------------------------------------------------
@@ -959,14 +971,15 @@
     const hash = orig && MM.fsys.hash(orig.text);
     const when = (v) => (v ? new Date(v).toLocaleString(undefined, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '?');
     const ext = /\.mindmap\.json$|\.json$/i;
+    const stem = (n) => n.replace(ext, '').replace(/\.mindmap(?= [[(])/gi, ''); // "W43.mindmap [conflicted]" -> "W43 [conflicted]"
     const items = [{ label: tr('This map: {when}', { when: when(orig && orig.version) }), action: () => P.openMap(path) }, '-'];
     const dups = [];
     for (const c of e.copies) {
       const f = await read(c.path);
       const dup = !!(f && hash && MM.fsys.hash(f.text) === hash);
       if (dup) dups.push(c.path);
-      // what tells the copy apart: "[conflicted 2]", "(Konflikt 2026-10-25 1228)"
-      const tag = c.name.replace(ext, '').slice(P.copyOf(c.name, true).replace(ext, '').length).trim() || c.name;
+      // what tells the copy apart: "[conflicted 2]", "(Konflikt 2026-10-25 1228)", "[conflicted] [conflicted 2]"
+      const tag = stem(c.name).slice(stem(e.name).length).trim() || c.name;
       items.push({
         label: `${tag} · ${when(f && f.version)}${dup ? ' · ' + tr('same content') : ''}`,
         submenu: [
