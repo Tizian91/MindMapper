@@ -58,6 +58,7 @@
       if (n.movedTo) continue; // carried over into another map, listed there
       if (n.repeat) continue;  // routine definition: listed on the workload page
       if (n.type === 'diary') continue; // diary entries live in their diary
+      if (n.taskList) continue; // "Overdue" / "Open tasks" of a plan: references, not tasks (tasklists.js)
       if (n.type === 'todo') {
         if (!MM.meta.isTaskTodo(n)) continue; // a plain check list, not a task
         const filled = (n.items || []).filter((i) => i.text.trim() && !i.moved);
@@ -153,6 +154,28 @@
     const text = !est ? count : tr('{count} · {est} estimated · {open} open', { count, est: d(est), open: open ? d(open) : '0' });
     return { text, title: tr('{n} task(s) shown (done ones only without "Hide done").\nEstimated: their estimates added up - a main task only with the part not split up into sub-tasks.\nOpen: what is left of that after the progress so far.', { n: list.length }) + (extra || '') };
   }
+
+  /**
+   * The tasks of some maps (Map path -> doc) as the Overview sees them - with main /
+   * sub-task, progress and estimate - for the lists of the plans (tasklists.js), so both
+   * agree on what is a (main) task. { items, byKey }; the open overview is not touched.
+   */
+  O.model = function (docs) {
+    const keep = { items, links, byKey };
+    try {
+      items = [];
+      links = [];
+      for (const [path, doc] of docs) {
+        const r = collect(doc, path);
+        items.push(...r.items);
+        links.push(...r.links);
+      }
+      buildTree();
+      return { items, byKey };
+    } finally {
+      ({ items, links, byKey } = keep); // synchronous: nothing else ran meanwhile
+    }
+  };
 
   /** Open the overview; mode: 'deadline' | 'tree' | 'load' (default: the last one). */
   O.open = async function (mode) {

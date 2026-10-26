@@ -48,6 +48,7 @@ const FILES = [
   'js/project.js',
   'js/transfer.js',
   'js/overview.js',
+  'js/tasklists.js',
   'js/views.js',
   'js/export.js',
   'js/workload.js',

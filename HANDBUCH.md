@@ -204,7 +204,7 @@ Es gilt die **erste** Zeile, die passt:
 2. **Planen:** *Estimate* und *Deadline* setzen (Klick auf die Chips). Jetzt rechnet MindMapper: Die Statusleiste zeigt, wie sich die Woche füllt, das Panel unter **Workload**, wie viel Puffer bis zur Deadline bleibt.
 3. **Aufteilen:** Große Aufgaben per Pfeil in Untertasks zerlegen – der Fortschritt der Haupttask rechnet sich dann selbst (∑).
 4. **Termin daraus machen:** Wird aus „Workshop vorbereiten bis Freitag“ ein fester Block („Workshop, Do 9:00, 3 h“), *Scheduled* setzen: Die Deadline verschwindet, die Zeit ist an dem Tag geblockt, und 📌 steht im Tages- und Wochenplan. Den 📌 im Plan abhaken setzt die Task auf *Done* – und umgekehrt.
-5. **Abschließen:** Status *Done* oder 100 %. Unerledigtes eines Tages- / Wochenplans wandert beim nächsten Plan mit (Carry-over, Kapitel 8) oder per **Move to map** (Kapitel 9).
+5. **Abschließen:** Status *Done* oder 100 %. Solange sie offen ist, steht die Aufgabe in jedem laufenden Plan unter **Open tasks** bzw. **Overdue** (Kapitel 8) – sie selbst bleibt in ihrer Map. Umziehen lässt sie sich per **Move to map** (Kapitel 9).
 6. **Wiederkehrend?** Wird etwas zur Gewohnheit (jeden Dienstag), *Repeat* setzen – ab jetzt ist es eine Routine.
 
 ### Beispiel: Zeitfresser sichtbar machen
@@ -250,11 +250,15 @@ Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Sta
 - **Zur Notiz springen:** Hinter jedem 🔁-, 📌- und 🏖-Eintrag erscheint beim Darüberfahren ein kleines **↗**. Ein Klick öffnet die Map mit der Original-Note (Termin, Routine, Urlaub) und zeigt die Note – praktisch, wenn dort weitere Notizen zum Termin stehen.
 - **Aufräumen:** Ebenfalls beim Öffnen verschwinden **offene** Einträge (ab heute), deren Termin oder Routine gelöscht wurde, deren Termin jetzt an einem anderen Tag ist oder deren Routine an dem Tag nicht mehr stattfindet. **Abgehakte** Einträge und vergangene Tage bleiben stehen. Kann eine Map nicht gelesen werden, wird zur Sicherheit nicht aufgeräumt.
 - **Abhaken im Tages- oder Wochenplan:** Ein 🔁- oder 📌-Eintrag steht im Tagesplan und im Wochenplan. Wird er in einem davon abgehakt (oder wieder geöffnet), passiert das im anderen Plan desselben Datums automatisch mit. Bei einem 📌-Termin gilt das auch für die Original-Note, in beide Richtungen: Wird die Note auf *Done* gesetzt, sind ihre Einträge in Tages- und Wochenplan abgehakt. **Strg+Z** nimmt das Abhaken überall zurück. Die Regel-Note einer Routine bleibt offen, und ein auf einen anderen Tag verschobener Termin wird vom Eintrag des alten Tages nicht berührt. Voraussetzung: Der Projektordner ist verbunden.
-- **Carry-over:** Beim Anlegen des nächsten Tages / der nächsten Woche / des nächsten Monats werden **unerledigte Einträge** übernommen und im alten Plan als übertragen markiert (→).
-  - Offene Einträge von To-do-Listen landen gesammelt in der Liste **Carried over**; deren Deadline ist der erste Tag des neuen Plans, so bleiben sie in der Overview.
-  - Unerledigte **Tasks und Notes mit Status** kommen als Ganzes mit, so wie bei **Move to map** (Kapitel 9): mit allen Untertasks, ihrer Gruppe und der Anordnung.
-  - **Termine** (Notes mit *Scheduled*) werden **nicht** übertragen – auch nicht, wenn sie erst in Wochen sind. Für einen Termin muss man vorher nichts tun; er bleibt in seiner Map und erscheint an seinem Tag als 📌 im Tages- und Wochenplan, in der Overview unter **Appointments** und in der Auslastung. Nur wenn ein Termin als Untertask an einer Aufgabe hängt, die übertragen wird, reist er mit ihr.
-  - Übertragen werden nur To-do-Listen, die als Aufgabe zählen (siehe Kapitel 11) – die Spalten der Pläne gehören dazu, eine reine Abhakliste (z. B. Einkaufszettel ohne Deadline) bleibt im alten Plan.
+- **Overdue und Open tasks:** Jeder laufende Tages-, Wochen- und Monatsplan hat links zwei Listen mit den **offenen Haupttasks des ganzen Projekts** – aus allen Maps:
+  - **Overdue** (rot): Deadline überschritten, die älteste oben.
+  - **Open tasks** (blau): Deadline ab heute bis **4 Wochen** voraus, die knappste oben; danach die offenen Aufgaben **ohne Deadline**. Was später fällig ist, zählt der Titel mit („Open tasks (+3 later)“) – zu sehen in der Overview.
+  - Ein Eintrag sagt, worum es geht: `Budget Plan · 📅 30.10. · ☑ 2/4 · 45 %` – Deadline, erledigte / alle Untertasks, Fortschritt. Untertasks stehen nicht einzeln in der Liste; sie hängen an ihrer Haupttask.
+  - Die **Aufgabe bleibt, wo sie entstanden ist** – mit ihren Pfeilen, ihrer Gruppe und ihren Untertasks. Die Listen verweisen nur auf sie und zählen nicht in Auslastung oder Overview.
+  - **Nachgeführt** werden die Listen, wenn du einen laufenden Plan öffnest: Neues kommt dazu, Erledigtes wird abgehakt, eine Aufgabe über ihrer Deadline wandert nach *Overdue*, Gelöschtes verschwindet. **Vergangene Pläne** behalten ihre Listen, wie sie zuletzt waren. Ein Plan, der im Voraus angelegt wurde, bekommt seine Listen, sobald sein Zeitraum beginnt.
+  - **Termine** (Notes mit *Scheduled*) stehen nicht in diesen Listen – sie erscheinen an ihrem Tag als 📌 im Tages- und Wochenplan und in der Overview unter **Appointments**.
+- **Carry-over:** Nur noch **lose Einträge** wandern mit – Text, den du direkt in eine Aufgabenliste geschrieben hast (z. B. „Folie 3“ in der Montagsspalte), denn darauf kann kein Verweis zeigen. Beim Anlegen des nächsten Tages / der nächsten Woche / des nächsten Monats landen sie gesammelt in der Liste **Carried over** (Deadline: erster Tag des neuen Plans) und werden im alten Plan als übertragen markiert (→).
+  - Übertragen werden nur Einträge von To-do-Listen, die als Aufgabe zählen (siehe Kapitel 11) – die Spalten der Pläne gehören dazu, eine reine Abhakliste (z. B. Einkaufszettel ohne Deadline) bleibt im alten Plan. Einträge einer Liste mit Termin (*Scheduled*) bleiben ebenfalls.
   - Legst du einen Plan **im Voraus** an (z. B. nächste Woche), wird noch nichts übertragen. Sobald der Zeitraum begonnen hat, fragt MindMapper beim Öffnen einmal nach.
 
 ### Was passiert automatisch?
@@ -265,7 +269,8 @@ Alles, was MindMapper in Tages- und Wochenpläne von selbst einträgt oder ände
 |---|---|---|
 | Plan wird angelegt | 🔁 Routinen, 📌 Termine, 🏖 Urlaub dieses Tages / dieser Woche | Tagesspalten (Woche) bzw. *Morning / Afternoon / Evening* (Tag) |
 | Wochenplan wird angelegt | Routinen ohne feste Tage (Wochenbudgets, „x-mal pro Woche“) | eine Liste je Routine-Kategorie (ohne Kategorie: **Routines this week**) links neben *Goals*, siehe Kapitel 14 |
-| Plan wird angelegt, sein Zeitraum hat schon begonnen (sonst: beim ersten Öffnen danach, mit Nachfrage) | Unerledigtes aus dem vorigen Tag / der vorigen Woche / dem vorigen Monat | Liste **Carried over** und die übertragenen Notes; im alten Plan als übertragen markiert (→) |
+| Plan wird angelegt, sein Zeitraum hat schon begonnen (sonst: beim ersten Öffnen danach, mit Nachfrage) | lose Einträge aus den Aufgabenlisten des vorigen Tages / der vorigen Woche / des vorigen Monats | Liste **Carried over**; im alten Plan als übertragen markiert (→) |
+| Ein laufender Tages-, Wochen- oder Monatsplan wird geöffnet | offene Haupttasks aller Maps | Listen **Overdue** und **Open tasks** – angelegt oder nachgeführt |
 | Plan wird geöffnet | neue 🔁 / 📌 / 🏖 ab heute dazu; offene Einträge gelöschter oder verschobener Termine / Routinen weg | wie beim Anlegen |
 | Abhaken (oder wieder öffnen) irgendwo | derselbe 🔁 / 📌-Eintrag im Tages- und Wochenplan und die Termin-Note | überall mit (Strg+Z nimmt es überall zurück) |
 

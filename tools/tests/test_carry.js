@@ -21,8 +21,8 @@ try {
   const tasks = add('todo', 'Aufgaben', { deadline: '2026-11-06', estimate: 30 });
   tasks.items = [MM.createTodoItem('Folie 3')];
   const c = T.collectUnfinished(doc);
-  out.push('moving notes | ' + c.notes.map((n) => n.text).sort().join(', ') + ' (Bericht - not Zahnarzt, not Erledigt)');
+  out.push('moving notes | [' + c.notes.map((n) => n.text).sort().join(', ') + '] ([] - notes stay; the next plan lists them, tasklists.js)');
   out.push('open items   | ' + c.items.map((i) => i.text).join(', ') + ' (Folie 3 - not the entries of the appointment list)');
-  out.push('count        | ' + c.open + ' (1)');
+  out.push('count        | ' + (c.items.length + c.open) + ' (1 - only the loose entry)');
 } catch (e) { out.push('ERROR ' + e.stack); }
 fs.writeFileSync(process.argv[3], out.join('\n'));

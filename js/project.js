@@ -505,13 +505,15 @@
   P.fillPlan = async function () {
     const path = S.file.path;
     const kind = path && MM.templates.parsePath(path).kind;
-    if (kind !== 'day' && kind !== 'week') return;
+    if (kind !== 'day' && kind !== 'week' && kind !== 'month') return;
     const doc = S.doc;
     const before = JSON.stringify(doc.planned || []);
     await MM.load.refresh(); // fresh from disk: the cache may still hold the map we came from as it was
-    const r = await MM.routines.addToPlan(doc, path, { fill: true });
+    const r = kind === 'month' ? {} : await MM.routines.addToPlan(doc, path, { fill: true });
     if (doc !== S.doc) return; // another map was opened meanwhile
-    if (!r.added && !r.removed && !r.updated && JSON.stringify(doc.planned || []) === before) return;
+    // "Overdue" / "Open tasks": the open main tasks of all maps (only while the plan runs)
+    const lists = MM.taskLists.fill(doc, path, MM.load.docs());
+    if (!lists && !r.added && !r.removed && !r.updated && JSON.stringify(doc.planned || []) === before) return;
     MM.commit();
     await MM.storage.writeFile();
     if (r.added || r.removed) {

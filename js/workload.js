@@ -90,6 +90,7 @@
       for (const n of Object.values(doc.nodes || {})) {
         if (n.movedTo || n.repeat || (isOpen && skip && skip.has(n.id))) continue; // routines reduce the capacity instead
         if (n.type === 'diary') continue; // a diary entry is no planned work
+        if (n.taskList) continue; // "Overdue" / "Open tasks": references to tasks counted where they are
         const m = n.meta || {};
         if (m.scheduled) {
           // appointment: a fixed block of time on its day - it stays reserved when ticked off

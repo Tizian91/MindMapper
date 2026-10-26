@@ -514,6 +514,16 @@ window.MM = window.MM || {};
       // list of a week plan for the routines of one category ('' = without category), see routines.js
       if (node.routineList !== undefined) node.routineList = str(node.routineList).slice(0, 40);
       for (const it of node.items) if (it.routine !== undefined) it.routine = str(it.routine); // entry created from a routine
+      // "Overdue" / "Open tasks" of a plan and their entries, pointing at a main task (tasklists.js)
+      if (node.taskList !== undefined) {
+        if (node.taskList === 'overdue' || node.taskList === 'open') node.taskList = String(node.taskList);
+        else delete node.taskList;
+      }
+      for (const it of node.items) {
+        if (it.ref === undefined) continue;
+        if (it.ref && typeof it.ref === 'object' && it.ref.id) it.ref = { id: str(it.ref.id), path: str(it.ref.path) };
+        else delete it.ref;
+      }
       if (node.type === 'file') {
         const f = Object.assign({ path: '', name: '', size: 0, mime: '' }, n.file && typeof n.file === 'object' ? n.file : {});
         node.file = { path: str(f.path), name: str(f.name), size: num(f.size, 0), mime: str(f.mime) };

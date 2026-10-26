@@ -222,45 +222,23 @@
   // ---- Carry over unfinished work ------------------------------------------------
 
   /**
-   * Unfinished work in a map:
-   *   items:   open to-do entries ({ text, from }) of task lists that stay where they are
-   *   notes:   all notes that move, copied as they are: the unfinished notes (a status
-   *            that is not "done", open tasks) with everything that travels with them
-   *            (sub-tasks, done ones too, the group around them - see MM.transfer.bundles)
-   *   bundles: the notes as arrays of ids that keep their layout together
-   *   open:    number of unfinished notes (for the question "carry over n entries?")
-   *   edges, assets: connections and image data of the source map (copied along)
+   * Unfinished work in a map that is carried over: the open entries ({ text, from }) of
+   * its task lists - written right into a list, they have no note a link could point at.
+   * Unfinished notes stay where they are: the next plan lists them in "Overdue" /
+   * "Open tasks" (tasklists.js). notes / bundles / open stay empty (kept for the callers).
    */
   T.collectUnfinished = function (doc) {
-    const items = [], seeds = [];
+    const items = [];
     for (const n of Object.values(doc.nodes || {})) {
-      const status = (n.meta && n.meta.status) || 'none';
-      if (n.movedTo || n.repeat) continue; // already carried over earlier / a routine definition
-      if (n.type === 'diary') continue; // diary entries stay on their day
-      // appointments stay as well: no work before their day; the plan of that day lists them (📌)
-      if (n.meta && n.meta.scheduled) continue;
-      if (n.type === 'todo') {
-        if (!MM.meta.isTaskTodo(n)) continue; // a plain check list stays where it is
-      } else if ((status !== 'none' && status !== 'done') || (n.type === 'task' && status !== 'done')) {
-        seeds.push(n.id);
-      }
-    }
-    const bundles = MM.transfer.bundles(doc, seeds);
-    const moving = new Set(bundles.flat());
-    for (const n of Object.values(doc.nodes || {})) {
-      // a list moving as a whole (sub-note of a task, inside a group) keeps its entries
-      if (n.type !== 'todo' || n.movedTo || n.repeat || moving.has(n.id) || !MM.meta.isTaskTodo(n) || (n.meta && n.meta.scheduled)) continue;
+      // appointments: no work before their day; the plan of that day lists them (📌)
+      if (n.type !== 'todo' || n.movedTo || n.repeat || n.taskList || !MM.meta.isTaskTodo(n) || (n.meta && n.meta.scheduled)) continue;
       for (const it of n.items || []) {
         // entries of routines (a meeting) are not carried along - the next plan gets its own
         if (it.done || it.moved || it.routine || !it.text.trim()) continue;
         items.push({ text: it.text, from: n.text === 'Carried over' ? null : n.text, nodeId: n.id, itemId: it.id });
       }
     }
-    return {
-      items, bundles, open: seeds.length,
-      notes: [...moving].map((id) => doc.nodes[id]),
-      edges: doc.edges || {}, assets: doc.assets || {},
-    };
+    return { items, bundles: [], open: 0, notes: [], edges: doc.edges || {}, assets: doc.assets || {} };
   };
 
   /**
