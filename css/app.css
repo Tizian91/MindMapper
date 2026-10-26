@@ -302,7 +302,7 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .cat-row input[type="text"] { flex: 1; min-width: 0; }
 .cat-row .cat-emoji { flex: none; width: 2.4em; padding: 2px 0; text-align: center; }
 .cat-row label.check { flex: none; white-space: nowrap; }
-.ov-routine.leisure { opacity: 0.6; }
+.ov-routine.leisure, .ov-row.leisure { opacity: 0.6; }
 /* routine history: ▣ done, □ missed, ◌ this week open, · no entries */
 .rt-hist { letter-spacing: 2px; font-size: 1.05em; white-space: nowrap; cursor: help; }
 .rt-done { color: #2f9e44; }

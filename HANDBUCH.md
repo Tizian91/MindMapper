@@ -314,6 +314,7 @@ Toolbar **Overview** (*Übersicht*) sammelt die Aufgaben **aller Maps** des Proj
 ### Appointments: Was steht wann an?
 
 - **Alle Termine** (Notes mit *Scheduled*) aller Maps, nach Tag gruppiert: *Past* (vergangen), *Today*, *Tomorrow*, *Next 7 days*, *Later* – innerhalb des Tages nach Uhrzeit.
+- **Routinen mit Uhrzeit** (🔁, wöchentlich oder monatlich, z. B. „jeden Dienstag 10:00“) stehen hier ebenfalls – mit ihren Terminen heute und in den nächsten 7 Tagen, nicht an einem freien Tag (🏖). Ein Klick öffnet die Routine. *Nice-to-have*-Routinen sind blasser und blocken keine Zeit. Routinen ohne Uhrzeit, Zeitbudgets und „mehrmals pro Woche“ haben keinen festen Zeitpunkt und fehlen hier; in den Listen der Pläne und unter *By deadline* stehen Routinen weiterhin nicht.
 - **Kopf jeder Gruppe:** Anzahl der Termine · die Zeit, die ihre Schätzungen an ihren Tagen **blocken**.
 - **By deadline** und die **Matrix** zeigen Termine nicht mehr, dort stehen nur Aufgaben. Ein vergangener Termin ist nicht „überfällig“, er ist vorbei – und über einen festen Termin muss man nicht nach wichtig / dringend entscheiden.
 - *Hide done* blendet abgehakte Termine aus – so bleiben unter *Past* nur die, die du noch nicht abgehakt hast.

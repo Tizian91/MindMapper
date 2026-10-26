@@ -29,6 +29,7 @@ ELECTRON_RUN_AS_NODE=1 "/c/Users/<Name>/AppData/Local/Programs/Microsoft VS Code
 | `test_assets.js` | Datei in `Assets/` ablegen: dieselbe Datei wird wiederverwendet, keine Kopie „(2)“ (`files.js store`) |
 | `test_copies.js` | Konfliktkopien erkennen (pCloud, Dropbox, MindMapper) und an die Map hängen (`project.js copyOf`) |
 | `test_revert.js` | Datei auf einen älteren Stand zurückgesetzt (Sync-Programm): fragen statt still laden (`storage.js checkFile`, Konfliktdialog) |
+| `test_apptroutines.js` | Overview *Appointments*: Routinen mit Uhrzeit mit ihren Terminen der nächsten 7 Tage, Nice-to-have blass, nicht unter *By deadline* (`overview.js routineDates`) |
 
 Einige Skripte rechnen mit dem heutigen Datum (Wochenpläne im Oktober/November 2026);
 liegen die Testdaten in der Vergangenheit, Daten im Skript anpassen.

@@ -331,7 +331,7 @@
           <span class="seg seg-mini ov-mode">
             <button data-ov-mode="deadline" title="${esc(tr('Tasks with a deadline, grouped by it (appointments: own view)'))}">${tr('By deadline')}</button>
             <button data-ov-mode="tree" title="${esc(tr('Main tasks with their sub-tasks'))}">${tr('By task')}</button>
-            <button data-ov-mode="appts" title="${esc(tr('Appointments (Scheduled) of all maps by day'))}">${tr('Appointments')}</button>
+            <button data-ov-mode="appts" title="${esc(tr('Appointments (Scheduled) and routines with a time of all maps by day'))}">${tr('Appointments')}</button>
             <button data-ov-mode="load" title="${esc(tr('Planned hours per day / week and the buffer until each deadline'))}">${tr('Workload')}</button>
             ${MM.prioKey() === 'quadrant' ? `<button data-ov-mode="matrix" title="${esc(tr('Eisenhower matrix – drag tasks into a quadrant to classify them'))}">${tr('Matrix')}</button>` : ''}
           </span>
@@ -474,7 +474,7 @@
       : o.caret === 'leaf' ? '<span class="ov-caret"></span>'
         : `<button class="ov-caret${o.caret === 'closed' ? ' closed' : ''}" data-ov-toggle="${esc(keyOf(it))}" title="${esc(tr('Show / hide sub-tasks'))}">▾</button>`;
     const indent = o.depth ? ` style="padding-left:${o.depth * 22}px"` : '';
-    return `<div class="ov-row${it.status === 'done' ? ' done' : ''}${o.context ? ' ov-context' : ''}" data-path="${esc(it.path)}" data-id="${esc(it.id)}">
+    return `<div class="ov-row${it.status === 'done' ? ' done' : ''}${o.context ? ' ov-context' : ''}${o.cls ? ' ' + o.cls : ''}" data-path="${esc(it.path)}" data-id="${esc(it.id)}">
       <span class="status-ico" style="--c:${s.color}" title="${esc(tr(s.label))}">${MM.meta.icon(it.status)}</span>
       <span class="ov-title"${indent}>${caret}<span class="ov-title-text">${esc(it.title)}${detail ? `<span class="ov-detail">${esc(detail)}</span>` : ''}</span></span>
       ${prog}
@@ -520,25 +520,53 @@
       return;
     }
     const h = view.mode === 'tree' ? renderTree(matches)
-      : view.mode === 'appts' ? renderAppointments(items.filter(matches)) : renderBuckets(items.filter(matches));
+      : view.mode === 'appts' ? renderAppointments(items.filter(matches), matches) : renderBuckets(items.filter(matches));
     dialog.querySelector('.ov-list').innerHTML = h ||
-      `<p class="hint">${view.mode === 'appts' ? tr('No appointments. An appointment is a note with a "Scheduled" date (panel → Details).')
+      `<p class="hint">${view.mode === 'appts' ? tr('No appointments. An appointment is a note with a "Scheduled" date (panel → Details) - or a routine with a time.')
         : items.length ? tr('Nothing matches.') : tr('No tasks yet. Give notes a status, priority or deadline – or use task / to-do notes.')}</p>`;
   }
 
-  /** View "Appointments": every Scheduled note of all maps by day, then by time. */
-  function renderAppointments(all) {
+  /**
+   * Routines with a time on fixed days (weekly / monthly): their dates today and in the
+   * next 7 days, as rows of the appointments view - a meeting is an appointment as well.
+   * Only listed there: they are no tasks (not in items, so not in "By deadline", the matrix
+   * or the lists of the plans). The maps are the ones MM.load read for the workload page.
+   */
+  function routineDates() {
+    const R = MM.routines, docs = MM.load.docs(), list = R.collect(docs);
+    const out = [];
+    const t = new Date();
+    for (const r of list) {
+      if (!r.rule.time || R.isWeekly(r.rule) || r.rule.kind === 'off') continue;
+      const n = docs.get(r.path).nodes[r.id];
+      for (let i = 0; i <= 7; i++) {
+        const d = new Date(t.getFullYear(), t.getMonth(), t.getDate() + i);
+        if (!R.occursOn(r.rule, d) || R.isOff(list, d)) continue; // a day off: it takes place without you
+        out.push({
+          path: r.path, id: r.id, title: '🔁 ' + r.title, type: n.type, status: 'none', tags: n.tags || [],
+          meta: Object.assign(MM.emptyMeta(), n.meta || {}, { scheduled: R.iso(d), scheduledTime: r.rule.time, deadline: '' }),
+          detail: R.label(r.rule, r.minutes), progress: null, shownProgress: null, children: [], parent: null, derived: '',
+          leisure: r.leisure,
+        });
+      }
+    }
+    return out;
+  }
+
+  /** View "Appointments": every Scheduled note of all maps and the routines with a time, by day, then by time. */
+  function renderAppointments(all, matches) {
     let h = '';
-    const shown = all.filter(isAppointment);
+    const shown = all.filter(isAppointment).concat(routineDates().filter(matches));
     for (const [key, label] of APPT_BUCKETS) {
       const list = shown.filter((it) => bucket(dateOf(it)) === key).sort(byDeadline);
       if (!list.length) continue;
-      const est = list.reduce((s, it) => s + (Number(it.meta.estimate) || 0), 0);
+      // a nice-to-have routine blocks no time (see MM.routines.isLeisure)
+      const est = list.reduce((s, it) => s + (it.leisure ? 0 : Number(it.meta.estimate) || 0), 0);
       const count = list.length === 1 ? tr('1 appointment') : tr('{n} appointments', { n: list.length });
       const text = est ? tr('{count} · {est} blocked', { count, est: MM.meta.formatDuration(est) }) : count;
       h += `<div class="ov-group ov-${key === 'overdue' ? 'past' : key}"><div class="ov-group-head">${tr(label)}` +
         `<span class="muted" title="${esc(tr('Appointments shown, and the time their estimates block on their days.'))}">${esc(text)}</span></div>`;
-      for (const it of list) h += rowHTML(it);
+      for (const it of list) h += rowHTML(it, { cls: it.leisure ? 'leisure' : '' });
       h += '</div>';
     }
     return h;
