@@ -217,7 +217,11 @@
       // the map was reloaded / replaced meanwhile (e.g. "Reload" in the conflict dialog)
       if (S.doc !== doc || S.file.path !== path || S.file.backend !== backend) return;
       try {
-        if (backend && path) {
+        if (backend && path && MM.fsys.hash(json) === S.file.hash) {
+          // the file has this content already (as read / written here): no write. Leaving the
+          // app sends "hidden" and "pagehide" - a second write of the same text while the sync
+          // program still uploads the first one is what makes pCloud keep a conflict copy
+        } else if (backend && path) {
           try {
             const r = await backend.write(path, json, { expect: S.file.version, expectHash: S.file.hash });
             S.file.version = r.version;

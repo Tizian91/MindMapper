@@ -314,8 +314,11 @@
   async function writeNow(path, text, opts) {
     try {
       const known = opts && opts.fresh ? null : versions.get(path);
-      const r = await P.backend.write(path, text, { expect: known ? known.v : undefined, expectHash: known && known.h });
       const h = MM.fsys.hash(text);
+      // the file has this text already (as read / written here): writing it again is no
+      // change, but a sync program may take a second write during its upload for a conflict
+      if (known && known.h === h) return { version: known.v };
+      const r = await P.backend.write(path, text, { expect: known ? known.v : undefined, expectHash: known && known.h });
       versions.set(path, { v: r.version, h });
       if (path === S.file.path) { // our own write is no conflict
         Object.assign(S.file, { version: r.version, hash: h });
@@ -1015,6 +1018,12 @@
       if (open) {
         await MM.storage.openPath(path);
         await P.fillPlan(); // a plan: routines / appointments the replaced version had added
+      }
+      // the other copies are mostly older states of the same work: offer to clean up at once
+      const rest = ((P.find(path) || {}).copies || []).map((c) => c.path);
+      if (rest.length && confirm(tr('"{map}" now has the content of the copy.\n\nAlso delete the other {n} copies?\n\nCancel: keep them, e.g. to compare.', { map: P.mapName(path), n: rest.length }))) {
+        await deleteCopies(path, rest, true);
+        return;
       }
       MM.ui.flash(tr('"{map}" now has the content of the copy', { map: P.mapName(path) }));
     } catch (err) {

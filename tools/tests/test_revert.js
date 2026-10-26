@@ -110,6 +110,28 @@ const root = process.argv[2], out = [];
     await ST.writeFile();
     out.push(`save, changed        | dialog: ${shown || '-'} | written: ${writes.length ? Object.keys(JSON.parse(writes[0]).nodes).join(',') : '-'}`);
     out.push('  (expected: dialog "Routinen" was changed elsewhere, written a)');
+
+    // closing the app: "hidden" and "pagehide" both save, the second while the first still writes
+    at(A);
+    mine = B; S.dirty = true; shown = null; writes.length = 0;
+    ST.writeFile();
+    await ST.writeFile();
+    out.push(`close app (2 saves)  | writes: ${writes.length} | dirty after: ${S.dirty}`);
+    out.push('  (expected: writes 1, dirty false)');
+    // a change marked, but the map is as in the file (e.g. changed and changed back)
+    mine = B; S.dirty = true; writes.length = 0;
+    await ST.writeFile();
+    out.push(`same as the file     | writes: ${writes.length} | dirty after: ${S.dirty}`);
+    out.push('  (expected: writes 0, dirty false)');
+
+    // other maps / the diary (project.js writeText): the same text again is not written
+    const P2 = 'Diaries/Arbeit.diary.json';
+    MM.project.setVersion(P2, file.version, FS.hash(C));
+    writes.length = 0;
+    await MM.project.writeText(P2, C);
+    await MM.project.writeText(P2, JSON.stringify({ nodes: { e: {} } }));
+    out.push(`writeText same, new  | writes: ${writes.length}`);
+    out.push('  (expected: writes 1 - only the new text)');
   } catch (e) { out.push('ERROR ' + e.stack); }
   fs.writeFileSync(process.argv[3], out.join('\n'));
 })();

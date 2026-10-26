@@ -249,6 +249,8 @@
     'Delete all {n} copies…': 'Alle {n} Kopien löschen…',
     'Replace "{map}" with this copy?\n\nThe current content of "{map}" is lost, the copy is removed.': '„{map}“ durch diese Kopie ersetzen?\n\nDer jetzige Inhalt von „{map}“ geht verloren, die Kopie wird entfernt.',
     '"{map}" now has the content of the copy': '„{map}“ hat jetzt den Inhalt der Kopie',
+    '"{map}" now has the content of the copy.\n\nAlso delete the other {n} copies?\n\nCancel: keep them, e.g. to compare.':
+      '„{map}“ hat jetzt den Inhalt der Kopie.\n\nDie anderen {n} Kopien auch löschen?\n\nAbbrechen: behalten, z. B. zum Vergleichen.',
     'Could not replace the map: {err}': 'Die Map konnte nicht ersetzt werden: {err}',
     'Delete {n} conflict copies of "{map}"?\n\nThe map itself stays.': '{n} Konfliktkopien von „{map}“ löschen?\n\nDie Map selbst bleibt.',
     'Deleted {n} copies': '{n} Kopien gelöscht',
