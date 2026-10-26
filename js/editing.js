@@ -83,7 +83,7 @@
     if (target.contentEditable !== 'plaintext-only') target.contentEditable = 'true';
     target.classList.add('editing');
     div.classList.add('editing');
-    target.focus();
+    target.focus({ preventScroll: true }); // the canvas must never scroll (interaction.js)
     // a long entry is continued at its end, not selected (typing would replace it)
     setCaret(target, (opts && opts.caret !== undefined) ? opts.caret : markdown ? 'end' : 'all');
 
@@ -196,7 +196,7 @@
       }
     }
     if (!md || MM.editing !== ed) return;
-    ed.el.focus();
+    ed.el.focus({ preventScroll: true });
     if (range) {
       sel.removeAllRanges();
       sel.addRange(range);
@@ -364,7 +364,7 @@
     input.dataset.edge = edgeId;
     document.getElementById('ui-layer').appendChild(input);
     labelInput = input;
-    input.focus();
+    input.focus({ preventScroll: true });
     input.select();
     input.addEventListener('keydown', (ev) => {
       ev.stopPropagation();

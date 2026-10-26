@@ -81,7 +81,7 @@
   E.insertText = function (char, range) {
     const ed = MM.editing;
     if (!ed || !ed.el) return false;
-    ed.el.focus();
+    ed.el.focus({ preventScroll: true });
     if (range && ed.el.contains(range.startContainer)) {
       const sel = window.getSelection();
       sel.removeAllRanges();

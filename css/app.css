@@ -422,6 +422,9 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 #viewport {
   position: relative;
   overflow: hidden;
+  /* clip: the browser cannot scroll it either (focusing a note's text on a phone did,
+     and every finger / mouse position landed beside its spot by that much) */
+  overflow: clip;
   background-color: var(--canvas);
   outline: none;
   user-select: none;

@@ -76,6 +76,12 @@
     vp.addEventListener('pointermove', onPointerMove);
     vp.addEventListener('pointerup', onPointerUp);
     vp.addEventListener('pointercancel', onPointerUp);
+    // The canvas never scrolls: the view is S.doc.view. If the browser scrolled it anyway
+    // (bringing a focused text into sight), every position - connection ends, new notes,
+    // the selection frame - would land beside its spot by that much.
+    vp.addEventListener('scroll', () => {
+      if (vp.scrollLeft || vp.scrollTop) vp.scrollTo(0, 0);
+    });
     vp.addEventListener('pointerleave', () => {
       if (!S.drag && S.hover) {
         S.hover = null;
