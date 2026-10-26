@@ -163,4 +163,95 @@
     lists.open.text = c.later ? `Open tasks (+${c.later} later)` : 'Open tasks';
     return snapshot() !== before;
   };
+
+  // ---- From the list to the task -------------------------------------------------------
+
+  /** ↗ of an entry: open the map of its task and show the task. */
+  TL.openTask = async function (ref) {
+    const S = MM.state, P = MM.project;
+    if (ref.path === S.file.path && MM.node(ref.id)) {
+      MM.actions.focusNode(ref.id);
+      return;
+    }
+    if (!P.find(ref.path)) {
+      MM.ui.flash(MM.tr('The task of this entry does not exist any more'));
+      return;
+    }
+    if (await P.openMap(ref.path)) {
+      if (MM.node(ref.id)) MM.actions.focusNode(ref.id);
+      else MM.ui.flash(MM.tr('The task of this entry does not exist any more'));
+    }
+  };
+
+  /** A sub-task and everything below it that is not done (model keys "path#id"). */
+  function openBelow(it, byKey, out = []) {
+    for (const k of it.children) {
+      const c = byKey.get(k);
+      if (!c) continue;
+      if (c.status !== 'done') out.push(c);
+      openBelow(c, byKey, out);
+    }
+    return out;
+  }
+
+  /**
+   * Checkbox of an entry with a task (item.ref): checking it checks off the task - after a
+   * question also its open sub-tasks, in whatever map they are; unchecking opens the task
+   * again (its sub-tasks stay as they are). Without the task (deleted) it is a plain box.
+   */
+  TL.toggle = async function (list, item) {
+    const S = MM.state, P = MM.project, tr = MM.tr;
+    const done = !item.done;
+    const plain = () => {
+      item.done = done;
+      MM.commit();
+    };
+    if (P.status !== 'ready') return plain();
+    await MM.load.refresh(); // fresh state of the other maps
+    const model = MM.overview.model(MM.load.docs());
+    const task = model.byKey.get(keyOf(item.ref.path, item.ref.id));
+    if (!task) return plain();
+    const targets = [task];
+    if (done) {
+      const subs = openBelow(task, model.byKey);
+      if (subs.length && !confirm(tr('"{task}" has {n} open sub-task(s). They are checked off as well - continue?', { task: task.title, n: subs.length }))) return;
+      targets.push(...subs);
+    }
+    // per map: set the status (done: 100 %, open again: the progress of a done task goes)
+    const byPath = new Map();
+    for (const t of targets) byPath.set(t.path, [...(byPath.get(t.path) || []), t.id]);
+    const set = (n) => {
+      n.meta = Object.assign(MM.emptyMeta(), n.meta || {});
+      if (done) {
+        n.meta.status = 'done';
+        if (n.type === 'task') n.meta.progress = 100;
+      } else {
+        n.meta.status = 'open';
+        if (n.meta.progress === 100) n.meta.progress = null;
+      }
+    };
+    try {
+      for (const [path, ids] of byPath) {
+        if (path === S.file.path) {
+          for (const id of ids) if (S.doc.nodes[id]) set(S.doc.nodes[id]); // saved with the entry below
+          continue;
+        }
+        const doc = await P.readMap(path);
+        if (!doc) continue;
+        for (const id of ids) if (doc.nodes[id]) set(doc.nodes[id]);
+        await P.writeMap(path, doc);
+      }
+    } catch (err) {
+      alert(tr('Could not change the task: {err}', { err: (err && err.message) || err }));
+      return;
+    }
+    if (list !== S.doc.nodes[list.id]) return; // another map was opened meanwhile
+    item.done = done;
+    MM.commit();
+    MM.load.scheduleRefresh();
+    MM.tasks.refreshExternal();
+    MM.ui.flash(done
+      ? (targets.length > 1 ? tr('Checked off "{task}" and {n} sub-task(s)', { task: task.title, n: targets.length - 1 }) : tr('Checked off "{task}"', { task: task.title }))
+      : tr('"{task}" is open again', { task: task.title }));
+  };
 })(window.MM);

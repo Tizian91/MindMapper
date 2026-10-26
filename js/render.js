@@ -342,8 +342,8 @@
           text.append(el('span', 'rt-mark' + (leisure ? ' leisure' : ''), '🔁'), document.createTextNode(it.text.slice(2)));
         } else text.textContent = it.text;
         li.append(check, text);
-        // 🔁 / 📌 / 🏖 entry of a plan: ↗ shows the note it came from
-        if (it.routine && !it.moved) {
+        // 🔁 / 📌 / 🏖 entry of a plan, or a task in "Overdue" / "Open tasks": ↗ shows its note
+        if ((it.routine || (it.ref && n.taskList)) && !it.moved) {
           const jump = el('span', 'todo-jump', '↗');
           jump.title = MM.tr('Show the note of this entry');
           li.append(jump);

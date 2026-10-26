@@ -261,11 +261,17 @@
       if (t.classList.contains('todo-jump')) {
         const it = n.items.find((i) => i.id === t.closest('li').dataset.item);
         if (it && it.routine) MM.routines.openSource(it.routine);
+        else if (it && it.ref) MM.taskLists.openTask(it.ref); // "Overdue" / "Open tasks" (tasklists.js)
         return;
       }
       // to-do checkbox / add item
       if (t.classList.contains('todo-check')) {
         const it = n.items.find((i) => i.id === t.closest('li').dataset.item);
+        // entry of "Overdue" / "Open tasks": checks off its task (and its sub-tasks)
+        if (it && it.ref && n.taskList) {
+          MM.taskLists.toggle(n, it);
+          return;
+        }
         if (it) it.done = !it.done;
         MM.commit();
         return;

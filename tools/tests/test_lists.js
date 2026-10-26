@@ -56,5 +56,30 @@ try {
   // a plan of last year: nothing
   const old = T.forPath('Weeks/2025-W44.mindmap.json').result.doc;
   out.push('past plan    | changed ' + TL.fill(old, 'Weeks/2025-W44.mindmap.json', docs()) + ', lists ' + Object.values(old.nodes).filter((n) => n.taskList).length + ' (false, 0)');
+
+  // ---- stage B: checking an entry checks off its task (and, after a question, its sub-tasks) ----
+  let answer = true, asked = 0, writes = 0;
+  ctx.confirm = () => { asked++; return answer; };
+  ctx.alert = (m) => out.push('ALERT ' + m);
+  MM.state.doc = plan;
+  MM.state.file = { path: weekPath };
+  MM.load = { refresh: async () => {}, docs, scheduleRefresh() {} };
+  MM.project = { status: 'ready', find: () => true, readMap: async () => work, writeMap: async () => { writes++; } };
+  MM.commit = () => {};
+  MM.tasks.refreshExternal = () => {};
+  MM.ui = { flash: (m) => out.push('             | flash: ' + m) };
+  const overdueList = Object.values(plan.nodes).find((n) => n.taskList === 'overdue');
+  const entry = overdueList.items.find((i) => i.ref && i.ref.id === poster.id);
+  (async () => {
+    answer = false;
+    await TL.toggle(overdueList, entry);
+    out.push('cancelled    | asked ' + asked + ', entry ' + entry.done + ', Poster ' + poster.meta.status + ', Texte ' + s2.meta.status + ' (1, false, progress, open)');
+    answer = true;
+    await TL.toggle(overdueList, entry);
+    out.push('checked      | entry ' + entry.done + ', Poster ' + poster.meta.status + ' ' + poster.meta.progress + ' %, Texte ' + s2.meta.status + ', writes ' + writes + ' (true, done 100 %, done, 1)');
+    await TL.toggle(overdueList, entry);
+    out.push('unchecked    | entry ' + entry.done + ', Poster ' + poster.meta.status + ' ' + poster.meta.progress + ', Texte ' + s2.meta.status + ' (false, open null, done - sub-tasks stay)');
+    fs.writeFileSync(process.argv[3], out.join('\n'));
+  })().catch((e) => { out.push('ERROR ' + e.stack); fs.writeFileSync(process.argv[3], out.join('\n')); });
 } catch (e) { out.push('ERROR ' + e.stack); }
 fs.writeFileSync(process.argv[3], out.join('\n'));

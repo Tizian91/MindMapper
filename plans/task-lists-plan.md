@@ -1,6 +1,6 @@
 # MindMapper – Plan: Aufgabenlisten statt Übertrag
 
-Stand: 26.10.2026, mit dem Nutzer abgestimmt, **noch nicht umgesetzt**. Grundregeln des Projekts gelten weiter: Modell in `MM.state.doc` ändern → `MM.commit()`, keine Build-Tools, keine ES-Module, alles über `window.MM`, UI-Texte englisch mit deutscher Übersetzung in `js/i18n-de2.js`, Handbuch mitpflegen.
+Stand: 26.10.2026, mit dem Nutzer abgestimmt. **Etappe A umgesetzt** (Commit bbb9d2b), **Etappe B umgesetzt** (Abhaken in beide Richtungen, ↗). Abweichung: Die Listen entstehen beim ersten Öffnen eines laufenden Plans, nicht schon in der Vorlage. Grundregeln des Projekts gelten weiter: Modell in `MM.state.doc` ändern → `MM.commit()`, keine Build-Tools, keine ES-Module, alles über `window.MM`, UI-Texte englisch mit deutscher Übersetzung in `js/i18n-de2.js`, Handbuch mitpflegen.
 
 ## Ziel
 
