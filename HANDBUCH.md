@@ -298,7 +298,7 @@ Toolbar **Overview** (*Übersicht*) sammelt die Aufgaben **aller Maps** des Proj
 ![By deadline: Gruppen nach Fälligkeit, je Zeile Status, Fortschritt, Chips und Map](docs/handbuch/overview-deadline.png)
 
 - **Gruppen:** *Overdue* (überfällig, rot), *Today* (orange), *Tomorrow*, *Next 7 days*, *Later*, *No deadline*.
-- **Kopf jeder Gruppe:** Anzahl der Aufgaben · ihre **Zeitsumme** · **Ø** durchschnittlicher Fortschritt.
+- **Kopf jeder Gruppe:** Anzahl der Aufgaben · ihre **geschätzte Zeit** · die davon noch **offene Zeit** · **Ø** durchschnittlicher Fortschritt – gezählt wie in der Matrix (unten), die Erklärung steht auch im Tooltip.
 - **Jede Zeile:** Status-Symbol · Titel, darunter grau die Herkunft (**↳ Haupttask**, Anzahl Untertasks, wie viel der Schätzung schon aufgeteilt ist) · Fortschrittsbalken · Chips (Deadline, Schätzung, Priorität …) · **↗ map** (abgeleitete Map öffnen) · Name der Map.
 - **So liest du es:** Die Zeitsumme bei *Today* und *Tomorrow* sagt, ob die nächsten Tage überhaupt passen. Viel in *Overdue* heißt: Deadlines anpassen oder Arbeit streichen. *No deadline* sammelt, was nie drängt – gut für einen regelmäßigen Blick, ob etwas davon wichtig ist.
 
@@ -330,7 +330,7 @@ Die Seite rechnet aus Schätzung, Fortschritt, Deadline und Kapazität, wie voll
 
 ![Matrix: Kreisfläche = Schätzung, Innenkreis = Fortschritt, Untertasks im Rahmen ihrer Haupttask](docs/handbuch/overview-matrix.png)
 
-- Die vier Quadranten mit den Aufgaben als **Kreisen**. Die Kopfzeile jedes Quadranten zeigt Anzahl und Stunden.
+- Die vier Quadranten mit den Aufgaben als **Kreisen**. Die Kopfzeile jedes Quadranten zeigt z. B. `3 Aufgaben · 7h geschätzt · 2h 7m offen`: **3** Aufgaben, ihre Schätzungen **zusammen 7 h**, davon nach dem bisherigen Fortschritt **noch 2 h 7 min offen**. Nichts zählt doppelt: Eine Haupttask trägt nur den Teil ihrer Schätzung bei, der noch nicht auf Untertasks verteilt ist. Erledigte Aufgaben zählen nur mit, wenn *Hide done* aus ist. Fährst du mit der Maus darüber, steht die Erklärung dort.
 - **Kreisfläche** = geschätzter Aufwand (gestrichelt = keine Schätzung), **Innenkreis** = Fortschritt. Große Kreise stehen vorne – aufgeblähte Aufgaben fallen so auf.
 - **Oranger Rand:** Deadline in höchstens 3 Tagen; **roter Rand:** Deadline überschritten; **„!“:** Puffer bis zur Deadline zu knapp (rot = negativ, orange = unter 10 %).
 - **Einordnen per Ziehen:** Kreis in einen Quadranten ziehen; zurück in **Not classified** hebt die Einordnung auf. Klappt auch für Maps, die gerade nicht offen sind. Der farbige Punkt an nicht eingeordneten Aufgaben zeigt ihre alte Stufe – nur als Erinnerung.

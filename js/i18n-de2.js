@@ -245,6 +245,12 @@
     'Could not replace the map: {err}': 'Die Map konnte nicht ersetzt werden: {err}',
     'Delete {n} conflict copies of "{map}"?\n\nThe map itself stays.': '{n} Konfliktkopien von „{map}“ löschen?\n\nDie Map selbst bleibt.',
     'Deleted {n} copies': '{n} Kopien gelöscht',
+    '1 task': '1 Aufgabe',
+    '{n} tasks': '{n} Aufgaben',
+    '{count} · {est} estimated · {open} open': '{count} · {est} geschätzt · {open} offen',
+    '{n} task(s) shown (done ones only without "Hide done").\nEstimated: their estimates added up - a main task only with the part not split up into sub-tasks.\nOpen: what is left of that after the progress so far.':
+      '{n} Aufgabe(n) angezeigt (erledigte nur ohne „Hide done“).\nGeschätzt: ihre Schätzungen zusammen – eine Haupttask nur mit dem Teil, der noch nicht auf Untertasks verteilt ist.\nOffen: was davon nach dem bisherigen Fortschritt noch übrig ist.',
+    'Ø: average progress of the tasks.': 'Ø: durchschnittlicher Fortschritt der Aufgaben.',
     'Delete folder…': 'Ordner löschen…',
     'Folder of the plans - delete single maps instead': 'Ordner der Pläne – stattdessen einzelne Maps löschen',
     'Delete the empty folder "{name}"?': 'Den leeren Ordner „{name}“ löschen?',

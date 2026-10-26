@@ -132,7 +132,22 @@
       it.shownProgress = it.children.length ? Math.round(v.p) : it.progress;
       // own share of the time: a main task only adds what its sub-tasks do not cover
       it.minutes = it.children.length ? it.rest || 0 : Number(it.meta.estimate) || 0;
+      // what is left of it: the part not split up counts as not started, done = nothing
+      it.open = it.status === 'done' ? 0 : it.children.length ? it.minutes : it.minutes * (1 - (Number(it.progress) || 0) / 100);
     }
+  }
+
+  /**
+   * Head of a group / quadrant: "3 tasks · 7h estimated · 2h 7m open", explained in its tooltip.
+   * No double counting: a main task only adds the part of its estimate not split up.
+   */
+  function sumHTML(list, extra) {
+    const est = list.reduce((s, it) => s + (it.minutes || 0), 0);
+    const open = Math.round(list.reduce((s, it) => s + (it.open || 0), 0));
+    const d = MM.meta.formatDuration;
+    const count = list.length === 1 ? tr('1 task') : tr('{n} tasks', { n: list.length });
+    const text = !est ? count : tr('{count} · {est} estimated · {open} open', { count, est: d(est), open: open ? d(open) : '0' });
+    return { text, title: tr('{n} task(s) shown (done ones only without "Hide done").\nEstimated: their estimates added up - a main task only with the part not split up into sub-tasks.\nOpen: what is left of that after the progress so far.', { n: list.length }) + (extra || '') };
   }
 
   /** Open the overview; mode: 'deadline' | 'tree' | 'load' (default: the last one). */
@@ -496,10 +511,9 @@
     for (const [key, label] of BUCKETS) {
       const list = shown.filter((it) => bucket(dateOf(it)) === key).sort(byDeadline);
       if (!list.length) continue;
-      // no double counting: main tasks only add their part not split up into sub-tasks
-      const total = list.reduce((s, it) => s + (it.minutes || 0), 0);
-      h += `<div class="ov-group ov-${key}"><div class="ov-group-head">${tr(label)}<span class="muted">${list.length}` +
-        (total ? ` · ${MM.meta.formatDuration(total)}` : '') + avgProgress(list) + '</span></div>';
+      const sum = sumHTML(list, '\n' + tr('Ø: average progress of the tasks.'));
+      h += `<div class="ov-group ov-${key}"><div class="ov-group-head">${tr(label)}<span class="muted" title="${esc(sum.title)}">${esc(sum.text)}` +
+        avgProgress(list) + '</span></div>';
       for (const it of list) h += rowHTML(it);
       h += '</div>';
     }
@@ -658,11 +672,12 @@
     const buffers = MM.load.summary().buffers;
     // a sub-task stands where its top main task stands
     const of = (q) => shown.filter((it) => (rootOf(it).meta.quadrant || 'none') === q);
-    // no double counting: main tasks only add their part not split up into sub-tasks
-    const total = (list) => list.reduce((s, it) => s + (it.minutes || 0), 0);
-    const head = (q, list, sub) => `<div class="mx-q-head"><b>${esc(MM.t('quad_' + q, MM.QUADRANTS[q].label))}</b>` +
-      (sub ? `<span class="muted">${esc(sub)}</span>` : '') +
-      `<span class="mx-sum">${list.length}${total(list) ? ' · ' + MM.meta.formatDuration(total(list)) : ''}</span></div>`;
+    const head = (q, list, sub) => {
+      const sum = sumHTML(list);
+      return `<div class="mx-q-head"><b>${esc(MM.t('quad_' + q, MM.QUADRANTS[q].label))}</b>` +
+        (sub ? `<span class="muted">${esc(sub)}</span>` : '') +
+        `<span class="mx-sum" title="${esc(sum.title)}">${esc(sum.text)}</span></div>`;
+    };
     let h = `<div class="mx-bar"><span class="hint">${esc(tr('Circle area = estimate, inner circle = progress. Orange / red ring: deadline soon / overdue. "!" = buffer too small. Drag a circle into a quadrant to classify it.'))}</span>` +
       (mxUndo.length ? `<button data-mx-undo title="${esc(tr('Undo the last classification (Ctrl+Z)'))}">↶ ${tr('Undo')}</button>` : '') + '</div>';
     h += `<div class="mx"><span></span><span class="mx-axis">${tr('Urgent')}</span><span class="mx-axis">${tr('Not urgent')}</span>`;
