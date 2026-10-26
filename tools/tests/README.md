@@ -24,6 +24,7 @@ ELECTRON_RUN_AS_NODE=1 "/c/Users/<Name>/AppData/Local/Programs/Microsoft VS Code
 | `test_symbol.js` | Emoji-Notes (Erkennung, Drehen) |
 | `test_totask.js` | „Zu Tasks machen (mit Notes darunter)“ |
 | `test_read.js` | leere / unvollständige Map-Dateien werden neu gelesen, nie als leere Map geöffnet (`project.js readDoc`) |
+| `test_carry.js` | Übertrag: offene Aufgaben mit Deadline kommen mit, Termine bleiben (`templates.js collectUnfinished`) |
 | `test_assets.js` | Datei in `Assets/` ablegen: dieselbe Datei wird wiederverwendet, keine Kopie „(2)“ (`files.js store`) |
 | `test_copies.js` | Konfliktkopien erkennen (pCloud, Dropbox, MindMapper) und an die Map hängen (`project.js copyOf`) |
 

@@ -32,6 +32,10 @@
     ['overdue', 'Overdue'], ['today', 'Today'], ['tomorrow', 'Tomorrow'],
     ['week', 'Next 7 days'], ['later', 'Later'], ['none', 'No deadline'],
   ];
+  // the appointments view: a past appointment is not "overdue", it is over
+  const APPT_BUCKETS = [['overdue', 'Past'], ['today', 'Today'], ['tomorrow', 'Tomorrow'], ['week', 'Next 7 days'], ['later', 'Later']];
+  /** An appointment (Scheduled) - listed in its own view, not in "By deadline". */
+  const isAppointment = (it) => !!it.meta.scheduled && !it.meta.deadline;
 
   const keyOf = (it) => it.path + '#' + it.id;
 
@@ -302,8 +306,9 @@
         <div class="ov-head" title="${esc(tr('Drag to move – double click: default position and size'))}">
           <h3>${tr('Overview')} <span class="muted ov-folder"></span></h3>
           <span class="seg seg-mini ov-mode">
-            <button data-ov-mode="deadline" title="${esc(tr('Grouped by deadline'))}">${tr('By deadline')}</button>
+            <button data-ov-mode="deadline" title="${esc(tr('Tasks with a deadline, grouped by it (appointments: own view)'))}">${tr('By deadline')}</button>
             <button data-ov-mode="tree" title="${esc(tr('Main tasks with their sub-tasks'))}">${tr('By task')}</button>
+            <button data-ov-mode="appts" title="${esc(tr('Appointments (Scheduled) of all maps by day'))}">${tr('Appointments')}</button>
             <button data-ov-mode="load" title="${esc(tr('Planned hours per day / week and the buffer until each deadline'))}">${tr('Workload')}</button>
             ${MM.prioKey() === 'quadrant' ? `<button data-ov-mode="matrix" title="${esc(tr('Eisenhower matrix – drag tasks into a quadrant to classify them'))}">${tr('Matrix')}</button>` : ''}
           </span>
@@ -487,12 +492,33 @@
       return;
     }
     if (view.mode === 'matrix') {
-      dialog.querySelector('.ov-list').innerHTML = renderMatrix(items.filter(matches));
+      // an appointment is fixed - neither important nor urgent to decide on
+      dialog.querySelector('.ov-list').innerHTML = renderMatrix(items.filter((it) => matches(it) && !isAppointment(it)));
       return;
     }
-    const h = view.mode === 'tree' ? renderTree(matches) : renderBuckets(items.filter(matches));
+    const h = view.mode === 'tree' ? renderTree(matches)
+      : view.mode === 'appts' ? renderAppointments(items.filter(matches)) : renderBuckets(items.filter(matches));
     dialog.querySelector('.ov-list').innerHTML = h ||
-      `<p class="hint">${items.length ? tr('Nothing matches.') : tr('No tasks yet. Give notes a status, priority or deadline – or use task / to-do notes.')}</p>`;
+      `<p class="hint">${view.mode === 'appts' ? tr('No appointments. An appointment is a note with a "Scheduled" date (panel → Details).')
+        : items.length ? tr('Nothing matches.') : tr('No tasks yet. Give notes a status, priority or deadline – or use task / to-do notes.')}</p>`;
+  }
+
+  /** View "Appointments": every Scheduled note of all maps by day, then by time. */
+  function renderAppointments(all) {
+    let h = '';
+    const shown = all.filter(isAppointment);
+    for (const [key, label] of APPT_BUCKETS) {
+      const list = shown.filter((it) => bucket(dateOf(it)) === key).sort(byDeadline);
+      if (!list.length) continue;
+      const est = list.reduce((s, it) => s + (Number(it.meta.estimate) || 0), 0);
+      const count = list.length === 1 ? tr('1 appointment') : tr('{n} appointments', { n: list.length });
+      const text = est ? tr('{count} · {est} blocked', { count, est: MM.meta.formatDuration(est) }) : count;
+      h += `<div class="ov-group ov-${key === 'overdue' ? 'past' : key}"><div class="ov-group-head">${tr(label)}` +
+        `<span class="muted" title="${esc(tr('Appointments shown, and the time their estimates block on their days.'))}">${esc(text)}</span></div>`;
+      for (const it of list) h += rowHTML(it);
+      h += '</div>';
+    }
+    return h;
   }
 
   /**
@@ -506,8 +532,9 @@
     return `<span title="${esc(tr('Average progress of {n} task(s)', { n: vals.length }))}"> · Ø ${avg} %</span>`;
   }
 
-  function renderBuckets(shown) {
+  function renderBuckets(all) {
     let h = '';
+    const shown = all.filter((it) => !isAppointment(it));
     for (const [key, label] of BUCKETS) {
       const list = shown.filter((it) => bucket(dateOf(it)) === key).sort(byDeadline);
       if (!list.length) continue;

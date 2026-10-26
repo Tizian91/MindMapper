@@ -253,6 +253,7 @@ Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Sta
 - **Carry-over:** Beim Anlegen des nächsten Tages / der nächsten Woche / des nächsten Monats werden **unerledigte Einträge** übernommen und im alten Plan als übertragen markiert (→).
   - Offene Einträge von To-do-Listen landen gesammelt in der Liste **Carried over**; deren Deadline ist der erste Tag des neuen Plans, so bleiben sie in der Overview.
   - Unerledigte **Tasks und Notes mit Status** kommen als Ganzes mit, so wie bei **Move to map** (Kapitel 9): mit allen Untertasks, ihrer Gruppe und der Anordnung.
+  - **Termine** (Notes mit *Scheduled*) werden **nicht** übertragen – auch nicht, wenn sie erst in Wochen sind. Für einen Termin muss man vorher nichts tun; er bleibt in seiner Map und erscheint an seinem Tag als 📌 im Tages- und Wochenplan, in der Overview unter **Appointments** und in der Auslastung. Nur wenn ein Termin als Untertask an einer Aufgabe hängt, die übertragen wird, reist er mit ihr.
   - Übertragen werden nur To-do-Listen, die als Aufgabe zählen (siehe Kapitel 11) – die Spalten der Pläne gehören dazu, eine reine Abhakliste (z. B. Einkaufszettel ohne Deadline) bleibt im alten Plan.
   - Legst du einen Plan **im Voraus** an (z. B. nächste Woche), wird noch nichts übertragen. Sobald der Zeitraum begonnen hat, fragt MindMapper beim Öffnen einmal nach.
 
@@ -289,7 +290,7 @@ Alles, was MindMapper in Tages- und Wochenpläne von selbst einträgt oder ände
 
 ## 11. Overview: alle Aufgaben aller Maps
 
-Toolbar **Overview** (*Übersicht*) sammelt die Aufgaben **aller Maps** des Projektordners in einem Fenster. Sie braucht einen geöffneten Ordner und liest die Maps, die darin gespeichert sind. Eine Map, die noch in keinem Ordner liegt (z. B. ein gerade geladenes Beispiel), fehlt dort, bis du sie mit **File → Save as…** in den Ordner speicherst. Oben wählst du die Ansicht – **By deadline**, **By task**, **Workload** und (nur im Eisenhower-Modus) **Matrix** –, daneben Suche und Filter. Unten am Bildschirmrand steht dauerhaft die **Statusleiste** mit der Kurzfassung.
+Toolbar **Overview** (*Übersicht*) sammelt die Aufgaben **aller Maps** des Projektordners in einem Fenster. Sie braucht einen geöffneten Ordner und liest die Maps, die darin gespeichert sind. Eine Map, die noch in keinem Ordner liegt (z. B. ein gerade geladenes Beispiel), fehlt dort, bis du sie mit **File → Save as…** in den Ordner speicherst. Oben wählst du die Ansicht – **By deadline**, **By task**, **Appointments**, **Workload** und (nur im Eisenhower-Modus) **Matrix** –, daneben Suche und Filter. Unten am Bildschirmrand steht dauerhaft die **Statusleiste** mit der Kurzfassung.
 
 **Was zählt als Aufgabe?** Tasks und Notes mit Details. **To-do-Listen** sind normalerweise reine Abhaklisten (wie ein Einkaufszettel) und erscheinen hier nicht. Sie zählen erst als Aufgabe, wenn sie eine **Schätzung**, eine **Deadline**, einen **Termin** oder eine **Priorität / Eisenhower-Einordnung** haben. Die Spalten der Tages-, Wochen- und Monatspläne haben ihre Deadline automatisch.
 
@@ -297,10 +298,17 @@ Toolbar **Overview** (*Übersicht*) sammelt die Aufgaben **aller Maps** des Proj
 
 ![By deadline: Gruppen nach Fälligkeit, je Zeile Status, Fortschritt, Chips und Map](docs/handbuch/overview-deadline.png)
 
-- **Gruppen:** *Overdue* (überfällig, rot), *Today* (orange), *Tomorrow*, *Next 7 days*, *Later*, *No deadline*.
+- **Gruppen:** *Overdue* (überfällig, rot), *Today* (orange), *Tomorrow*, *Next 7 days*, *Later*, *No deadline*. Termine haben ihre eigene Ansicht (**Appointments**, unten).
 - **Kopf jeder Gruppe:** Anzahl der Aufgaben · ihre **geschätzte Zeit** · die davon noch **offene Zeit** · **Ø** durchschnittlicher Fortschritt – gezählt wie in der Matrix (unten), die Erklärung steht auch im Tooltip.
 - **Jede Zeile:** Status-Symbol · Titel, darunter grau die Herkunft (**↳ Haupttask**, Anzahl Untertasks, wie viel der Schätzung schon aufgeteilt ist) · Fortschrittsbalken · Chips (Deadline, Schätzung, Priorität …) · **↗ map** (abgeleitete Map öffnen) · Name der Map.
 - **So liest du es:** Die Zeitsumme bei *Today* und *Tomorrow* sagt, ob die nächsten Tage überhaupt passen. Viel in *Overdue* heißt: Deadlines anpassen oder Arbeit streichen. *No deadline* sammelt, was nie drängt – gut für einen regelmäßigen Blick, ob etwas davon wichtig ist.
+
+### Appointments: Was steht wann an?
+
+- **Alle Termine** (Notes mit *Scheduled*) aller Maps, nach Tag gruppiert: *Past* (vergangen), *Today*, *Tomorrow*, *Next 7 days*, *Later* – innerhalb des Tages nach Uhrzeit.
+- **Kopf jeder Gruppe:** Anzahl der Termine · die Zeit, die ihre Schätzungen an ihren Tagen **blocken**.
+- **By deadline** und die **Matrix** zeigen Termine nicht mehr, dort stehen nur Aufgaben. Ein vergangener Termin ist nicht „überfällig“, er ist vorbei – und über einen festen Termin muss man nicht nach wichtig / dringend entscheiden.
+- *Hide done* blendet abgehakte Termine aus – so bleiben unter *Past* nur die, die du noch nicht abgehakt hast.
 
 ### By task: Was gehört wozu?
 

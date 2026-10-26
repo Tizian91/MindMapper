@@ -237,6 +237,8 @@
       const status = (n.meta && n.meta.status) || 'none';
       if (n.movedTo || n.repeat) continue; // already carried over earlier / a routine definition
       if (n.type === 'diary') continue; // diary entries stay on their day
+      // appointments stay as well: no work before their day; the plan of that day lists them (📌)
+      if (n.meta && n.meta.scheduled) continue;
       if (n.type === 'todo') {
         if (!MM.meta.isTaskTodo(n)) continue; // a plain check list stays where it is
       } else if ((status !== 'none' && status !== 'done') || (n.type === 'task' && status !== 'done')) {
@@ -247,7 +249,7 @@
     const moving = new Set(bundles.flat());
     for (const n of Object.values(doc.nodes || {})) {
       // a list moving as a whole (sub-note of a task, inside a group) keeps its entries
-      if (n.type !== 'todo' || n.movedTo || n.repeat || moving.has(n.id) || !MM.meta.isTaskTodo(n)) continue;
+      if (n.type !== 'todo' || n.movedTo || n.repeat || moving.has(n.id) || !MM.meta.isTaskTodo(n) || (n.meta && n.meta.scheduled)) continue;
       for (const it of n.items || []) {
         // entries of routines (a meeting) are not carried along - the next plan gets its own
         if (it.done || it.moved || it.routine || !it.text.trim()) continue;
