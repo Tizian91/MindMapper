@@ -278,6 +278,8 @@
 
   /** All maps of the project (other maps from the cache, the open one live). */
   L.docs = allDocs;
+  /** The map just left is one of the others now - as it was in memory, until they are read again. */
+  L.keep = (path, doc) => others.set(path, doc);
   /** Have the other maps been read at least once? */
   L.loaded = () => othersVersion > 0;
 

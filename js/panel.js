@@ -231,13 +231,14 @@
     // tasks with sub-tasks get their progress from them (read only here)
     const calc = nodes.length === 1 ? MM.tasks.info(nodes[0]) : null;
     const anyCalc = nodes.some((n) => MM.tasks.info(n));
+    const maxDl = MM.tasks.maxDeadline(nodes); // sub-tasks: not after the main task
     const calcRow = calc
       ? `<div class="row"><label>${t('progress')}</label><span class="ov-progress">${MM.meta.progressBar(calc.progress)}<b>${calc.progress} % ∑</b></span></div>
         <p class="hint">${t(calc.count === 1 ? 'calcFromOne' : 'calcFromMany').replace('{n}', calc.count)}</p>`
       : `<p class="hint">${t('calcSome')}</p>`;
     return `<section><h3>${t('details')}</h3>
       <div class="row"><label>${t('deadline')}</label><input type="date" data-meta="deadline" value="${esc(m.deadline || '')}"
-          title="${esc(t('deadlineTitle'))}">
+          ${maxDl ? `max="${maxDl}"` : ''} title="${esc(maxDl ? MM.tr('Sub-task: due by {d} at the latest (deadline of the main task)', { d: MM.meta.formatDate(maxDl) }) : t('deadlineTitle'))}">
         <button class="icon-btn" data-clear-meta="deadline" title="${t('clearDeadline')}">×</button></div>
       <div class="row"><label>${t('scheduled')}</label><input type="date" data-meta="scheduled" value="${esc(m.scheduled || '')}"
           title="${esc(t('scheduledTitle'))}">

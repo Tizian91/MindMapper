@@ -145,6 +145,8 @@
     const input = document.createElement('input');
     input.type = 'date';
     input.value = n.meta[key] || inDays(0);
+    const max = key === 'deadline' ? MM.tasks.maxDeadline([n]) : ''; // sub-task: not after the main task
+    if (max) input.max = max;
     input.className = 'chip-date-input';
     input.style.left = rect.left + 'px';
     input.style.top = rect.bottom + 'px';
@@ -190,10 +192,14 @@
         checked: (m[key] || 'none') === k, action: set(k),
       }));
     } else if (key === 'deadline') {
-      const opt = (label, value) => ({ label, shortcut: MM.meta.formatDate(value), checked: m.deadline === value, action: set(value) });
+      const max = MM.tasks.maxDeadline([n]); // sub-task: not after the main task
+      const opt = (label, value) => ({
+        label, shortcut: MM.meta.formatDate(value), checked: m.deadline === value, disabled: !!max && value > max, action: set(value),
+      });
       list = [
         opt('Today', inDays(0)), opt('Tomorrow', inDays(1)), opt('In 3 days', inDays(3)),
         opt('Next Monday', nextMonday()), opt('In a week', inDays(7)), opt('In 2 weeks', inDays(14)),
+        max && opt('Deadline of the main task', max),
         '-',
         { label: 'Pick date…', action: () => pickDate(n, rect) },
         { label: 'Clear', disabled: !m.deadline, action: set('') },

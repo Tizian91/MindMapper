@@ -232,15 +232,16 @@
   };
 
   /**
-   * Scheduled notes (appointments, meta.scheduled) of the given docs, not done / moved:
-   * [{ path, id, title, date, rule: { time }, minutes }] sorted by date and time.
+   * Scheduled notes (appointments, meta.scheduled) of the given docs, not moved (and
+   * not done, unless withDone): [{ path, id, title, date, rule: { time }, minutes }]
+   * sorted by date and time.
    */
-  R.appointments = function (docs) {
+  R.appointments = function (docs, withDone) {
     const out = [];
     for (const [path, doc] of docs) {
       for (const n of Object.values(doc.nodes || {})) {
         const m = n.meta || {};
-        if (!m.scheduled || n.movedTo || n.repeat || m.status === 'done' || n.type === 'diary') continue;
+        if (!m.scheduled || n.movedTo || n.repeat || (m.status === 'done' && !withDone) || n.type === 'diary') continue;
         out.push({
           path, id: n.id, title: (n.text || '').split('\n')[0] || MM.tr('Appointment'), date: m.scheduled,
           rule: { time: m.scheduledTime || '' }, minutes: Number(m.estimate) || 0,
@@ -275,6 +276,7 @@
     it.text = entryText(r, icon);
     it.routine = r.id;
     if (!empty) col.items.push(it);
+    return it;
   }
 
   /**
@@ -294,7 +296,10 @@
     const info = MM.templates.parsePath(path);
     if (info.kind !== 'week' && info.kind !== 'day') return fill ? { added: 0, removed: 0 } : 0;
     const list = await R.all();
-    const appts = R.appointments(MM.load.docs());
+    const docs = MM.load.docs();
+    // a done appointment is listed as well - checked, like what was checked off in another plan
+    const appts = R.appointments(docs, true);
+    const doneElsewhere = doneKeys(docs);
     if (!fill && !list.length && !appts.length) return 0;
     // the plan's columns (the "Carried over" list has a deadline as well, but is no column)
     const cols = Object.values(doc.nodes).filter((n) => n.type === 'todo' && n.meta && n.meta.deadline &&
@@ -328,7 +333,8 @@
           return;
         }
       }
-      addEntry(col, r, icon);
+      const it = addEntry(col, r, icon);
+      if (doneElsewhere.has(base)) it.done = true;
       planned.add(key);
       count++;
     };
@@ -386,6 +392,17 @@
       for (const box of routineLists(doc)) if (!box.items.length) delete doc.nodes[box.id];
     }
     place();
+    // checked off in another plan (or the appointment note itself) while this one was closed
+    if (fill) {
+      for (const col of cols) {
+        for (const it of col.items) {
+          if (it.routine && !it.done && doneElsewhere.has(`${it.routine}@${col.meta.deadline}`)) {
+            it.done = true;
+            updated++;
+          }
+        }
+      }
+    }
     if (planned.size || doc.planned) doc.planned = [...planned];
     return fill ? { added: count, removed, updated } : count;
 
@@ -561,6 +578,7 @@
   // track('restore') after undo / redo, track('reset') when a map is loaded.
   // The open map is adjusted within the same undo step; other maps are written
   // in the background. Undo in the open map takes the other maps back as well.
+  // A plan made or opened later takes over what is checked off elsewhere (addToPlan).
 
   /**
    * What is done in a doc: Map(key -> { id, date, done }), id = routine / appointment note id.
@@ -577,6 +595,15 @@
       for (const it of n.items || []) {
         if (it.routine) out.set(`i:${n.id}:${it.id}`, { id: it.routine, date: m.deadline, done: !!it.done });
       }
+    }
+    return out;
+  }
+
+  /** "<id>@<date>" of what is done in any of the docs (Map path -> doc), see doneState. */
+  function doneKeys(docs) {
+    const out = new Set();
+    for (const doc of docs.values()) {
+      for (const v of doneState(doc).values()) if (v.done) out.add(`${v.id}@${v.date}`);
     }
     return out;
   }

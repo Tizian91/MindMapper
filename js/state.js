@@ -674,8 +674,8 @@ window.MM = window.MM || {};
 
   /** Finish a user operation: record undo step, autosave, redraw. */
   MM.commit = function () {
-    // sub-tasks are due by their main task's deadline (see tasks.js)
-    const limited = MM.tasks ? MM.tasks.enforceDeadlines(MM.state.doc) : 0;
+    // sub-tasks are due by their main task's deadline, derived maps follow (see tasks.js)
+    const limited = MM.tasks ? MM.tasks.commit(MM.state.doc, MM.history.last) : 0;
     if (limited && MM.ui) MM.ui.flash(MM.tr('Sub-task deadline moved back to the main task\'s deadline ({n})', { n: limited }));
     // a meeting / appointment checked off here is checked off in the other plans as well
     if (MM.routines) MM.routines.track('commit');

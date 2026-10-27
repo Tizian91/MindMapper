@@ -149,6 +149,8 @@
 
   /** Replace the current document. */
   ST.load = function (raw, name) {
+    // e.g. a derived map needs the deadline of its main task in the map we come from
+    if (MM.load && S.file.path && S.doc) MM.load.keep(S.file.path, S.doc);
     S.doc = MM.normalizeDoc(raw);
     S.selection = new Set();
     S.file.name = name || S.file.name;

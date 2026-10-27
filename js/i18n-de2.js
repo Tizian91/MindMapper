@@ -384,6 +384,10 @@
     '{n} weeks in a row': '{n} Wochen in Folge',
     '"{path}" was changed elsewhere in the meantime (other computer, other tab). It was not overwritten - open it again and repeat the step.':
       '„{path}“ wurde inzwischen woanders geändert (anderer Rechner, anderer Tab) und deshalb nicht überschrieben – bitte neu öffnen und den Schritt wiederholen.',
+    'Deadline of the main task': 'Frist der Hauptaufgabe',
+    'Sub-task: due by {d} at the latest (deadline of the main task)': 'Unteraufgabe: spätestens bis {d} fällig (Frist der Hauptaufgabe)',
+    'Deadline of the sub-tasks also changed in {n} derived map(s)': 'Frist der Unteraufgaben auch in {n} abgeleiteten Map(s) angepasst',
+    'Could not update the derived maps: {err}': 'Die abgeleiteten Maps konnten nicht angepasst werden: {err}',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);
