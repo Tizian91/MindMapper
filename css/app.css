@@ -121,14 +121,15 @@ html, body {
 
 #app {
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto 1fr auto;
   height: 100vh;
   height: 100dvh; /* phones: the visible height, without the browser bars */
 }
 #toolbar { grid-row: 1; }
-#filterbar { grid-row: 2; }
-#main { grid-row: 3; }
-#statusbar { grid-row: 4; }
+#offline-bar { grid-row: 2; }
+#filterbar { grid-row: 3; }
+#main { grid-row: 4; }
+#statusbar { grid-row: 5; }
 
 /* ---- Toolbar ------------------------------------------------------------ */
 
@@ -313,6 +314,16 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .conflict-buttons { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
 .conflict-buttons button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; text-align: left; }
 .conflict-buttons small { font-weight: 400; opacity: 0.75; }
+/* the folder is not connected (project.js): lock at the start, then a bar until it is */
+.lock-dialog { max-width: 440px; }
+.lock-dialog .lock-msg { color: var(--danger); font-weight: 600; }
+.lock-dialog .lock-msg:empty { display: none; }
+#offline-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  padding: 6px 12px; background: var(--danger-soft); border-bottom: 1px solid var(--danger-border); font-size: 13px;
+}
+#offline-bar[hidden] { display: none; }
+#offline-bar span { flex: 1; min-width: 200px; }
 .dlg-carry[hidden] { display: none; }
 .sb-back { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

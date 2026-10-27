@@ -237,7 +237,17 @@
     'Load the older version': 'Älteren Stand laden',
     'Discard my newer changes here': 'Meine neueren Änderungen hier verwerfen',
     'conflict': 'Konflikt',
-    'No access to the folder ({perm}) - tap "Reconnect" again': 'Kein Zugriff auf den Ordner ({perm}) – tippe noch einmal auf „Reconnect“',
+    'Connect the folder "{name}"': 'Ordner „{name}“ verbinden',
+    'Without the connection your changes go into this browser only - not into your files, and your other devices do not see them.':
+      'Ohne Verbindung landen deine Änderungen nur in diesem Browser – nicht in deinen Dateien, und deine anderen Geräte sehen sie nicht.',
+    'Connect': 'Verbinden',
+    'The browser asks for your OK': 'Der Browser fragt nach deinem OK',
+    'Work without the folder': 'Ohne Ordner weiterarbeiten',
+    'Then save and open maps with File → Save as… / Open file…': 'Maps dann über Datei → Speichern unter… / Datei öffnen… speichern und öffnen',
+    'Not connected yet - tap "Connect" again.': 'Noch nicht verbunden – tippe noch einmal auf „Verbinden“.',
+    'Not connected to the folder <b>{name}</b> - changes go into this browser only. Save and open maps with File → Save as… / Open file…':
+      'Nicht mit dem Ordner <b>{name}</b> verbunden – Änderungen landen nur in diesem Browser. Maps über Datei → Speichern unter… / Datei öffnen… speichern und öffnen.',
+    'No access to the folder ({perm}) - please try again': 'Kein Zugriff auf den Ordner ({perm}) – bitte noch einmal versuchen',
     '"{map}" is linked to its file again': '„{map}“ ist wieder mit ihrer Datei verbunden',
     'The open map "{map}" is a copy that belongs to no file, and it differs from the file in the folder.\n\nOK: load the file (recommended).\nCancel: keep the copy here - it will overwrite the file.':
       'Die offene Map „{map}“ ist eine Kopie, die zu keiner Datei gehört, und sie weicht von der Datei im Ordner ab.\n\nOK: die Datei laden (empfohlen).\nAbbrechen: die Kopie hier behalten – sie überschreibt dann die Datei.',

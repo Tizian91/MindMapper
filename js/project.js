@@ -41,7 +41,10 @@
         else P.status = 'needs-permission';
       }
     } catch (e) { /* no stored folder */ }
+    const bar = document.getElementById('offline-bar');
+    if (bar) bar.addEventListener('click', (e) => { if (e.target.closest('[data-bar="connect"]')) P.reconnect(); });
     P.render();
+    if (P.status === 'needs-permission') showLock();
   };
 
   P.choose = async function () {
@@ -74,7 +77,7 @@
         perm = await P.backend.access(false);
       }
       if (perm !== 'granted') {
-        MM.ui.flash(tr('No access to the folder ({perm}) - tap "Reconnect" again', { perm }));
+        MM.ui.flash(tr('No access to the folder ({perm}) - please try again', { perm }));
       } else {
         try {
           await connected();
@@ -89,6 +92,48 @@
     }
     P.render();
   };
+
+  // ---- Not connected: a lock at the start, then a bar ------------------------------
+  // Without the folder every change goes into this browser only - easy to miss on a phone,
+  // where the folder needs "Reconnect" after each start. The lock asks first (its button is
+  // the tap the browser needs for the permission); going on without the folder is a choice
+  // of its own, and the bar stays until the folder is connected.
+
+  function showLock() {
+    const d = document.createElement('dialog');
+    d.className = 'lock-dialog';
+    d.innerHTML = `
+      <form method="dialog" class="dlg">
+        <h3>${tr('Connect the folder "{name}"', { name: esc(P.backend.name) })}</h3>
+        <p>${tr('Without the connection your changes go into this browser only - not into your files, and your other devices do not see them.')}</p>
+        <p class="lock-msg"></p>
+        <div class="conflict-buttons">
+          <button type="button" class="primary" data-lock="connect"><b>${tr('Connect')}</b><small>${tr('The browser asks for your OK')}</small></button>
+          <button type="button" data-lock="offline"><b>${tr('Work without the folder')}</b><small>${tr('Then save and open maps with File → Save as… / Open file…')}</small></button>
+        </div>
+      </form>`;
+    document.body.appendChild(d);
+    d.addEventListener('keydown', (e) => e.stopPropagation());
+    d.addEventListener('cancel', (e) => e.preventDefault()); // Esc: a decision is needed
+    const close = () => { d.close(); d.remove(); };
+    d.querySelector('[data-lock="offline"]').addEventListener('click', close);
+    d.querySelector('[data-lock="connect"]').addEventListener('click', async () => {
+      await P.reconnect();
+      if (P.status === 'ready') close();
+      else d.querySelector('.lock-msg').textContent = tr('Not connected yet - tap "Connect" again.');
+    });
+    d.showModal();
+  }
+
+  /** The bar below the toolbar while the folder waits for its permission. */
+  function renderBar() {
+    const bar = document.getElementById('offline-bar');
+    if (!bar) return;
+    bar.hidden = !(P.status === 'needs-permission' && P.backend);
+    if (bar.hidden) return;
+    bar.innerHTML = `<span>⚠ ${tr('Not connected to the folder <b>{name}</b> - changes go into this browser only. Save and open maps with File → Save as… / Open file…', { name: esc(P.backend.name) })}</span>
+      <button type="button" class="primary" data-bar="connect">${tr('Connect')}</button>`;
+  }
 
   /**
    * Before another project folder is opened: save the open map into its file,
@@ -932,6 +977,7 @@
       }
     }
     root.innerHTML = h;
+    renderBar();
   };
 
   /** Language change: sidebar and dialogs are built again in the new language. */
