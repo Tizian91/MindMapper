@@ -331,6 +331,9 @@ window.MM = window.MM || {};
     if ((type === 'outline' || type === 'task') && !n.blocks.length) {
       n.blocks = n.items.length ? n.items.map((i) => MM.createBlock(i.text, 0)) : [MM.createBlock('', 0)];
     }
+    // text alignment: the new type's own (a centered note becomes a left-aligned list), unless it was changed by hand
+    const align = (t) => ((NODE_PRESETS[t] || {}).style || {}).align || MM.DEFAULT_NODE_STYLE.align;
+    if (n.style && (n.style.align || MM.DEFAULT_NODE_STYLE.align) === align(n.type)) n.style.align = align(type);
     n.type = type;
   };
 
@@ -408,8 +411,9 @@ window.MM = window.MM || {};
   // planned (day / week plans only): routine / appointment entries put in once ("<note id>@<date>"),
   // so an entry the user deleted is not added again (see routines.js addToPlan).
   MM.emptyDoc = () => ({
-    app: 'MindMapper', version: 1, nodes: {}, edges: {}, assets: {}, view: { x: 0, y: 0, zoom: 1 }, carriedOver: false,
+    app: 'MindMapper', version: 2, nodes: {}, edges: {}, assets: {}, view: { x: 0, y: 0, zoom: 1 }, carriedOver: false,
   });
+  // version 2: the entries of to-do / outline / task notes follow the text alignment (before, only their title did)
 
   // Values from a file are untrusted: several of them end up in HTML / SVG
   // markup, so numbers must really be numbers and ids must come from the catalogs.
@@ -435,6 +439,7 @@ window.MM = window.MM || {};
         if (typeof url === 'string' && url.startsWith('data:image/')) doc.assets[id] = url;
       }
     }
+    const old = !(num(raw.version, 1) >= 2); // see emptyDoc
     for (const n of Object.values(raw.nodes || {})) {
       if (!n || typeof n !== 'object' || !n.id) continue;
       const type = oneOf(n.type, MM.NODE_TYPES, 'text');
@@ -454,6 +459,8 @@ window.MM = window.MM || {};
       for (const k of ['fill', 'stroke', 'textColor', 'strokeStyle', 'align', 'fit']) {
         if (node.style[k] !== undefined) node.style[k] = str(node.style[k]);
       }
+      // older file: a list centered by its former note type looked left-aligned - it stays so
+      if (old && ['todo', 'outline', 'task'].includes(type) && node.style.align === 'center') node.style.align = 'left';
       node.items = (Array.isArray(n.items) ? n.items : []).filter((i) => i && typeof i === 'object')
         .map((i) => Object.assign(i, { id: str(i.id) || MM.uid('i'), text: str(i.text), done: !!i.done }));
       node.blocks = (Array.isArray(n.blocks) ? n.blocks : []).filter((b) => b && typeof b === 'object')

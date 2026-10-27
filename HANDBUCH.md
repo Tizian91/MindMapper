@@ -106,6 +106,8 @@ MindMapper ist eine Planungssoftware für Menschen, denen lineare Zeitpläne sch
 
 Den Typ änderst du per Rechtsklick → **Change type** oder im Panel. Wird eine To-do-Liste, Outline oder Task zu **Markdown**, steht ihr Titel danach als Überschrift über ihrer Liste – To-do-Einträge als Kästchen, Outline-Punkte eingerückt.
 
+**Textausrichtung:** Im Panel unter *Style* neben **B** (fett): linksbündig, zentriert, rechtsbündig oder Blocksatz. Sie gilt für den ganzen Text der Note – bei To-do-Listen, Outlines und Tasks auch für die Einträge, nicht nur für den Titel. Beim Umwandeln bekommt die Note die Ausrichtung ihres neuen Typs (eine zentrierte Note wird zur linksbündigen Task); hattest du die Ausrichtung selbst geändert, bleibt deine.
+
 ## 4. Details: Status, Priorität, Deadline, Termin, Schätzung, Tags
 
 - Im Panel unter **Details**: **Deadline**, **Scheduled** (Termin), **Estimate** (z. B. `1h 30m`, `90m`, `2h`, `1d` = ein Arbeitstag, also so viele Stunden wie unter *Hours / work day* eingestellt; gespeichert wird beim Eintippen der Stundenwert), **Progress** (nur Tasks), **Status**, **Priority**, **Tags**, **Link**.

@@ -530,7 +530,7 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .todo-list { list-style: none; margin: 0; padding: 0; font-weight: 400; }
 .todo-list li { display: flex; align-items: flex-start; gap: 6px; padding: 1px 0; }
 .todo-list li.done .todo-text { text-decoration: line-through; opacity: 0.55; }
-.todo-text { flex: 1; white-space: pre-wrap; min-height: 1.35em; text-align: left; }
+.todo-text { flex: 1; white-space: pre-wrap; min-height: 1.35em; } /* aligned like the note (panel) */
 /* 🔁 of a routine entry: the emoji is recoloured (grey -> sepia -> hue), so it looks the same
    on Windows and Android - blue: takes time off the capacity, orange: leisure routine */
 .rt-mark { filter: grayscale(1) sepia(1) saturate(4) hue-rotate(175deg); }
@@ -639,7 +639,7 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 }
 .outline-list li.has-children .outline-bullet { cursor: pointer; }
 .outline-list li.collapsed .outline-bullet::before { box-shadow: 0 0 0 0.22em rgba(0, 0, 0, 0.18); }
-.outline-text { flex: 1; white-space: pre-wrap; min-height: 1.35em; text-align: left; }
+.outline-text { flex: 1; white-space: pre-wrap; min-height: 1.35em; } /* aligned like the note (panel) */
 
 /* Link, code and group notes */
 .link-note { text-align: center; }

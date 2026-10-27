@@ -52,6 +52,13 @@
     left: 'M3,2V20M6,5H22M6,13H16', hcenter: 'M16,2V20M8,5H24M11,13H21', right: 'M29,2V20M10,5H26M16,13H26',
     top: 'M2,3H30M6,6V20M14,6V14', vcenter: 'M2,11H30M6,4V18M14,7V15', bottom: 'M2,19H30M6,2V16M14,8V16',
   };
+  // text alignment inside a note: lines of different length
+  const TEXT_ALIGN_ICONS = {
+    left: 'M2,3H14M2,7H10M2,11H14M2,15H8', center: 'M2,3H14M4,7H12M2,11H14M5,15H11',
+    right: 'M2,3H14M6,7H14M2,11H14M8,15H14', justify: 'M2,3H14M2,7H14M2,11H14M2,15H9',
+  };
+  const textAlignIcon = (k) =>
+    `<svg viewBox="0 0 16 18" width="16" height="16"><path d="${TEXT_ALIGN_ICONS[k]}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
   const alignIcon = (k) =>
     `<svg viewBox="0 0 32 22" width="28" height="20"><path d="${ALIGN_ICONS[k]}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
 
@@ -181,8 +188,8 @@
         <input type="number" data-node-style="fontSize" value="${esc(st.fontSize)}" min="8" max="96" step="1" title="${t('fontSize')}"></div>
       <div class="row"><label></label>
         <button data-node-style="bold" data-value="${!st.bold}" class="${st.bold ? 'active' : ''}" title="${t('bold')}"><b>B</b></button>
-        ${seg('data-node-style="align" data-value', st.align, { left: t('alignLeft'), center: t('alignCenter'), right: t('alignRight') },
-          (a) => ({ left: '⇤', center: '↔', right: '⇥' })[a])}
+        ${seg('data-node-style="align" data-value', st.align, { left: t('alignLeft'), center: t('alignCenter'), right: t('alignRight'), justify: t('alignJustify') },
+          textAlignIcon)}
       </div>`) + `
     </section>`;
     if (nodes.length > 1) {
