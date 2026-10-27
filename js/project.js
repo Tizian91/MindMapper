@@ -66,7 +66,27 @@
 
   P.reconnect = async function () {
     if (!P.backend) return;
-    if ((await P.backend.access(true)) === 'granted') await connected();
+    try {
+      let perm = await P.backend.access(true);
+      // Android: the answer may come before the permission is noted - ask once more
+      if (perm !== 'granted') {
+        await new Promise((r) => setTimeout(r, 400));
+        perm = await P.backend.access(false);
+      }
+      if (perm !== 'granted') {
+        MM.ui.flash(tr('No access to the folder ({perm}) - tap "Reconnect" again', { perm }));
+      } else {
+        try {
+          await connected();
+        } catch (err) {
+          // Android, folder of another app: the first reading right after the permission may fail
+          await new Promise((r) => setTimeout(r, 400));
+          await connected();
+        }
+      }
+    } catch (err) {
+      alert(tr('Could not open folder: {err}', { err: err.message }));
+    }
     P.render();
   };
 
@@ -111,6 +131,7 @@
       await relinkRestored(path);
       if (S.file.path) await P.fillPlan(); // the plan of the last session gets what is new as well
     }
+    await P.adoptOpenMap(); // linking it failed (now or in an earlier session)
     P.render();
     MM.ui.update();
     if (MM.panel) MM.panel.update(true); // capacity hint now names the folder
@@ -145,6 +166,47 @@
     S.file.version = version; // the local copy may replace this state of the file (checked above)
     S.file.hash = null;
   }
+
+  /**
+   * The open map belongs to no file, but it is a map of this folder: same file name and
+   * notes in common (node ids are random). Left over when linking it again after a restart
+   * failed, e.g. the sync app handed out the file empty for a moment - and kept so by the
+   * autosave. Its changes would only go into the browser, and the diary would show its
+   * entries twice (from the file and from this copy). Link it again: the same content
+   * silently, else the file is loaded - unless there are unsaved changes here (then ask).
+   */
+  P.adoptOpenMap = async function () {
+    if (P.status !== 'ready' || S.file.path || S.file.handle || !S.doc) return;
+    const paths = P.mapPaths().filter((p) => p.split('/').pop() === S.file.name);
+    if (paths.length !== 1) return;
+    const path = paths[0], doc = S.doc;
+    let f;
+    try {
+      f = await P.readDoc(path);
+    } catch (err) {
+      return; // empty / cut off just now: next time (coming back to the app)
+    }
+    if (!f || S.doc !== doc || S.file.path || S.file.handle) return;
+    if (!Object.keys(doc.nodes || {}).some((id) => f.doc.nodes && f.doc.nodes[id])) return; // another map of that name
+    const link = () => {
+      Object.assign(S.file, { handle: null, backend: P.backend, path, version: f.version, hash: MM.fsys.hash(f.text) });
+      P.setVersion(path, f.version, S.file.hash);
+      MM.storage.remember(path, S.file.hash);
+    };
+    if (MM.storage.serialize() === f.text) {
+      link();
+      S.dirty = false;
+      MM.storage.autosave();
+      MM.ui.flash(tr('"{map}" is linked to its file again', { map: P.mapName(path) }));
+    } else if (!S.dirty || confirm(tr('The open map "{map}" is a copy that belongs to no file, and it differs from the file in the folder.\n\nOK: load the file (recommended).\nCancel: keep the copy here - it will overwrite the file.', { map: P.mapName(path) }))) {
+      await MM.storage.openPath(path);
+      await P.fillPlan();
+    } else {
+      link();
+      await MM.storage.writeFile();
+    }
+    P.render();
+  };
 
   P.scan = async function () {
     if (!P.backend) return;

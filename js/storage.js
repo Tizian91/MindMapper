@@ -568,7 +568,7 @@
       ST.checkFile();
       if (Date.now() - lastScan > 30000) { // new maps (or copies) from the other device
         lastScan = Date.now();
-        MM.project.scan();
+        MM.project.scan().then(() => MM.project.adoptOpenMap()).catch(() => {});
       }
     };
     document.addEventListener('visibilitychange', () => (document.visibilityState === 'hidden' ? leave() : back()));

@@ -237,6 +237,10 @@
     'Load the older version': 'Älteren Stand laden',
     'Discard my newer changes here': 'Meine neueren Änderungen hier verwerfen',
     'conflict': 'Konflikt',
+    'No access to the folder ({perm}) - tap "Reconnect" again': 'Kein Zugriff auf den Ordner ({perm}) – tippe noch einmal auf „Reconnect“',
+    '"{map}" is linked to its file again': '„{map}“ ist wieder mit ihrer Datei verbunden',
+    'The open map "{map}" is a copy that belongs to no file, and it differs from the file in the folder.\n\nOK: load the file (recommended).\nCancel: keep the copy here - it will overwrite the file.':
+      'Die offene Map „{map}“ ist eine Kopie, die zu keiner Datei gehört, und sie weicht von der Datei im Ordner ab.\n\nOK: die Datei laden (empfohlen).\nAbbrechen: die Kopie hier behalten – sie überschreibt dann die Datei.',
     'Reloaded {name} - your changes were discarded': '{name} neu geladen – deine Änderungen wurden verworfen',
     '{name} was changed elsewhere - loaded the new version': '{name} wurde woanders geändert – neue Version geladen',
     '{n} conflict copies of this map (e.g. from a sync program) - compare, keep one, clean up': '{n} Konfliktkopien dieser Map (z. B. vom Sync-Programm) – vergleichen, eine behalten, aufräumen',
