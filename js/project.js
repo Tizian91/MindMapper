@@ -672,8 +672,18 @@
     const r = kind === 'month' ? {} : await MM.routines.addToPlan(doc, path, { fill: true });
     if (doc !== S.doc) return; // another map was opened meanwhile
     // "Overdue" / "Open tasks": the open main tasks of all maps (only while the plan runs)
+    const shape = MM.taskLists.shape(doc);
     const lists = MM.taskLists.fill(doc, path, MM.load.docs());
-    if (!lists && !r.added && !r.removed && !r.updated && JSON.stringify(doc.planned || []) === before) return;
+    if (!r.added && !r.removed && !r.updated && JSON.stringify(doc.planned || []) === before &&
+      (!lists || MM.taskLists.shape(doc) === shape)) {
+      // only texts / order of task entries: shown now, written with the next real change (see shape)
+      if (lists) {
+        MM.history.rebase();
+        S.rev++;
+        MM.refresh();
+      }
+      return;
+    }
     MM.commit();
     await MM.storage.writeFile();
     if (r.added || r.removed) {

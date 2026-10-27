@@ -47,11 +47,19 @@ try {
   const posterItem = Object.values(plan.nodes).find((n) => n.taskList === 'open').items[0];
   out.push('entry text   | ' + posterItem.text + ' (Poster · 📅 dd.mm. · ☑ 1/2 · % - ref ' + (posterItem.ref.id === poster.id) + ')');
   out.push('again        | changed ' + TL.fill(plan, weekPath, docs()) + ' (false - nothing to write)');
+  // progress and deadline of a task change: the entry shows it, but the plan need not be written at once
+  let shape = TL.shape(plan);
+  s2.meta.progress = 50;
+  poster.meta.deadline = day(5);
+  out.push('only texts   | changed ' + TL.fill(plan, weekPath, docs()) + ', shape same ' + (TL.shape(plan) === shape) + ' (true, true)');
+  poster.meta.deadline = day(3);
+  TL.fill(plan, weekPath, docs());
+  shape = TL.shape(plan);
   // done elsewhere, overdue now, deleted
   antrag.meta.status = 'done';
   poster.meta.deadline = day(-2);
   delete work.nodes[merch.id];
-  out.push('changes      | changed ' + TL.fill(plan, weekPath, docs()) + ' | ' + show());
+  out.push('changes      | changed ' + TL.fill(plan, weekPath, docs()) + ', shape same ' + (TL.shape(plan) === shape) + ' (false) | ' + show());
   out.push('             | (overdue [Poster, ✓Antrag], open [] - Merch gone)');
   // a plan of last year: nothing
   const old = T.forPath('Weeks/2025-W44.mindmap.json').result.doc;

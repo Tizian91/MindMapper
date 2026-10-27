@@ -92,6 +92,15 @@
 
   const listsOf = (doc) => Object.values(doc.nodes || {}).filter((n) => n.taskList === 'overdue' || n.taskList === 'open');
 
+  /**
+   * What of the lists has to be saved at once: which task is in which list and which
+   * entries are checked (and entries written by hand). The texts and the order only show
+   * the current state of the tasks - they are saved with the next real change of the plan.
+   * Rewriting a plan each time a task changes made sync programs keep conflict copies.
+   */
+  TL.shape = (doc) => JSON.stringify(listsOf(doc).map((n) => [n.id, n.taskList,
+    n.items.map((i) => (i.ref && i.ref.id ? keyOf(i.ref.path, i.ref.id) : 'text:' + i.text) + (i.done ? ' ✓' : '')).sort()]));
+
   /** The two lists of a plan; missing ones are added left of everything else. */
   function ensureLists(doc) {
     const have = {};

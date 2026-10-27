@@ -649,6 +649,12 @@ window.MM = window.MM || {};
       if (MM.routines) MM.routines.track('reset');
     },
 
+    /** The doc was brought up to date without a step of its own (nothing to undo, not unsaved). */
+    rebase() {
+      this.last = snapshot();
+      if (MM.routines) MM.routines.track('reset');
+    },
+
     commit() {
       const s = snapshot();
       if (s === this.last) return false;
