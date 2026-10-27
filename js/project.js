@@ -42,9 +42,14 @@
       }
     } catch (e) { /* no stored folder */ }
     const bar = document.getElementById('offline-bar');
-    if (bar) bar.addEventListener('click', (e) => { if (e.target.closest('[data-bar="connect"]')) P.reconnect(); });
+    if (bar) {
+      bar.addEventListener('click', (e) => {
+        if (e.target.closest('[data-bar="connect"]')) P.reconnect();
+        if (e.target.closest('[data-bar="choose"]')) P.choose();
+      });
+    }
     P.render();
-    if (P.status === 'needs-permission') showLock();
+    if (P.status === 'needs-permission' || P.status === 'none') showLock();
   };
 
   P.choose = async function () {
@@ -98,18 +103,33 @@
   // where the folder needs "Reconnect" after each start. The lock asks first (its button is
   // the tap the browser needs for the permission); going on without the folder is a choice
   // of its own, and the bar stays until the folder is connected.
+  // No folder chosen yet (first start, or the browser forgot it): the same, with "Choose folder…".
+
+  const lockBtn = (key, label, hint, cls) => `<button type="button"${cls ? ` class="${cls}"` : ''} data-lock="${key}"><b>${tr(label)}</b><small>${tr(hint)}</small></button>`;
 
   function showLock() {
+    const first = !P.backend;
     const d = document.createElement('dialog');
     d.className = 'lock-dialog';
-    d.innerHTML = `
+    const offline = lockBtn('offline', first ? 'Try it without a folder first' : 'Work without the folder', 'Then save and open maps with File → Save as… / Open file…');
+    d.innerHTML = first ? `
+      <form method="dialog" class="dlg">
+        <h3>${tr('Choose a project folder')}</h3>
+        <p>${tr('MindMapper keeps your maps as files in a folder you choose - e.g. one that pCloud or another sync program keeps in step with your other devices. Without a folder a map stays in this browser only.')}</p>
+        <p class="lock-msg"></p>
+        <div class="conflict-buttons">
+          ${lockBtn('choose', 'Choose folder…', 'Your maps are saved into it by themselves', 'primary')}
+          ${offline}
+        </div>
+      </form>` : `
       <form method="dialog" class="dlg">
         <h3>${tr('Connect the folder "{name}"', { name: esc(P.backend.name) })}</h3>
         <p>${tr('Without the connection your changes go into this browser only - not into your files, and your other devices do not see them.')}</p>
         <p class="lock-msg"></p>
         <div class="conflict-buttons">
-          <button type="button" class="primary" data-lock="connect"><b>${tr('Connect')}</b><small>${tr('The browser asks for your OK')}</small></button>
-          <button type="button" data-lock="offline"><b>${tr('Work without the folder')}</b><small>${tr('Then save and open maps with File → Save as… / Open file…')}</small></button>
+          ${lockBtn('connect', 'Connect', 'The browser asks for your OK', 'primary')}
+          ${lockBtn('choose', 'Choose another folder…', 'e.g. another project, or the folder on this device')}
+          ${offline}
         </div>
       </form>`;
     document.body.appendChild(d);
@@ -117,22 +137,37 @@
     d.addEventListener('cancel', (e) => e.preventDefault()); // Esc: a decision is needed
     const close = () => { d.close(); d.remove(); };
     d.querySelector('[data-lock="offline"]').addEventListener('click', close);
-    d.querySelector('[data-lock="connect"]').addEventListener('click', async () => {
-      await P.reconnect();
+    if (!first) {
+      d.querySelector('[data-lock="connect"]').addEventListener('click', async () => {
+        await P.reconnect();
+        if (P.status === 'ready') close();
+        else d.querySelector('.lock-msg').textContent = tr('Not connected yet - tap "Connect" again.');
+      });
+    }
+    d.querySelector('[data-lock="choose"]').addEventListener('click', async () => {
+      await P.choose(); // the folder picker (cancelled: the lock stays)
       if (P.status === 'ready') close();
-      else d.querySelector('.lock-msg').textContent = tr('Not connected yet - tap "Connect" again.');
     });
     d.showModal();
   }
 
-  /** The bar below the toolbar while the folder waits for its permission. */
+  /**
+   * The bar below the toolbar while the folder waits for its permission - or while there
+   * is no folder at all (not for a map opened as a single file: it is saved into that file).
+   */
   function renderBar() {
     const bar = document.getElementById('offline-bar');
     if (!bar) return;
-    bar.hidden = !(P.status === 'needs-permission' && P.backend);
+    const waiting = P.status === 'needs-permission' && !!P.backend;
+    const none = P.status === 'none' && !S.file.handle;
+    bar.hidden = !(waiting || none);
     if (bar.hidden) return;
-    bar.innerHTML = `<span>⚠ ${tr('Not connected to the folder <b>{name}</b> - changes go into this browser only. Save and open maps with File → Save as… / Open file…', { name: esc(P.backend.name) })}</span>
-      <button type="button" class="primary" data-bar="connect">${tr('Connect')}</button>`;
+    const hint = tr('Save and open maps with File → Save as… / Open file…');
+    bar.innerHTML = waiting
+      ? `<span>⚠ ${tr('Not connected to the folder <b>{name}</b> - changes go into this browser only.', { name: esc(P.backend.name) })} ${hint}</span>
+        <button type="button" class="primary" data-bar="connect">${tr('Connect')}</button>`
+      : `<span>⚠ ${tr('No project folder - changes go into this browser only.')} ${hint}</span>
+        <button type="button" class="primary" data-bar="choose">${tr('Choose folder…')}</button>`;
   }
 
   /**

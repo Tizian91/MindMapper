@@ -243,10 +243,19 @@
     'Connect': 'Verbinden',
     'The browser asks for your OK': 'Der Browser fragt nach deinem OK',
     'Work without the folder': 'Ohne Ordner weiterarbeiten',
+    'Choose another folder…': 'Anderen Ordner wählen…',
+    'e.g. another project, or the folder on this device': 'z. B. ein anderes Projekt oder der Ordner auf diesem Gerät',
     'Then save and open maps with File → Save as… / Open file…': 'Maps dann über Datei → Speichern unter… / Datei öffnen… speichern und öffnen',
     'Not connected yet - tap "Connect" again.': 'Noch nicht verbunden – tippe noch einmal auf „Verbinden“.',
-    'Not connected to the folder <b>{name}</b> - changes go into this browser only. Save and open maps with File → Save as… / Open file…':
-      'Nicht mit dem Ordner <b>{name}</b> verbunden – Änderungen landen nur in diesem Browser. Maps über Datei → Speichern unter… / Datei öffnen… speichern und öffnen.',
+    'Not connected to the folder <b>{name}</b> - changes go into this browser only.': 'Nicht mit dem Ordner <b>{name}</b> verbunden – Änderungen landen nur in diesem Browser.',
+    'Save and open maps with File → Save as… / Open file…': 'Maps über Datei → Speichern unter… / Datei öffnen… speichern und öffnen.',
+    'No project folder - changes go into this browser only.': 'Kein Projektordner – Änderungen landen nur in diesem Browser.',
+    'Choose a project folder': 'Projektordner wählen',
+    'MindMapper keeps your maps as files in a folder you choose - e.g. one that pCloud or another sync program keeps in step with your other devices. Without a folder a map stays in this browser only.':
+      'MindMapper speichert deine Maps als Dateien in einem Ordner, den du wählst – z. B. einem, den pCloud oder ein anderes Sync-Programm mit deinen anderen Geräten abgleicht. Ohne Ordner bleibt eine Map nur in diesem Browser.',
+    'Choose folder…': 'Ordner wählen…',
+    'Your maps are saved into it by themselves': 'Deine Maps werden darin von selbst gespeichert',
+    'Try it without a folder first': 'Erst einmal ohne Ordner ausprobieren',
     'No access to the folder ({perm}) - please try again': 'Kein Zugriff auf den Ordner ({perm}) – bitte noch einmal versuchen',
     '"{map}" is linked to its file again': '„{map}“ ist wieder mit ihrer Datei verbunden',
     'The open map "{map}" is a copy that belongs to no file, and it differs from the file in the folder.\n\nOK: load the file (recommended).\nCancel: keep the copy here - it will overwrite the file.':

@@ -76,11 +76,48 @@ const root = process.argv[2], out = [];
     state('work without folder  ');
     out.push('  (expected: needs-permission, lock closed, bar shown)');
 
+    // "Choose another folder…": the picker, cancelled - then a folder chosen
+    dialogs.length = 0; backend.granted = false; P.status = 'none';
+    await P.init();
+    MM.saveSettings = () => {};
+    MM.refresh = () => {};
+    MM.fsys.local.pick = async () => { const e = new Error('cancelled'); e.name = 'AbortError'; throw e; };
+    await click(lock(), 'choose');
+    state('other folder, cancel ');
+    out.push('  (expected: needs-permission, lock open, bar shown)');
+    MM.fsys.local.pick = async () => ({ kind: 'local', name: 'Privat', access: async () => 'granted', list: async () => [] });
+    await click(lock(), 'choose');
+    state('other folder chosen  ');
+    out.push(`  folder: ${P.backend.name} (expected: ready, lock closed, bar hidden, folder Privat)`);
+
     // the OK is kept by the browser: no lock at all
     dialogs.length = 0; backend.granted = true; P.status = 'none';
     await P.init();
     state('start, OK kept       ');
     out.push('  (expected: ready, lock -, bar hidden)');
+
+    // no folder stored (first start): "Choose a project folder"
+    dialogs.length = 0; P.status = 'none'; P.backend = null;
+    MM.fsys.local.restore = async () => null;
+    await P.init();
+    state('first start          ');
+    out.push('  lock: ' + /<h3>(.*?)<\/h3>/.exec(lock().innerHTML)[1] + ' | buttons: ' + [...lock().innerHTML.matchAll(/data-lock="(\w+)"/g)].map((m) => m[1]).join(', '));
+    out.push('  bar: ' + /<span>(.*?)<\/span>/.exec(byId['offline-bar'].innerHTML)[1] + ' | ' + /data-bar="(\w+)"/.exec(byId['offline-bar'].innerHTML)[1]);
+    out.push('  (expected: none, lock open "Choose a project folder" with choose, offline; bar "No project folder" with choose)');
+    await click(lock(), 'offline');
+    state('try without folder   ');
+    out.push('  (expected: none, lock closed, bar shown)');
+    // a map opened as a single file is saved into that file: no bar
+    S.file = { handle: {}, backend: null, name: 'Liste.mindmap.json', path: null };
+    P.render();
+    state('single file open     ');
+    out.push('  (expected: none, lock closed, bar hidden)');
+    S.file = { handle: null, backend: null, name: 'Untitled.mindmap.json', path: null };
+    dialogs.length = 0; P.status = 'none'; P.backend = null;
+    await P.init();
+    await click(lock(), 'choose');
+    state('first start, chosen  ');
+    out.push('  (expected: ready, lock closed, bar hidden)');
   } catch (e) { out.push('ERROR ' + e.stack); }
   fs.writeFileSync(process.argv[3], out.join('\n'));
 })();
