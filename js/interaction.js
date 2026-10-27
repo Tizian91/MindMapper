@@ -356,10 +356,11 @@
       }
     }
     // with Ctrl held while dragging, everything below goes along (arrows, group contents, anchored drawings)
-    const sub = new Map();
+    const sub = new Map(), subBox = new Map(); // subBox: anchor frame of anchored drawings among them
     for (const id of MM.transfer.bundles(S.doc, [...orig.keys()], { group: false }).flat()) {
       const n = MM.node(id);
       if (!orig.has(id) && !n.movedTo) sub.set(id, { x: n.x, y: n.y });
+      if (sub.has(id) && n.anchor) subBox.set(id, Object.assign({}, n.anchor.box));
     }
     // free ends of selected connections move along
     const freeEnds = [];
@@ -368,7 +369,7 @@
         if (!edge[end].node) freeEnds.push({ end: edge[end], x: edge[end].x, y: edge[end].y });
       }
     }
-    startDrag(e, Object.assign({ mode: 'move', start: p, orig, sub, freeEnds, moved: false }, extra));
+    startDrag(e, Object.assign({ mode: 'move', start: p, orig, sub, subBox, freeEnds, moved: false }, extra));
   }
 
   // ---- Pointer move ----------------------------------------------------------
@@ -473,7 +474,10 @@
     const withSub = (e.ctrlKey || e.metaKey) && drag.sub.size > 0;
     for (const [id, o] of drag.sub) {
       const n = MM.node(id);
-      if (n && !withSub) Object.assign(n, o);
+      if (!n || withSub) continue;
+      Object.assign(n, o);
+      // an anchored drawing back at its start: it follows its note from the frame it had there
+      if (n.anchor && drag.subBox.has(id)) n.anchor.box = Object.assign({}, drag.subBox.get(id));
     }
     const moving = withSub ? new Map([...drag.orig, ...drag.sub]) : drag.orig;
     if (withSub !== !!drag.withSub) {
@@ -487,7 +491,8 @@
         const n = MM.node(id);
         return { x: o.x + dx, y: o.y + dy, w: n.w, h: n.h };
       });
-      const snap = MM.snap.move(MM.geo.bbox(boxes), ids);
+      // not onto the drawings anchored to what moves - they move along, so they would pull at it
+      const snap = MM.snap.move(MM.geo.bbox(boxes), new Set([...ids, ...MM.draw.anchoredTo(ids)]));
       dx += snap.dx;
       dy += snap.dy;
       S.guides = snap.guides;
@@ -521,7 +526,7 @@
     if (dir.includes('n')) { b.y = o.y + dy; b.h = o.h - dy; }
 
     if (!e.altKey) {
-      const snap = MM.snap.resize(b, dir, new Set([n.id]));
+      const snap = MM.snap.resize(b, dir, new Set([n.id, ...MM.draw.anchoredTo(new Set([n.id]))])); // its drawings scale along
       b = snap.box;
       S.guides = snap.guides;
     } else {

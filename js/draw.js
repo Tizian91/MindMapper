@@ -91,9 +91,28 @@
     n.anchor = a && !D.is(a) ? { node: a.id, box: frame(a) } : null;
   };
 
-  /** The note below a drawing (at its centre), drawings left out. */
+  /**
+   * The note below a drawing, drawings left out: the one at its centre, else the one
+   * it overlaps most (an arrow pointing at a note has its centre beside it).
+   */
   D.noteBelow = function (n) {
-    return MM.interaction.nodeAt({ x: n.x + n.w / 2, y: n.y + n.h / 2 });
+    const at = MM.interaction.nodeAt({ x: n.x + n.w / 2, y: n.y + n.h / 2 });
+    if (at) return at;
+    let best = null, most = 0;
+    for (const a of Object.values(S.doc.nodes)) {
+      if (D.is(a) || a.type === 'group' || MM.meta.isHidden(a)) continue;
+      const w = Math.min(n.x + n.w, a.x + a.w) - Math.max(n.x, a.x), h = Math.min(n.y + n.h, a.y + a.h) - Math.max(n.y, a.y);
+      if (w > 0 && h > 0 && w * h > most) {
+        most = w * h;
+        best = a;
+      }
+    }
+    return best;
+  };
+
+  /** Drawings anchored to one of the notes `ids` (not in ids themselves): they move along. */
+  D.anchoredTo = function (ids) {
+    return Object.values(S.doc.nodes).filter((n) => D.is(n) && n.anchor && ids.has(n.anchor.node) && !ids.has(n.id)).map((n) => n.id);
   };
 
   /**
@@ -194,11 +213,19 @@
   /**
    * Ctrl+G (like grouping in Inkscape): anchor the selected drawings. With
    * exactly one note / image selected as well, to that one; otherwise each to
-   * the note below it.
+   * the note below it. Only one note selected: the free drawings lying on it.
    */
   A.drawAnchor = function () {
     const sel = MM.selectedNodes();
-    const drawings = sel.filter(D.is), notes = sel.filter((n) => !D.is(n));
+    let drawings = sel.filter(D.is);
+    const notes = sel.filter((n) => !D.is(n));
+    if (!drawings.length && notes.length === 1) {
+      drawings = Object.values(S.doc.nodes).filter((n) => D.is(n) && !n.anchor && D.noteBelow(n) === notes[0]);
+      if (!drawings.length) {
+        MM.ui.flash(MM.tr('No free drawing lies on this note'));
+        return;
+      }
+    }
     if (!drawings.length) {
       MM.ui.flash(MM.tr('Select a drawing (and the note to anchor it to) first'));
       return;

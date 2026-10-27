@@ -135,6 +135,7 @@
     'Detach (not anchored)': 'Lösen (nicht verankert)',
     'No fill': 'Keine Füllung',
     'Select a drawing (and the note to anchor it to) first': 'Erst eine Zeichnung (und die Note, an der sie hängen soll) auswählen',
+    'No free drawing lies on this note': 'Auf dieser Note liegt keine freie Zeichnung',
     'Anchored {n} drawing(s) to "{note}"': '{n} Zeichnung(en) an „{note}“ verankert',
     'Detached {n} drawing(s)': '{n} Zeichnung(en) gelöst',
     'Nothing anchored here': 'Hier ist nichts verankert',
