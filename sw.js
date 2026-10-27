@@ -30,6 +30,7 @@ const FILES = [
   'js/render.js',
   'js/meta.js',
   'js/tasks.js',
+  'js/actual.js',
   'js/links.js',
   'js/images.js',
   'js/files.js',

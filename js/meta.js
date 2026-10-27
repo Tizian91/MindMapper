@@ -117,6 +117,7 @@
     deadline: '<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 7h12M5 1.5v3M11 1.5v3"/></svg>',
     scheduled: '<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 7h12M5 1.5v3M11 1.5v3"/><rect x="5" y="9" width="3" height="2.5" class="fill"/></svg>',
     estimate: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>',
+    actual: '<svg viewBox="0 0 16 16"><circle cx="8" cy="9" r="5.5"/><path d="M8 9V6M6.5 1.5h3M8 1.5v2"/></svg>',
     priority: '<svg viewBox="0 0 16 16"><path d="M3.5 14.5V2M3.5 2.5h8.5l-2 3 2 3H3.5"/></svg>',
     quadrant: '<svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M8 2v12M2 8h12"/></svg>',
     // status icons: one per state
@@ -168,10 +169,26 @@
     } else if (placeholders && !m.deadline) {
       h += `<span class="chip chip-empty" data-meta="scheduled">${ICONS.scheduled}${tr('Scheduled')}</span>`;
     }
-    if (m.estimate !== null && m.estimate !== undefined) {
+    // a main task: how much of it the sub-tasks estimate (∑), see tasks.js
+    const split = n.id && MM.tasks ? (MM.tasks.info(n) || {}).split : 0;
+    const F = META.formatDuration;
+    if (split && (m.estimate === null || m.estimate === undefined)) {
+      h += `<span class="chip chip-time chip-calc" data-meta="estimate" title="${esc(tr('Sum of the sub-task estimates (no own estimate)'))}">${ICONS.estimate}${F(split)} ∑</span>`;
+    } else if (split && split < m.estimate) {
+      h += `<span class="chip chip-time" data-meta="estimate" title="${esc(tr('Estimated {e} - {s} of it split into sub-tasks, {r} not split up yet', { e: F(m.estimate), s: F(split), r: F(m.estimate - split) }))}">` +
+        `${ICONS.estimate}${F(m.estimate)} <span class="chip-part">(${F(split)} ∑)</span></span>`;
+    } else if (split) {
+      h += `<span class="chip chip-time" data-meta="estimate" title="${esc(tr('Estimated {e} - all of it split into sub-tasks', { e: F(m.estimate) }))}">${ICONS.estimate}${F(m.estimate)} ∑</span>`;
+    } else if (m.estimate !== null && m.estimate !== undefined) {
       h += `<span class="chip chip-time" data-meta="estimate" title="${esc(tr('Estimated time'))}">${ICONS.estimate}${META.formatDuration(m.estimate)}</span>`;
     } else if (placeholders) {
       h += `<span class="chip chip-empty" data-meta="estimate">${ICONS.estimate}${tr('Estimate')}</span>`;
+    }
+    // actual time: only when recorded (see actual.js), no placeholder
+    if (m.actual !== null && m.actual !== undefined) {
+      const est = m.estimateFirst !== null && m.estimateFirst !== undefined ? m.estimateFirst : m.estimate;
+      const title = est ? tr('Actual time - estimated {e}', { e: META.formatDuration(est) }) : tr('Actual time');
+      h += `<span class="chip chip-time chip-actual" data-meta="actual" title="${esc(title)}">${ICONS.actual}${META.formatDuration(m.actual)}</span>`;
     }
     // only task notes carry an explicit progress value; tasks with sub-tasks a calculated one
     const calc = n.id && MM.tasks ? MM.tasks.info(n) : null;

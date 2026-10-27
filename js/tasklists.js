@@ -220,9 +220,14 @@
     // per map: set the status (done: 100 %, open again: the progress of a done task goes)
     const byPath = new Map();
     for (const t of targets) byPath.set(t.path, [...(byPath.get(t.path) || []), t.id]);
-    const set = (n) => {
+    const ask = []; // checked off in another map: how long did it take? (actual.js)
+    const set = (n, path) => {
       n.meta = Object.assign(MM.emptyMeta(), n.meta || {});
       if (done) {
+        if (path && n.meta.status !== 'done') {
+          MM.actual.checkedOff(n);
+          if (MM.actual.askable(n)) ask.push({ path, node: n });
+        }
         n.meta.status = 'done';
         if (n.type === 'task') n.meta.progress = 100;
       } else {
@@ -238,7 +243,7 @@
         }
         const doc = await P.readMap(path);
         if (!doc) continue;
-        for (const id of ids) if (doc.nodes[id]) set(doc.nodes[id]);
+        for (const id of ids) if (doc.nodes[id]) set(doc.nodes[id], path);
         await P.writeMap(path, doc);
       }
     } catch (err) {
@@ -247,7 +252,8 @@
     }
     if (list !== S.doc.nodes[list.id]) return; // another map was opened meanwhile
     item.done = done;
-    MM.commit();
+    MM.commit(); // asks itself for the tasks of the open map - the others join that question
+    if (ask.length) MM.actual.askFor(ask);
     MM.load.scheduleRefresh();
     MM.tasks.refreshExternal();
     MM.ui.flash(done

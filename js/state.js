@@ -223,7 +223,8 @@ window.MM = window.MM || {};
    * scheduled ('YYYY-MM-DD') + scheduledTime ('HH:MM') = appointment: the note takes
    * place on that day. A note has either a deadline or a scheduled date, never both.
    */
-  MM.emptyMeta = () => ({ deadline: '', scheduled: '', scheduledTime: '', estimate: null, priority: 'none', quadrant: 'none', status: 'none', progress: null });
+  MM.emptyMeta = () => ({ deadline: '', scheduled: '', scheduledTime: '', estimate: null, priority: 'none', quadrant: 'none', status: 'none', progress: null,
+    actual: null, estimateFirst: null }); // actual time and the estimate when work began (see actual.js)
 
   /** Create a node of the given type centered on (cx, cy). */
   MM.createNode = function (type, cx, cy, overrides) {
@@ -465,6 +466,10 @@ window.MM = window.MM || {};
       m.scheduledTime = m.scheduled && /^\d{2}:\d{2}$/.test(m.scheduledTime) ? m.scheduledTime : '';
       if (m.scheduled) m.deadline = ''; // either / or – the appointment wins
       m.estimate = num(m.estimate, null);
+      for (const k of ['actual', 'estimateFirst']) {
+        const v = num(m[k], null);
+        m[k] = v !== null && v >= 0 ? v : null;
+      }
       m.priority = oneOf(m.priority, MM.PRIORITIES, 'none');
       m.quadrant = oneOf(QUAD_LEGACY[m.quadrant] || m.quadrant, MM.QUADRANTS, 'none');
       m.status = oneOf(m.status, MM.STATUSES, 'none');
@@ -587,6 +592,7 @@ window.MM = window.MM || {};
       lastDiary: '',       // diary of the last diary entry (new entries go there)
       prioSystem: 'levels', // 'levels' | 'eisenhower' (per project folder, see storage.js)
       routineCategories: [], // [{ id, name, emoji, leisure }] (per project folder, see routines.js)
+      askActual: true,     // ask for the actual time when a task is checked off (per project folder, see actual.js)
     },
     // view filter (not saved, not part of undo); see meta.js
     filter: {
@@ -675,7 +681,10 @@ window.MM = window.MM || {};
   /** Finish a user operation: record undo step, autosave, redraw. */
   MM.commit = function () {
     // sub-tasks are due by their main task's deadline, derived maps follow (see tasks.js)
-    const limited = MM.tasks ? MM.tasks.commit(MM.state.doc, MM.history.last) : 0;
+    const prev = MM.tasks ? MM.tasks.before(MM.state.doc, MM.history.last) : null;
+    const limited = MM.tasks ? MM.tasks.commit(MM.state.doc, prev) : 0;
+    // a task checked off: ask how long it took (see actual.js)
+    if (MM.actual) MM.actual.commit(MM.state.doc, prev);
     if (limited && MM.ui) MM.ui.flash(MM.tr('Sub-task deadline moved back to the main task\'s deadline ({n})', { n: limited }));
     // a meeting / appointment checked off here is checked off in the other plans as well
     if (MM.routines) MM.routines.track('commit');

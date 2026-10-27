@@ -388,6 +388,28 @@
     'Sub-task: due by {d} at the latest (deadline of the main task)': 'Unteraufgabe: spätestens bis {d} fällig (Frist der Hauptaufgabe)',
     'Deadline of the sub-tasks also changed in {n} derived map(s)': 'Frist der Unteraufgaben auch in {n} abgeleiteten Map(s) angepasst',
     'Could not update the derived maps: {err}': 'Die abgeleiteten Maps konnten nicht angepasst werden: {err}',
+    'How long did it take?': 'Wie lange hat es gedauert?',
+    'Only if you know it - no value is better than a guessed one. Turn the question off: panel without selection → Planning capacity.':
+      'Nur ausfüllen, wenn du es weißt – lieber kein Wert als ein geratener. Abschalten: Panel ohne Auswahl → Planungskapazität.',
+    'Skip': 'Überspringen',
+    'e.g. 1h 30m': 'z. B. 1h 30m',
+    'It took as long as estimated': 'Hat so lange gedauert wie geschätzt',
+    'Actual time': 'Ist-Zeit',
+    'not recorded': 'nicht erfasst',
+    'How long it really took - to compare with the estimate': 'Wie lange es wirklich gedauert hat – zum Vergleich mit der Schätzung',
+    'Estimate when work began: {d} (kept for the comparison)': 'Schätzung zu Beginn: {d} (bleibt für den Vergleich)',
+    'Actual time - estimated {e}': 'Ist-Zeit – geschätzt {e}',
+    'Estimate of "{t}" raised to its sub-tasks: {d}': 'Schätzung von „{t}“ auf die Summe der Untertasks angehoben: {d}',
+    'Estimate of {n} main tasks raised to their sub-tasks': 'Schätzung von {n} Hauptaufgaben auf die Summe ihrer Untertasks angehoben',
+    'Sum of the sub-task estimates (no own estimate)': 'Summe der Schätzungen der Untertasks (keine eigene Schätzung)',
+    'Estimated {e} - {s} of it split into sub-tasks, {r} not split up yet': 'Geschätzt {e} – davon {s} auf Untertasks verteilt, {r} noch nicht aufgeteilt',
+    'Estimated {e} - all of it split into sub-tasks': 'Geschätzt {e} – vollständig auf Untertasks verteilt',
+    '∑ {d} (sub-tasks)': '∑ {d} (Untertasks)',
+    '{s} of it split into sub-tasks, {r} not split up yet': 'Davon {s} auf Untertasks verteilt, {r} noch nicht aufgeteilt',
+    'Could not save the actual time: {err}': 'Die Ist-Zeit konnte nicht gespeichert werden: {err}',
+    'Ask for the actual time when a task is checked off': 'Beim Abhaken nach der Ist-Zeit fragen',
+    'Only tasks with an estimate. To learn how well you estimate; the actual time can always be set in the panel. Stored {where}.':
+      'Nur bei Aufgaben mit Schätzung. Zeigt mit der Zeit, wie gut du schätzt; die Ist-Zeit lässt sich immer im Panel setzen. Gespeichert {where}.',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

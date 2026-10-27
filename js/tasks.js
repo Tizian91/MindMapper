@@ -5,6 +5,8 @@
  *   - the top level tasks of a map derived from A (A.derivedMap) are sub-tasks of A
  * The estimate of a main task is its total effort; the sub-tasks split it up
  * and the part not split up yet is planned with the main task (see combine).
+ * An estimate below the sub-tasks together is raised to their sum (raiseEstimates);
+ * without an own estimate the sum is only shown.
  * Its progress comes from the sub-tasks, weighted by effort; done counts as
  * 100 %, a done main task is 100 %.
  *
@@ -131,21 +133,55 @@
     return limited;
   };
 
+  /**
+   * A main task never estimates less than its sub-tasks together: an own estimate
+   * below their sum is raised to it (without an own estimate the sum is only shown,
+   * see meta.js). Sub-tasks in derived maps count as read last. Changes doc in place;
+   * returns [{ title, to }] of the raised tasks.
+   */
+  TK.raiseEstimates = function (doc) {
+    const external = doc === S.doc ? (path) => ext.get(path) || null : null;
+    const out = [];
+    for (const [id, c] of TK.compute(doc, external).info) {
+      if (!c.over) continue;
+      const n = doc.nodes[id];
+      n.meta.estimate = c.split;
+      out.push({ title: (n.text || '').split('\n')[0], to: c.split });
+    }
+    return out;
+  };
+
   let syncing = Promise.resolve();
 
   /**
-   * Called by MM.commit before a step is recorded (last: the undo snapshot before it):
-   * sub-task deadlines of the open map, and the derived maps follow their main task.
-   * Returns the number of moved-back deadlines.
+   * The doc before a step from its undo snapshot `last` - only read when doc has
+   * tasks or notes with task details (null otherwise, or without snapshot).
    */
-  TK.commit = function (doc, last) {
-    if (!Object.values(doc.nodes || {}).some(isTask)) return 0;
-    let prev = null;
+  TK.before = function (doc, last) {
+    const m = (n) => n.meta || {};
+    if (!last || !Object.values(doc.nodes || {}).some((n) => isTask(n) || m(n).estimate != null || (m(n).status && m(n).status !== 'none'))) return null;
     try {
-      prev = last ? JSON.parse(last) : null;
-    } catch (err) { /* no snapshot: every relation counts as new */ }
+      return JSON.parse(last);
+    } catch (err) {
+      return null;
+    }
+  };
+
+  /**
+   * Called by MM.commit before a step is recorded (prev: the doc before it, see before;
+   * null: every relation counts as new): sub-task deadlines of the open map, and the
+   * derived maps follow their main task. Returns the number of moved-back deadlines.
+   */
+  TK.commit = function (doc, prev) {
+    if (!Object.values(doc.nodes || {}).some(isTask)) return 0;
     const due = TK.outerDeadline();
     const limited = TK.enforceDeadlines(doc, prev, due === null ? null : { due, was: due });
+    const raised = TK.raiseEstimates(doc);
+    if (raised.length && MM.ui) {
+      MM.ui.flash(raised.length === 1
+        ? MM.tr('Estimate of "{t}" raised to its sub-tasks: {d}', { t: raised[0].title, d: MM.meta.formatDuration(raised[0].to) })
+        : MM.tr('Estimate of {n} main tasks raised to their sub-tasks', { n: raised.length }));
+    }
     const moved = prev && Object.values(doc.nodes).some((n) => isTask(n) && n.derivedMap && prev.nodes[n.id] &&
       ((n.meta && n.meta.deadline) || '') !== ((prev.nodes[n.id].meta || {}).deadline || ''));
     if (moved) {
@@ -314,7 +350,10 @@
     ext = next;
     if (changed) {
       extVersion++;
-      MM.refresh();
+      // the derived map now has more than its main task estimates: raise it (an undo step of its own)
+      const over = [...TK.compute(S.doc, (p) => ext.get(p) || null).info.values()].some((c) => c.over);
+      if (over) MM.commit();
+      else MM.refresh();
     }
   };
 })(window.MM);

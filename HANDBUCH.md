@@ -133,6 +133,16 @@ Den Typ änderst du per Rechtsklick → **Change type** oder im Panel. Wird eine
   - **Ohne Schätzung** zählt eine Aufgabe mit Deadline oder Termin **nicht** mit. Die Statusleiste meldet sie als „n without estimate“, damit nichts unbemerkt durchrutscht.
 - **Wie genau?** Grob genügt. Lieber etwas zu großzügig als zu knapp – eine Schätzung, die später nicht passt, korrigierst du einfach; die Planung rechnet sofort neu. Wird eine Aufgabe größer als ein, zwei Tage, lohnt es sich, sie in **Untertasks** zu zerlegen (Kapitel 12): Die Schätzung der Haupttask ist dann der Gesamtaufwand, die Untertasks teilen ihn auf.
 
+### Ist-Zeit: wie gut schätze ich?
+
+Neben der Schätzung kannst du festhalten, wie lange eine Aufgabe **wirklich** gedauert hat – die **Ist-Zeit**. Mit der Zeit siehst du daran, ob du eher zu knapp oder zu großzügig schätzt.
+
+- **Eingabe:** im Panel unter **Details → Ist-Zeit**, im selben Format wie die Schätzung (`1h 30m`). Ist sie gesetzt, zeigt die Task einen eigenen Chip mit Stoppuhr; ein Klick darauf öffnet die Abfrage. Leer heißt „nicht erfasst“.
+- **Abfrage beim Abhaken:** Hakst du eine Task mit Schätzung ab (Status *Done* oder 100 %), fragt MindMapper „Wie lange hat es gedauert?“. Das Feld ist leer – trag nur ein, was du weißt; **= 2h** übernimmt die Schätzung, wenn es wirklich so lange gedauert hat. **Überspringen** lässt die Ist-Zeit leer. Werden mehrere Tasks auf einmal abgehakt, stehen sie zusammen in einer Abfrage – auch beim Abhaken in *Overdue* / *Open tasks* eines Plans, wenn die Untertasks mit abgehakt werden (dann steht der Name ihrer Map dabei; die Ist-Zeit wird in diese Map geschrieben). Nicht gefragt wird bei Terminen, Routinen, Tasks ohne Schätzung und Tasks, die schon eine Ist-Zeit haben.
+- **Abschalten:** Panel ohne Auswahl → **Planungskapazität** → *Beim Abhaken nach der Ist-Zeit fragen*. Die Einstellung gilt für den Projektordner (PC und Handy gleich). Die Ist-Zeit im Panel lässt sich immer setzen.
+- **Schätzung zu Beginn:** Sobald du an einer Task anfängst (*In progress*, Fortschritt über 0 % oder erledigt), merkt sich MindMapper ihre Schätzung. Korrigierst du die Schätzung danach, bleibt der Anfangswert für den Vergleich erhalten – das Panel zeigt ihn dann als Hinweis an. Die Planung rechnet weiter mit der aktuellen Schätzung.
+- Die Ist-Zeit ändert an der Planung nichts; sie wird nur gesammelt. Eine Auswertung (z. B. „du brauchst im Mittel 1,3× so lang“) folgt später.
+
 ### Prioritäten: Stufen oder Eisenhower
 
 MindMapper kennt zwei Arten, Wichtigkeit festzuhalten. Pro Projektordner gilt eine davon.
@@ -383,7 +393,11 @@ Unten am Rand steht immer, z. B.: `Today 6 h / 8 h · Week 26 h / 40 h · Buffer
   - **Haupttask verschoben:** Untertasks, die dieselbe Deadline hatten wie die Haupttask (oder keine), wandern mit – früher und später. Untertasks mit eigener, früherer Deadline behalten sie; nur wenn die Haupttask davor rückt, rücken sie mit. Wird die Deadline der Haupttask **gelöscht**, verlieren auch die mitgewanderten Untertasks ihre.
   - **Abgeleitete Maps** folgen genauso: Änderst du die Deadline von A, werden die Tasks der aus A abgeleiteten Map im Hintergrund angepasst (Hinweis in der Statusleiste).
   - Die Deadline einer Untertask kannst du jederzeit **löschen** (× im Panel oder Chip-Menü → *Clear*) – sie bleibt dann leer, bis du eine neue setzt. Untertasks mit Termin (Scheduled) statt Deadline bleiben unberührt.
-- **Zeitaufwand:** Die Schätzung der Haupttask ist der **Gesamtaufwand**, die Untertasks teilen ihn auf. Was noch nicht aufgeteilt ist (z. B. 10 h geschätzt, Untertasks zusammen 6 h → 4 h), wird bei der Haupttask mit ihrer Deadline eingeplant. Ergeben die Untertasks mehr als die Haupttask, zählen die Untertasks (Hinweis „sub-tasks 12h > 10h estimated“). Nichts wird doppelt gezählt.
+- **Zeitaufwand:** Die Schätzung der Haupttask ist der **Gesamtaufwand**, die Untertasks teilen ihn auf. Was noch nicht aufgeteilt ist (z. B. 10 h geschätzt, Untertasks zusammen 6 h → 4 h), wird bei der Haupttask mit ihrer Deadline eingeplant. Nichts wird doppelt gezählt. Am ⏱-Chip der Haupttask siehst du, wie weit sie aufgeteilt ist:
+  - `6h ∑` (kursiv, gestrichelt): Die Haupttask hat **keine eigene Schätzung**; angezeigt wird die Summe der Untertasks. Sie wächst und schrumpft mit, gespeichert wird nichts.
+  - `10h (6h ∑)`: eigene Schätzung 10 h, davon 6 h auf Untertasks verteilt – 4 h sind noch nicht aufgeteilt. Im Panel steht das als Hinweis unter *Estimate*.
+  - `10h ∑`: Die Schätzung ist vollständig auf Untertasks verteilt.
+  - Ergeben die Untertasks **mehr** als die Schätzung der Haupttask, wird diese automatisch auf die Summe **angehoben** (Hinweis in der Statusleiste) – auch wenn die Untertasks in einer abgeleiteten Map liegen. Werden die Untertasks später kleiner, bleibt die Schätzung der Haupttask, wie sie ist.
 - Eine Task mit Untertasks zeigt ihren Fortschritt **berechnet**, erkennbar am **∑**: nach Stunden gewichtet (Untertasks ohne Schätzung zählen wie der Durchschnitt der anderen), der noch nicht aufgeteilte Rest zählt als nicht begonnen, *Done* = 100 %. Dieser Wert ist nicht von Hand verstellbar.
 
 ## 13. Auslastung und Puffer

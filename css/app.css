@@ -297,6 +297,9 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .dlg-templates { margin-bottom: 8px; }
 .dlg-templates .pick-chip { --c: var(--accent); }
 .dlg-buttons { display: flex; justify-content: flex-end; gap: 6px; margin-top: 14px; }
+.act-rows { display: flex; flex-direction: column; gap: 10px; max-height: 50vh; overflow: auto; }
+.act-title { font-weight: 600; margin-bottom: 4px; overflow-wrap: anywhere; }
+.act-row .row { gap: 6px; }
 .conflict-dialog { max-width: 520px; }
 /* routine categories (panel settings) and leisure routines (workload page) */
 .cat-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
@@ -742,6 +745,9 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .chip-scheduled svg .fill { fill: currentColor; stroke: none; }
 .task-done .outline-title { text-decoration: line-through; opacity: 0.6; }
 .task-done .outline-list { opacity: 0.55; }
+/* estimate of a main task: the sum of its sub-tasks (no own estimate) / the part split up */
+.chip-time.chip-calc { font-style: italic; border-style: dashed; }
+.chip-part { opacity: 0.7; font-weight: 400; }
 .chip-empty { color: #a0aec0; border-style: dashed; background: transparent; cursor: pointer; }
 .chip-empty:hover { color: var(--accent); border-color: var(--accent); }
 

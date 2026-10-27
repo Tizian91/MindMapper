@@ -3,7 +3,7 @@ const root = process.argv[2], out = [];
 try {
   const w = { MM: {} };
   const ctx = vm.createContext({ window: w, console, document: { getElementById: () => null, documentElement: {} }, navigator: { language: 'en' }, localStorage: null, setTimeout, clearTimeout, Intl });
-  for (const f of ['state.js', 'meta.js', 'tasks.js', 'templates.js', 'overview.js', 'tasklists.js']) {
+  for (const f of ['state.js', 'meta.js', 'tasks.js', 'templates.js', 'overview.js', 'tasklists.js', 'actual.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, 'js', f), 'utf8'), ctx, { filename: f });
   }
   const MM = w.MM, T = MM.templates, TL = MM.taskLists;
@@ -67,6 +67,7 @@ try {
   MM.project = { status: 'ready', find: () => true, readMap: async () => work, writeMap: async () => { writes++; } };
   MM.commit = () => {};
   MM.tasks.refreshExternal = () => {};
+  MM.actual.askFor = (l) => out.push('             | asked for the actual time: ' + l.map((x) => x.node.text + ' (first ' + x.node.meta.estimateFirst + ')').join(', '));
   MM.ui = { flash: (m) => out.push('             | flash: ' + m) };
   const overdueList = Object.values(plan.nodes).find((n) => n.taskList === 'overdue');
   const entry = overdueList.items.find((i) => i.ref && i.ref.id === poster.id);
@@ -76,7 +77,7 @@ try {
     out.push('cancelled    | asked ' + asked + ', entry ' + entry.done + ', Poster ' + poster.meta.status + ', Texte ' + s2.meta.status + ' (1, false, progress, open)');
     answer = true;
     await TL.toggle(overdueList, entry);
-    out.push('checked      | entry ' + entry.done + ', Poster ' + poster.meta.status + ' ' + poster.meta.progress + ' %, Texte ' + s2.meta.status + ', writes ' + writes + ' (true, done 100 %, done, 1)');
+    out.push('checked      | entry ' + entry.done + ', Poster ' + poster.meta.status + ' ' + poster.meta.progress + ' %, Texte ' + s2.meta.status + ', writes ' + writes + ' (true, done 100 %, done, 1 - asked: Poster (first 600), Texte (first 120))');
     await TL.toggle(overdueList, entry);
     out.push('unchecked    | entry ' + entry.done + ', Poster ' + poster.meta.status + ' ' + poster.meta.progress + ', Texte ' + s2.meta.status + ' (false, open null, done - sub-tasks stay)');
     fs.writeFileSync(process.argv[3], out.join('\n'));

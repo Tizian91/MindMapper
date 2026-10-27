@@ -244,8 +244,15 @@
           title="${esc(t('scheduledTitle'))}">
         <input type="time" data-meta="scheduledTime" value="${esc(m.scheduledTime || '')}" title="${esc(t('scheduledTimeTitle'))}">
         <button class="icon-btn" data-clear-meta="scheduled" title="${t('clearScheduled')}">×</button></div>
-      <div class="row"><label>${t('estimate')}</label><input type="text" data-meta="estimate" placeholder="${t('estimatePlaceholder')}"
+      <div class="row"><label>${t('estimate')}</label><input type="text" data-meta="estimate"
+        placeholder="${calc && calc.split ? esc(MM.tr('∑ {d} (sub-tasks)', { d: MM.meta.formatDuration(calc.split) })) : t('estimatePlaceholder')}"
         value="${esc(MM.meta.formatDuration(m.estimate))}"></div>
+      ${calc && calc.split && m.estimate > calc.split ? `<p class="hint">${esc(MM.tr('{s} of it split into sub-tasks, {r} not split up yet', {
+        s: MM.meta.formatDuration(calc.split), r: MM.meta.formatDuration(m.estimate - calc.split) }))}</p>` : ''}
+      <div class="row"><label>${esc(MM.tr('Actual time'))}</label><input type="text" data-meta="actual" placeholder="${esc(MM.tr('not recorded'))}"
+        value="${esc(MM.meta.formatDuration(m.actual))}" title="${esc(MM.tr('How long it really took - to compare with the estimate'))}"></div>
+      ${m.estimateFirst !== null && m.estimateFirst !== undefined && m.estimateFirst !== m.estimate
+        ? `<p class="hint">${esc(MM.tr('Estimate when work began: {d} (kept for the comparison)', { d: MM.meta.formatDuration(m.estimateFirst) }))}</p>` : ''}
       ${tasks && anyCalc ? calcRow : ''}
       ${tasks && !anyCalc ? `<div class="row"><label>${t('progress')}</label>
         <input type="range" data-meta="progress" min="0" max="100" step="5" value="${prog}">
@@ -396,6 +403,8 @@
       <p class="hint">${t('capacityHint').replace('{where}', esc(MM.storage.capacityLocation()))}</p>
       <div class="row"><label>${t('prioSystem')}</label>${select('data-setting="prioSystem"', set.prioSystem, { levels: t('prioLevels'), eisenhower: t('eisenhower') })}</div>
       <p class="hint">${t('prioSystemHint').replace('{where}', esc(MM.storage.capacityLocation()))}</p>
+      <label class="check"><input type="checkbox" data-setting="askActual" ${set.askActual !== false ? 'checked' : ''}> ${esc(MM.tr('Ask for the actual time when a task is checked off'))}</label>
+      <p class="hint">${esc(MM.tr('Only tasks with an estimate. To learn how well you estimate; the actual time can always be set in the panel. Stored {where}.', { where: MM.storage.capacityLocation() }))}</p>
     </section>
     ${categoriesSection()}
     <section><h3>${t('newConnections')}</h3>
@@ -691,12 +700,12 @@
       S.settings[ds.setting] = el.type === 'checkbox' ? el.checked : value;
       MM.saveSettings();
       if (ds.setting === 'theme') MM.applyTheme();
-      if (MM.storage.CAPACITY_KEYS.includes(ds.setting) || ds.setting === 'syncedFolder') MM.storage.saveProjectSettings();
+      if (MM.storage.CAPACITY_KEYS.includes(ds.setting) || ds.setting === 'syncedFolder' || ds.setting === 'askActual') MM.storage.saveProjectSettings();
       return true;
     }
     if (ds.meta) {
       let v = raw;
-      if (ds.meta === 'estimate') {
+      if (ds.meta === 'estimate' || ds.meta === 'actual') {
         v = MM.meta.parseDuration(raw);
         if (v === undefined) {
           el.classList.add('invalid');
@@ -785,7 +794,7 @@
   function onInput(e) {
     const el = e.target;
     if (el.type === 'checkbox' || el.tagName === 'SELECT') return;
-    if (['estimate', 'deadline', 'scheduled', 'scheduledTime'].includes(el.dataset.meta) ||
+    if (['estimate', 'actual', 'deadline', 'scheduled', 'scheduledTime'].includes(el.dataset.meta) ||
       el.dataset.tagInput !== undefined || el.dataset.linkInput !== undefined ||
       el.dataset.diaryField !== undefined || el.dataset.catName !== undefined) return; // applied on change (deadline / appointment exclude each other)
     if (apply(el, el.value)) {

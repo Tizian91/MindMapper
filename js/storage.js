@@ -81,6 +81,7 @@
       S.settings.routineCategories = MM.normalizeCategories(data && data.routineCategories);
       // a folder of a sync program: write its maps after a longer pause (see scheduleAutosave)
       S.settings.syncedFolder = !!(data && data.synced);
+      S.settings.askActual = !(data && data.askActual === false); // on unless turned off
       MM.saveSettings();
       MM.setPrioSystem(data && data.prioSystem, false);
     } catch (e) {
@@ -96,7 +97,7 @@
     try {
       await MM.project.writeText(ST.PROJECT_SETTINGS_FILE, JSON.stringify({
         version: 1, capacity, prioSystem: S.settings.prioSystem, routineCategories: S.settings.routineCategories || [],
-        synced: !!S.settings.syncedFolder,
+        synced: !!S.settings.syncedFolder, askActual: S.settings.askActual !== false,
       }, null, 2));
     } catch (e) {
       console.warn('MindMapper: could not write ' + ST.PROJECT_SETTINGS_FILE, e);

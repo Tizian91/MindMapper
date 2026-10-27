@@ -245,6 +245,9 @@
     } else if (key === 'repeat') {
       MM.panel.focusField('repeat'); // the rule has several fields: edit it in the panel
       return;
+    } else if (key === 'actual') {
+      MM.actual.ask([n.id]); // the same question as after checking off
+      return;
     } else if (key === 'progress' && MM.tasks.info(n)) {
       // calculated from the sub-tasks: nothing to set here
       const calc = MM.tasks.info(n);
