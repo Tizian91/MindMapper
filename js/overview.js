@@ -6,6 +6,7 @@
  *   - "By deadline": grouped by deadline (overdue, today, tomorrow, this week, later, none)
  *   - "By task":     main tasks with their sub-tasks as a collapsible tree
  *   - "Set aside":   deferred and dropped tasks (not in "By deadline" or the matrix)
+ *   - "Estimates":   estimated vs. actual time, steps by tag and projects (stats.js)
  *   (plus "Appointments", "Workload" and, with Eisenhower, "Matrix")
  *
  * A note counts as a task if it is a task note or has a status, priority or
@@ -338,6 +339,7 @@
             <button data-ov-mode="appts" title="${esc(tr('Appointments (Scheduled) and routines with a time of all maps by day'))}">${tr('Appointments')}</button>
             <button data-ov-mode="load" title="${esc(tr('Planned hours per day / week and the buffer until each deadline'))}">${tr('Workload')}</button>
             <button data-ov-mode="aside" title="${esc(tr('Deferred tasks (some day, no date yet) and dropped ones (kept as they were)'))}">${tr('Set aside')}</button>
+            <button data-ov-mode="stats" title="${esc(tr('Estimated and actual time: steps by tag, projects'))}">${tr('Estimates')}</button>
             ${MM.prioKey() === 'quadrant' ? `<button data-ov-mode="matrix" title="${esc(tr('Eisenhower matrix – drag tasks into a quadrant to classify them'))}">${tr('Matrix')}</button>` : ''}
           </span>
           <input type="search" class="ov-search" placeholder="${esc(tr('Search tasks…'))}">
@@ -514,11 +516,15 @@
 
     // the filters of the head do not apply to the workload page
     dialog.querySelectorAll('.ov-search, .ov-type, .ov-status, .ov-prio, .ov-hide').forEach((el) => {
-      (el.closest('label') || el).hidden = view.mode === 'load' || (view.mode === 'matrix' && el.classList.contains('ov-prio')) ||
+      (el.closest('label') || el).hidden = view.mode === 'load' || view.mode === 'stats' || (view.mode === 'matrix' && el.classList.contains('ov-prio')) ||
         (view.mode === 'aside' && (el.classList.contains('ov-hide') || el.classList.contains('ov-status')));
     });
     if (view.mode === 'load') {
       dialog.querySelector('.ov-list').innerHTML = MM.load.overviewHTML();
+      return;
+    }
+    if (view.mode === 'stats') {
+      dialog.querySelector('.ov-list').innerHTML = renderStats();
       return;
     }
     if (view.mode === 'matrix') {
@@ -627,6 +633,57 @@
       h += '</div>';
     }
     return h;
+  }
+
+  // ---- Estimates: estimated vs. actual time (computed by stats.js) -------------------
+
+  const num = (v, digits = 1) => v.toLocaleString(MM.locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const factorText = (f) => (f === null ? '–' : num(f) + '×');
+  const pct = (v) => (v === null ? '–' : Math.round(v * 100) + ' %');
+  const dur = (min) => MM.meta.formatDuration(Math.round(min)) || '0m';
+
+  /** View "Estimates": the steps by tag (each group opens to its steps), then the projects. */
+  function renderStats() {
+    const r = MM.stats.compute(items);
+    const few = (g) => g.n < MM.stats.FEW;
+    const row = (label, g, cls) => `<span class="st-tag">${label}</span><span>${g.n}</span><span>${dur(g.est)}</span><span>${dur(g.act)}</span>` +
+      `<span class="st-f">${factorText(g.factor)}</span><span>${factorText(g.median)}</span><span>${pct(g.hit)}</span>`;
+    const stepLine = (s) => `<div class="st-step" data-path="${esc(s.it.path)}" data-id="${esc(s.it.id)}" title="${esc(tr('Open the task'))}">` +
+      `<span>${esc(s.it.title)}</span><span>${dur(s.est)} → ${dur(s.act)}</span><span class="st-f">${factorText(s.act / s.est)}</span></div>`;
+    const title = tr('Factor = actual ÷ estimated: 1.5× means it took half as long again. Σ: of the totals (big tasks weigh more); Median: of the single tasks (outliers count less). On target: within ±25 %. Below {n} steps a group says little.', { n: MM.stats.FEW });
+    let h = `<div class="ov-group"><div class="ov-group-head">${tr('Steps by tag')}<span class="muted" title="${esc(title)}">` +
+      `${esc(tr('Done tasks without sub-tasks, with estimate and actual time'))} ⓘ</span></div>`;
+    if (!r.all.n) {
+      h += `<p class="hint">${esc(tr('No step with an actual time yet. It is asked for when you check off a task with an estimate (or set it in the panel).'))}</p>`;
+    } else {
+      h += `<div class="st-table"><div class="st-row st-head">${['Tag', 'n', 'Estimated', 'Actual', 'Σ factor', 'Median', 'On target']
+        .map((x) => `<span>${esc(tr(x))}</span>`).join('')}</div>`;
+      for (const g of r.tags) {
+        h += `<details class="st-group${few(g) ? ' few' : ''}"${few(g) ? ` title="${esc(tr('Fewer than {n} steps - says little yet', { n: MM.stats.FEW }))}"` : ''}>` +
+          `<summary class="st-row">${row(g.tag ? '#' + esc(g.tag) : `<i>${esc(tr('without tag'))}</i>`, g)}</summary>` +
+          g.steps.map(stepLine).join('') + '</details>';
+      }
+      h += `<div class="st-row st-all">${row(esc(tr('All')) + ` <span class="muted">${esc(tr('(each step once)'))}</span>`, r.all)}</div></div>`;
+    }
+    h += '</div>';
+
+    h += `<div class="ov-group"><div class="ov-group-head">${tr('Projects')}<span class="muted" title="${esc(tr('Main tasks: estimated when begun → the steps planned together → actual time of the recorded steps. A total is only complete when every step is recorded.'))}">` +
+      `${esc(tr('estimated at first → steps planned → actual'))} ⓘ</span></div>`;
+    if (!r.projects.length) h += `<p class="hint">${esc(tr('No main task with sub-tasks yet.'))}</p>`;
+    for (const p of r.projects) {
+      const s = MM.STATUSES[p.it.status] || MM.STATUSES.none;
+      const chain = [p.first ? dur(p.first) : '–', p.planned ? dur(p.planned) : '–', p.act ? dur(p.act) : '–'].join(' → ');
+      const cover = p.own ? tr('actual time of the project itself')
+        : tr('{d} of {n} steps done, {r} recorded', { d: p.done, n: p.steps, r: p.recorded });
+      const partial = !p.own && p.recorded < p.steps;
+      const f = p.first && p.act ? p.act / p.first : null;
+      h += `<div class="st-project" data-path="${esc(p.it.path)}" data-id="${esc(p.it.id)}">` +
+        `<span class="status-ico" style="--c:${s.color}" title="${esc(tr(s.label))}">${MM.meta.icon(p.it.status)}</span>` +
+        `<span class="st-ptitle">${esc(p.it.title)}<span class="ov-detail">${esc(cover)}</span></span>` +
+        `<span class="st-chain">${esc(chain)}</span>` +
+        `<span class="st-f" title="${esc(partial ? tr('So far - not every step is recorded yet') : tr('Actual ÷ estimated at first'))}">${f === null ? '' : (partial ? tr('so far') + ' ' : '') + factorText(f)}</span></div>`;
+    }
+    return h + '</div>';
   }
 
   /** Tree of main tasks. A row that does not match stays (faded) when one of its sub-tasks does. */

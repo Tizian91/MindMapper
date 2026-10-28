@@ -193,6 +193,8 @@
     for (const [id, c] of TK.compute(doc, external).info) {
       if (!c.over) continue;
       const n = doc.nodes[id];
+      // the project's own first guess stays for the comparison (overview "Estimates")
+      if ((n.meta.estimateFirst === null || n.meta.estimateFirst === undefined) && n.meta.estimate) n.meta.estimateFirst = n.meta.estimate;
       n.meta.estimate = c.split;
       out.push({ title: (n.text || '').split('\n')[0], to: c.split });
     }

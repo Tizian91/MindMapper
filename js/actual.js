@@ -27,7 +27,8 @@
 
   /**
    * Called by MM.commit before a step is recorded (prev: the doc before it, or null).
-   * Keeps the first estimate of tasks begun in this step and asks for the actual
+   * Keeps the first estimate of tasks begun in this step, notes the day of the ones
+   * finished (meta.doneAt, for the evaluation) and asks for the actual
    * time of the tasks checked off in it.
    */
   AT.commit = function (doc, prev) {
@@ -41,6 +42,9 @@
       if (!has(m.estimateFirst) && has(m.estimate) && started(m) && (!started(om) || !has(om.estimate))) m.estimateFirst = m.estimate;
       // finished or set aside: its stopwatch stops
       if (MM.notPlanned(m.status) && !MM.notPlanned(om.status) && m.timerStart) AT.stop(n);
+      // the day it was finished (for a period in the evaluation later on)
+      if (m.status === 'done' && om.status !== 'done') m.doneAt = MM.meta.todayStr();
+      else if (m.status !== 'done' && m.doneAt) delete m.doneAt;
       if (m.status === 'done' && om.status !== 'done' && AT.askable(n)) done.push(n.id);
     }
     if (done.length) setTimeout(() => AT.ask(done), 0);
@@ -116,9 +120,12 @@
     // appointments and routines took the time they were set for
     !n.repeat && !n.meta.scheduled && !n.movedTo && !has(n.meta.actual) && has(n.meta.estimate);
 
-  /** Note n of another map was checked off (written there, e.g. from a plan's task list): keep its first estimate. */
+  /** Note n of another map was checked off (written there, e.g. from a plan's task list): as AT.commit does it. */
   AT.checkedOff = function (n) {
-    if (n.meta && !has(n.meta.estimateFirst) && has(n.meta.estimate)) n.meta.estimateFirst = n.meta.estimate;
+    if (!n.meta) return;
+    if (!has(n.meta.estimateFirst) && has(n.meta.estimate)) n.meta.estimateFirst = n.meta.estimate;
+    n.meta.doneAt = MM.meta.todayStr();
+    if (n.meta.timerStart) AT.stop(n);
   };
 
   let dialog = null, rows = [];

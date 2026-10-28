@@ -161,7 +161,7 @@ Neben der Schätzung kannst du festhalten, wie lange eine Aufgabe **wirklich** g
 - **Abfrage beim Abhaken:** Hakst du eine Task mit Schätzung ab (Status *Done* oder 100 %), fragt MindMapper „Wie lange hat es gedauert?“. Das Feld ist leer – trag nur ein, was du weißt; **= 2h** übernimmt die Schätzung, wenn es wirklich so lange gedauert hat. **Überspringen** lässt die Ist-Zeit leer. Werden mehrere Tasks auf einmal abgehakt, stehen sie zusammen in einer Abfrage – auch beim Abhaken in *Overdue* / *Open tasks* eines Plans, wenn die Untertasks mit abgehakt werden (dann steht der Name ihrer Map dabei; die Ist-Zeit wird in diese Map geschrieben). Nicht gefragt wird bei Terminen, Routinen, Tasks ohne Schätzung und Tasks, die schon eine Ist-Zeit haben.
 - **Abschalten:** Panel ohne Auswahl → **Planungskapazität** → *Beim Abhaken nach der Ist-Zeit fragen*. Die Einstellung gilt für den Projektordner (PC und Handy gleich). Die Ist-Zeit im Panel lässt sich immer setzen.
 - **Schätzung zu Beginn:** Sobald du an einer Task anfängst (*In progress*, Fortschritt über 0 % oder erledigt), merkt sich MindMapper ihre Schätzung. Korrigierst du die Schätzung danach, bleibt der Anfangswert für den Vergleich erhalten – das Panel zeigt ihn dann als Hinweis an. Die Planung rechnet weiter mit der aktuellen Schätzung.
-- Die Ist-Zeit ändert an der Planung nichts; sie wird nur gesammelt. Eine Auswertung (z. B. „du brauchst im Mittel 1,3× so lang“) folgt später.
+- Die Ist-Zeit ändert an der Planung nichts. Ausgewertet wird sie in der Overview unter **Estimates** (Kapitel 11): nach Tags und pro Projekt.
 - **Stoppuhr (freiwillig):** Am Ende der Chip-Zeile einer Task steht ein unauffälliges **▶**. Ein Klick startet die Uhr – sie wird rot, pulsiert leicht und zeigt die Startzeit (`■ 09:12`); so siehst du, dass du sie später stoppen musst. Ein Klick auf **■** stoppt sie, und der Lauf kommt als Zeile unter die Chips: `28.10. 09:12–10:05  53m`.
   - Die Liste wird **nicht verrechnet** – die Ist-Zeit trägst du weiterhin selbst ein. In der Abfrage beim Abhaken bietet ein Knopf **⏱ 1h 18m** die Summe der Liste an; übernommen wird sie nur, wenn du ihn drückst.
   - Ein falscher Eintrag lässt sich mit **×** (erscheint beim Darüberfahren) löschen. Ein Lauf unter einer Minute (versehentlich geklickt) wird gar nicht erst eingetragen.
@@ -386,6 +386,22 @@ Die Seite rechnet aus Schätzung, Fortschritt, Deadline und Kapazität, wie voll
 - Untertasks, die mit ihrer Haupttask beiseitegelegt wurden, stehen nicht einzeln da; du findest sie unter *By task*.
 - In *By deadline* und in der Matrix tauchen beide nicht auf. *Hide done* blendet in den anderen Ansichten auch verworfene Aufgaben aus.
 - Klick auf eine Zeile öffnet die Map. Willst du eine zurückgestellte Aufgabe angehen, gib ihr eine Deadline – dann ist sie wieder offen.
+
+### Estimates: Wie gut schätze ich?
+
+Vergleicht Schätzung und Ist-Zeit (Kapitel 4). Zwei Teile, die nie zusammengezählt werden:
+
+- **Schritte nach Tag:** alle **erledigten Tasks ohne Untertasks**, die eine Schätzung und eine Ist-Zeit haben – bei Projekten also die einzelnen Schritte (Probenpräparation, Messung …), nicht das Projekt selbst.
+  - Gruppiert nach **Tags**. Ein Schritt zählt auch unter den Tags seiner Haupttask(s) – auch in einer abgeleiteten Map. Hat dein Projekt den Tag `#MoS2`, siehst du in der Zeile *MoS2* alle seine Schritte.
+  - Spalten: **n** (Anzahl), **Geschätzt** und **Ist** (Summen), **Σ-Faktor** = Ist ÷ geschätzt aus den Summen (große Aufgaben wiegen mehr), **Median** = mittlerer Faktor der einzelnen Schritte (ein Ausreißer verzerrt nicht), **Getroffen** = Anteil innerhalb ±25 %. *1,5×* heißt: hat anderthalbmal so lange gedauert wie geschätzt.
+  - Ein Schritt mit zwei Tags steht in beiden Zeilen – die Tag-Zeilen also nicht addieren. Die Zeile **Alle** zählt jeden Schritt genau einmal.
+  - Klick auf eine Zeile klappt ihre Schritte auf; ein Klick auf einen Schritt öffnet ihn. Zeilen mit weniger als 5 Schritten sind grau – noch wenig aussagekräftig.
+  - Verglichen wird mit der **Schätzung zu Beginn**, nicht mit einer später korrigierten.
+- **Projekte:** jede Haupttask (ganz oben) mit Untertasks: **anfangs geschätzt → Schritte geplant → Ist**, z. B. `20h → 32h → 41h`. So siehst du, ob das Projekt schon beim Planen der Schritte gewachsen ist (20 → 32) oder erst beim Ausführen (32 → 41).
+  - Darunter: wie viele Schritte erledigt und wie viele davon erfasst sind. Die Ist-Summe ist erst vollständig, wenn jeder Schritt eine Ist-Zeit hat – bis dahin steht beim Faktor **bisher**.
+  - Hat kein Schritt eine Ist-Zeit, aber das Projekt selbst, zählt diese als Gesamtzeit.
+  - Laufende Projekte stehen oben, abgeschlossene darunter; verworfene fehlen.
+- **Worauf achten:** Gezählt wird nur, wofür du eine Ist-Zeit eingetragen hast. Tags einheitlich schreiben (die Vorschläge im Panel helfen) – nachträglich vergebene Tags zählen sofort mit, alles wird beim Öffnen neu berechnet und nichts gespeichert.
 
 ### Matrix: Wichtig oder nur dringend? (nur Eisenhower)
 

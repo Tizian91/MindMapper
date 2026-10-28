@@ -487,6 +487,7 @@ window.MM = window.MM || {};
         m.timeLog = m.timeLog.filter((x) => x && num(x.s, 0) > 0 && num(x.e, 0) > num(x.s, 0)).map((x) => ({ s: num(x.s, 0), e: num(x.e, 0) }));
       }
       if (!Array.isArray(m.timeLog) || !m.timeLog.length) delete m.timeLog;
+      if (m.doneAt !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(m.doneAt)) delete m.doneAt; // day it was finished
       m.priority = oneOf(m.priority, MM.PRIORITIES, 'none');
       m.quadrant = oneOf(QUAD_LEGACY[m.quadrant] || m.quadrant, MM.QUADRANTS, 'none');
       m.status = oneOf(m.status, MM.STATUSES, 'none');

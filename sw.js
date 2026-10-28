@@ -31,6 +31,7 @@ const FILES = [
   'js/meta.js',
   'js/tasks.js',
   'js/actual.js',
+  'js/stats.js',
   'js/links.js',
   'js/images.js',
   'js/files.js',
