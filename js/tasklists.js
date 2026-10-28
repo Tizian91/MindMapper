@@ -44,7 +44,7 @@
 
   /** A list item of the Overview that belongs into the lists: an open main task, no appointment. */
   function isOpenMainTask(it) {
-    if (it.parent || it.type === 'todo' || it.status === 'done') return false;
+    if (it.parent || it.type === 'todo' || MM.notPlanned(it.status)) return false; // done, deferred, dropped: not now
     if (it.meta.scheduled && !it.meta.deadline) return false; // an appointment: 📌 in the plan of its day
     return it.type === 'task' || !!it.meta.deadline || ['open', 'progress', 'blocked'].includes(it.status);
   }
@@ -82,7 +82,7 @@
     const d = it.meta.deadline;
     if (d) parts.push('📅 ' + d.slice(8, 10) + '.' + d.slice(5, 7) + '.');
     if (it.children.length) {
-      const kids = it.children.map((k) => model.byKey.get(k)).filter(Boolean);
+      const kids = it.children.map((k) => model.byKey.get(k)).filter((c) => c && c.status !== 'dropped');
       parts.push(`☑ ${kids.filter((c) => c.status === 'done').length}/${kids.length}`);
     }
     const p = it.shownProgress;
@@ -197,7 +197,7 @@
     for (const k of it.children) {
       const c = byKey.get(k);
       if (!c) continue;
-      if (c.status !== 'done') out.push(c);
+      if (c.status !== 'done' && c.status !== 'dropped') out.push(c);
       openBelow(c, byKey, out);
     }
     return out;

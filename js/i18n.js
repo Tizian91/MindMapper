@@ -266,6 +266,8 @@ window.MM = window.MM || {};
       status_open: 'Offen',
       status_progress: 'In Bearbeitung',
       status_blocked: 'Blockiert',
+      status_deferred: 'Zurückgestellt',
+      status_dropped: 'Verworfen',
       status_done: 'Erledigt',
 
       // Shortcuts table
@@ -602,6 +604,8 @@ window.MM = window.MM || {};
       status_open: 'Open',
       status_progress: 'In progress',
       status_blocked: 'Blocked',
+      status_deferred: 'Deferred',
+      status_dropped: 'Dropped',
       status_done: 'Done',
 
       // Shortcuts table

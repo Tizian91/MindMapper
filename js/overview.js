@@ -5,6 +5,8 @@
  * Two views:
  *   - "By deadline": grouped by deadline (overdue, today, tomorrow, this week, later, none)
  *   - "By task":     main tasks with their sub-tasks as a collapsible tree
+ *   - "Set aside":   deferred and dropped tasks (not in "By deadline" or the matrix)
+ *   (plus "Appointments", "Workload" and, with Eisenhower, "Matrix")
  *
  * A note counts as a task if it is a task note or has a status, priority or
  * deadline. To-do notes count while they have open entries – and only if they
@@ -36,6 +38,8 @@
   const APPT_BUCKETS = [['overdue', 'Past'], ['today', 'Today'], ['tomorrow', 'Tomorrow'], ['week', 'Next 7 days'], ['later', 'Later']];
   /** An appointment (Scheduled) - listed in its own view, not in "By deadline". */
   const isAppointment = (it) => !!it.meta.scheduled && !it.meta.deadline;
+  /** Deferred or dropped - listed in the view "Set aside" only (and in the tree). */
+  const isAside = (it) => it.status === 'deferred' || it.status === 'dropped';
 
   const keyOf = (it) => it.path + '#' + it.id;
 
@@ -123,7 +127,7 @@
       const own = Number(it.meta.estimate) || 0;
       let v;
       if (it.children.length) {
-        const c = MM.tasks.combine(it.children.map(effective), own, it.status === 'done');
+        const c = MM.tasks.combine(it.children.filter((k) => byKey.get(k).status !== 'dropped').map(effective), own, it.status === 'done');
         Object.assign(it, { split: c.split, rest: c.rest, over: c.over });
         v = { p: c.progress, w: c.effort };
       } else {
@@ -138,7 +142,7 @@
       // own share of the time: a main task only adds what its sub-tasks do not cover
       it.minutes = it.children.length ? it.rest || 0 : Number(it.meta.estimate) || 0;
       // what is left of it: the part not split up counts as not started, done = nothing
-      it.open = it.status === 'done' ? 0 : it.children.length ? it.minutes : it.minutes * (1 - (Number(it.progress) || 0) / 100);
+      it.open = MM.notPlanned(it.status) ? 0 : it.children.length ? it.minutes : it.minutes * (1 - (Number(it.progress) || 0) / 100);
     }
   }
 
@@ -333,6 +337,7 @@
             <button data-ov-mode="tree" title="${esc(tr('Main tasks with their sub-tasks'))}">${tr('By task')}</button>
             <button data-ov-mode="appts" title="${esc(tr('Appointments (Scheduled) and routines with a time of all maps by day'))}">${tr('Appointments')}</button>
             <button data-ov-mode="load" title="${esc(tr('Planned hours per day / week and the buffer until each deadline'))}">${tr('Workload')}</button>
+            <button data-ov-mode="aside" title="${esc(tr('Deferred tasks (some day, no date yet) and dropped ones (kept as they were)'))}">${tr('Set aside')}</button>
             ${MM.prioKey() === 'quadrant' ? `<button data-ov-mode="matrix" title="${esc(tr('Eisenhower matrix – drag tasks into a quadrant to classify them'))}">${tr('Matrix')}</button>` : ''}
           </span>
           <input type="search" class="ov-search" placeholder="${esc(tr('Search tasks…'))}">
@@ -474,7 +479,7 @@
       : o.caret === 'leaf' ? '<span class="ov-caret"></span>'
         : `<button class="ov-caret${o.caret === 'closed' ? ' closed' : ''}" data-ov-toggle="${esc(keyOf(it))}" title="${esc(tr('Show / hide sub-tasks'))}">▾</button>`;
     const indent = o.depth ? ` style="padding-left:${o.depth * 22}px"` : '';
-    return `<div class="ov-row${it.status === 'done' ? ' done' : ''}${o.context ? ' ov-context' : ''}${o.cls ? ' ' + o.cls : ''}" data-path="${esc(it.path)}" data-id="${esc(it.id)}">
+    return `<div class="ov-row${it.status === 'done' ? ' done' : ''}${it.status === 'dropped' || it.status === 'deferred' ? ' ' + it.status : ''}${o.context ? ' ov-context' : ''}${o.cls ? ' ' + o.cls : ''}" data-path="${esc(it.path)}" data-id="${esc(it.id)}">
       <span class="status-ico" style="--c:${s.color}" title="${esc(tr(s.label))}">${MM.meta.icon(it.status)}</span>
       <span class="ov-title"${indent}>${caret}<span class="ov-title-text">${esc(it.title)}${detail ? `<span class="ov-detail">${esc(detail)}</span>` : ''}</span></span>
       ${prog}
@@ -499,8 +504,9 @@
     typeSel.value = current;
 
     const text = view.text.trim().toLowerCase();
+    // "Hide done" hides dropped tasks as well - except in their own view
     const matches = (it) =>
-      !(view.hideDone && it.status === 'done') &&
+      !(view.hideDone && view.mode !== 'aside' && (it.status === 'done' || it.status === 'dropped')) &&
       (current === 'any' || it.type === current) &&
       (view.status === 'any' || it.status === view.status) &&
       (view.priority === 'any' || view.mode === 'matrix' || MM.prioOf(it.meta) === view.priority) &&
@@ -508,7 +514,8 @@
 
     // the filters of the head do not apply to the workload page
     dialog.querySelectorAll('.ov-search, .ov-type, .ov-status, .ov-prio, .ov-hide').forEach((el) => {
-      (el.closest('label') || el).hidden = view.mode === 'load' || (view.mode === 'matrix' && el.classList.contains('ov-prio'));
+      (el.closest('label') || el).hidden = view.mode === 'load' || (view.mode === 'matrix' && el.classList.contains('ov-prio')) ||
+        (view.mode === 'aside' && (el.classList.contains('ov-hide') || el.classList.contains('ov-status')));
     });
     if (view.mode === 'load') {
       dialog.querySelector('.ov-list').innerHTML = MM.load.overviewHTML();
@@ -516,13 +523,16 @@
     }
     if (view.mode === 'matrix') {
       // an appointment is fixed - neither important nor urgent to decide on
-      dialog.querySelector('.ov-list').innerHTML = renderMatrix(items.filter((it) => matches(it) && !isAppointment(it)));
+      dialog.querySelector('.ov-list').innerHTML = renderMatrix(items.filter((it) => matches(it) && !isAppointment(it) && !isAside(it)));
       return;
     }
     const h = view.mode === 'tree' ? renderTree(matches)
-      : view.mode === 'appts' ? renderAppointments(items.filter(matches), matches) : renderBuckets(items.filter(matches));
+      : view.mode === 'aside' ? renderAside(items.filter((it) => isAside(it) && matches(it)))
+        : view.mode === 'appts' ? renderAppointments(items.filter((it) => matches(it) && it.status !== 'dropped'), matches)
+          : renderBuckets(items.filter((it) => matches(it) && !isAside(it)));
     dialog.querySelector('.ov-list').innerHTML = h ||
-      `<p class="hint">${view.mode === 'appts' ? tr('No appointments. An appointment is a note with a "Scheduled" date (panel → Details) - or a routine with a time.')
+      `<p class="hint">${view.mode === 'aside' ? tr('Nothing set aside. Status "Deferred": some day, no date yet. "Dropped": will not be done - kept as it was.')
+        : view.mode === 'appts' ? tr('No appointments. An appointment is a note with a "Scheduled" date (panel → Details) - or a routine with a time.')
         : items.length ? tr('Nothing matches.') : tr('No tasks yet. Give notes a status, priority or deadline – or use task / to-do notes.')}</p>`;
   }
 
@@ -598,6 +608,27 @@
     return h;
   }
 
+  /**
+   * View "Set aside": deferred tasks (some day, no date yet) and dropped ones (the idea
+   * stays, with everything it had). Sub-tasks set aside along with their main task are
+   * listed below it only (one row per main task).
+   */
+  function renderAside(all) {
+    let h = '';
+    for (const [status, label, hint] of [
+      ['deferred', 'Deferred', 'Comes some day - give it a deadline when it is due, then it is open again.'],
+      ['dropped', 'Dropped', 'Will not be done. Kept with everything it had, to look up later.'],
+    ]) {
+      const list = all.filter((it) => it.status === status && !(it.parent && (byKey.get(it.parent) || {}).status === status))
+        .sort((a, b) => a.title.localeCompare(b.title));
+      if (!list.length) continue;
+      h += `<div class="ov-group ov-${status}"><div class="ov-group-head">${tr(label)}<span class="muted" title="${esc(tr(hint))}">${list.length}</span></div>`;
+      for (const it of list) h += rowHTML(it);
+      h += '</div>';
+    }
+    return h;
+  }
+
   /** Tree of main tasks. A row that does not match stays (faded) when one of its sub-tasks does. */
   function renderTree(matches) {
     const visible = new Set();
@@ -654,7 +685,7 @@
   /** Buffer until the deadline of an item ({ buffer, cap } or null). */
   function bufferOf(it, buffers) {
     const dl = it.meta.deadline;
-    if (!dl || it.status === 'done') return null;
+    if (!dl || MM.notPlanned(it.status)) return null;
     const date = MM.meta.daysUntil(dl) < 0 ? MM.meta.todayStr() : dl;
     return buffers.find((b) => b.date === date) || null;
   }
@@ -675,7 +706,7 @@
     const quad = it.meta.quadrant || 'none';
     const color = MM.QUADRANTS[quad].color;
     const p = Math.max(0, Math.min(100, it.status === 'done' ? 100 : it.shownProgress || 0));
-    const due = it.status === 'done' ? null : MM.meta.deadlineStatus(it.meta.deadline);
+    const due = MM.notPlanned(it.status) ? null : MM.meta.deadlineStatus(it.meta.deadline);
     const ring = due === 'overdue' ? ' overdue' : due === 'today' || due === 'soon' ? ' soon' : '';
     const buf = bufferOf(it, buffers);
     const warn = !buf ? '' : buf.buffer < 0 ? 'bad' : buf.buffer < buf.cap * 0.1 ? 'tight' : '';

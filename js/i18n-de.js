@@ -72,6 +72,7 @@
     'None': 'Keine', 'Low': 'Niedrig', 'Medium': 'Mittel', 'High': 'Hoch', 'Urgent': 'Dringend',
     'No status': 'Kein Status', 'No priority': 'Keine Priorität',
     'Open': 'Offen', 'In progress': 'In Bearbeitung', 'Blocked': 'Blockiert', 'Done': 'Erledigt',
+    'Deferred': 'Zurückgestellt', 'Dropped': 'Verworfen',
     'Straight': 'Gerade', 'Elbow': 'Rechter Winkel', 'Rounded elbow': 'Abgerundeter Winkel', 'Curve': 'Kurve',
     'Solid': 'Durchgezogen', 'Dashed': 'Gestrichelt', 'Dotted': 'Gepunktet', 'Dash-dot': 'Strichpunkt',
     // ---- Metadata chip menus ----

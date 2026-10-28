@@ -353,8 +353,9 @@
       wrap.append(head, list, el('div', 'todo-add', '+ Add item'));
       c.append(wrap);
     } else if (MM.hasBlocks(n)) {
-      const done = n.type === 'task' && n.meta.status === 'done';
-      const wrap = el('div', 'outline' + (n.type === 'task' ? ' task' : '') + (done ? ' task-done' : ''));
+      const st = n.type === 'task' ? n.meta.status : '';
+      const wrap = el('div', 'outline' + (n.type === 'task' ? ' task' : '') + (st === 'done' ? ' task-done' : '') +
+        (st === 'dropped' ? ' task-dropped' : '') + (st === 'deferred' ? ' task-deferred' : ''));
       const title = el('div', 'outline-title', n.text);
       title.dataset.field = 'text';
       wrap.append(title);

@@ -125,7 +125,10 @@
     open: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/></svg>',
     progress: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" class="fill"/></svg>',
     blocked: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M5.5 8h5"/></svg>',
+    // deferred: a pause; dropped: crossed out
+    deferred: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M6.5 5.8v4.4M9.5 5.8v4.4"/></svg>',
     done: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" class="fill"/><path d="M5.4 8.2l1.8 1.8 3.4-3.6" class="check"/></svg>',
+    dropped: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M6 6l4 4M10 6l-4 4"/></svg>',
   };
   META.icon = (k) => ICONS[k];
 
@@ -157,13 +160,13 @@
     }
     if (m.deadline) {
       // a finished task is never "overdue"
-      const st = status === 'done' ? 'finished' : META.deadlineStatus(m.deadline);
+      const st = status === 'done' || status === 'dropped' ? 'finished' : META.deadlineStatus(m.deadline);
       h += `<span class="chip chip-date ${st}" data-meta="deadline" title="${esc(tr('Deadline {d}', { d: m.deadline }))}">${ICONS.deadline}${META.formatDate(m.deadline)}</span>`;
     } else if (placeholders && !m.scheduled) {
       h += `<span class="chip chip-empty" data-meta="deadline">${ICONS.deadline}${tr('Deadline')}</span>`;
     }
     if (m.scheduled) {
-      const st = status === 'done' ? 'finished' : META.deadlineStatus(m.scheduled);
+      const st = status === 'done' || status === 'dropped' ? 'finished' : META.deadlineStatus(m.scheduled);
       const label = META.formatDate(m.scheduled) + (m.scheduledTime ? ' ' + m.scheduledTime : '');
       h += `<span class="chip chip-date chip-scheduled ${st}" data-meta="scheduled" title="${esc(tr('Scheduled {d}', { d: m.scheduled + (m.scheduledTime ? ' ' + m.scheduledTime : '') }))}">${ICONS.scheduled}${esc(label)}</span>`;
     } else if (placeholders && !m.deadline) {
@@ -257,9 +260,15 @@
           n.meta.status = 'open';
         }
       } else if (key === 'status') {
+        delete n.meta.along; // set by hand now, not taken along by its main task (see tasks.js followStatus)
         if (value === 'done') n.meta.progress = 100;
+        else if (value === 'dropped') { /* dropped: everything stays as it was */ }
         else if (n.meta.progress === 100) n.meta.progress = 90;
+        // deferred: comes some day, no date yet (its sub-tasks follow, see tasks.js)
+        if (value === 'deferred') Object.assign(n.meta, { deadline: '', scheduled: '', scheduledTime: '' });
       }
+      // a deferred task that gets a date is planned again
+      if (['deadline', 'scheduled', 'scheduledTime'].includes(key) && value && n.meta.status === 'deferred') n.meta.status = 'open';
     }
   };
 
@@ -367,7 +376,7 @@
       // finished tasks don't count as due / overdue
       // an appointment counts as the date of the note as well
       const date = m.deadline || m.scheduled;
-      const days = m.status === 'done' && ['overdue', 'today', 'week'].includes(f.deadline) ? null : META.daysUntil(date);
+      const days = MM.notPlanned(m.status) && ['overdue', 'today', 'week'].includes(f.deadline) ? null : META.daysUntil(date);
       switch (f.deadline) {
         case 'overdue': if (!(days !== null && days < 0)) return false; break;
         case 'today': if (!(days !== null && days <= 0)) return false; break;

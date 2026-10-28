@@ -387,7 +387,6 @@
       '„{path}“ wurde inzwischen woanders geändert (anderer Rechner, anderer Tab) und deshalb nicht überschrieben – bitte neu öffnen und den Schritt wiederholen.',
     'Deadline of the main task': 'Frist der Hauptaufgabe',
     'Sub-task: due by {d} at the latest (deadline of the main task)': 'Unteraufgabe: spätestens bis {d} fällig (Frist der Hauptaufgabe)',
-    'Deadline of the sub-tasks also changed in {n} derived map(s)': 'Frist der Unteraufgaben auch in {n} abgeleiteten Map(s) angepasst',
     'Could not update the derived maps: {err}': 'Die abgeleiteten Maps konnten nicht angepasst werden: {err}',
     'How long did it take?': 'Wie lange hat es gedauert?',
     'Only if you know it - no value is better than a guessed one. Turn the question off: panel without selection → Planning capacity.':
@@ -407,7 +406,16 @@
     'Estimated {e} - all of it split into sub-tasks': 'Geschätzt {e} – vollständig auf Untertasks verteilt',
     '∑ {d} (sub-tasks)': '∑ {d} (Untertasks)',
     '{s} of it split into sub-tasks, {r} not split up yet': 'Davon {s} auf Untertasks verteilt, {r} noch nicht aufgeteilt',
-    'Could not save the actual time: {err}': 'Die Ist-Zeit konnte nicht gespeichert werden: {err}',
+    '{n} sub-task(s) changed along with their main task': '{n} Untertask(s) mit der Hauptaufgabe geändert',
+    'Sub-tasks also changed in {n} derived map(s)': 'Untertasks auch in {n} abgeleiteten Map(s) angepasst',
+    'Done, deferred, dropped or moved notes are not planned work.': 'Erledigte, zurückgestellte, verworfene oder verschobene Notes sind keine geplante Arbeit.',
+    'Deferred tasks (some day, no date yet) and dropped ones (kept as they were)': 'Zurückgestellte Aufgaben (irgendwann, noch ohne Datum) und verworfene (so aufbewahrt, wie sie waren)',
+    'Set aside': 'Beiseite',
+    'Nothing set aside. Status "Deferred": some day, no date yet. "Dropped": will not be done - kept as it was.':
+      'Nichts beiseitegelegt. Status „Zurückgestellt“: irgendwann, noch ohne Datum. „Verworfen“: wird nicht gemacht – bleibt so erhalten, wie es war.',
+    'Comes some day - give it a deadline when it is due, then it is open again.': 'Kommt irgendwann – bekommt sie eine Deadline, ist sie wieder offen.',
+    'Will not be done. Kept with everything it had, to look up later.': 'Wird nicht gemacht. Bleibt mit allem erhalten, was sie hatte – zum Nachschlagen.',
+    'Could not save the actual time: {err}':'Die Ist-Zeit konnte nicht gespeichert werden: {err}',
     'Ask for the actual time when a task is checked off': 'Beim Abhaken nach der Ist-Zeit fragen',
     'Only tasks with an estimate. To learn how well you estimate; the actual time can always be set in the panel. Stored {where}.':
       'Nur bei Aufgaben mit Schätzung. Zeigt mit der Zeit, wie gut du schätzt; die Ist-Zeit lässt sich immer im Panel setzen. Gespeichert {where}.',

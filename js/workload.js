@@ -95,6 +95,7 @@
         if (m.scheduled) {
           // appointment: a fixed block of time on its day - it stays reserved when ticked off
           const est = Number(m.estimate) || 0;
+          if (m.status === 'dropped') continue; // will not take place
           if (!est && (n.type === 'todo' || m.status === 'done' || (n.type !== 'task' && (!m.status || m.status === 'none')))) continue;
           out.push({
             path, id: n.id, title: (n.text || '').split('\n')[0] || tr('Appointment'),
@@ -102,7 +103,7 @@
           });
           continue;
         }
-        if (m.status === 'done') continue;
+        if (MM.notPlanned(m.status)) continue; // done, deferred or dropped: no work now
         if (n.type === 'task' && parents.has(n.id)) {
           // only the part of its estimate that is not split up into sub-tasks yet
           const info = parents.get(n.id);
@@ -416,13 +417,13 @@
           ? `<div class="over">${x(tr('Sub-tasks: {a} > {b} estimated – the sub-tasks count.', { a: e(info.split), b: e(own) }))}</div>`
           : `<div>${x(tr('{a} of {b} split up into sub-tasks', { a: e(info.split) || '0m', b: e(own) }) +
             (info.rest ? tr('; the rest ({r}) is planned with this task.', { r: e(info.rest) }) : '.'))}</div>`;
-      if (!info.rest || !m.deadline || m.status === 'done') return `<div class="load-box">${split}</div>`;
+      if (!info.rest || !m.deadline || MM.notPlanned(m.status)) return `<div class="load-box">${split}</div>`;
     } else if (m.scheduled) {
       return L.appointmentHTML(n);
     } else if (!m.estimate || !m.deadline) {
       return `<p class="hint">${tr('Set an estimate and a deadline or a scheduled date to see the effect on your plan.')}</p>`;
     }
-    if (m.status === 'done' || n.movedTo) return `<p class="hint">${tr('Done or moved notes are not planned work.')}</p>`;
+    if (MM.notPlanned(m.status) || n.movedTo) return `<p class="hint">${tr('Done, deferred, dropped or moved notes are not planned work.')}</p>`;
     const sum = L.summary();
     const without = L.compute(L.items(allDocs(), new Set(nodes.map((x) => x.id))), sum.routines);
     const w1 = weekOf(sum, m.deadline), w0 = weekOf(without, m.deadline);

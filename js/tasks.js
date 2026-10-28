@@ -100,7 +100,8 @@
     // k is a sub-task of a main task due `due` now and `was` before this step (undefined: unknown)
     const fit = (k, due, was, fresh) => {
       const m = nodes[k].meta;
-      if (!m || m.scheduled) return;
+      // deferred: no date on purpose; dropped: stays as it was
+      if (!m || m.scheduled || m.status === 'deferred' || m.status === 'dropped') return;
       const own = m.deadline || '';
       const touched = before && before[k] ? dl(before[k]) !== own : false; // changed by hand in this step
       if (fresh) {
@@ -131,6 +132,53 @@
     }
     for (const id of children.keys()) if (!parent.has(id)) visit(id);
     return limited;
+  };
+
+  const ASIDE = ['deferred', 'dropped'];
+  const statusOf = (n) => (n && n.meta && n.meta.status) || 'none';
+
+  /**
+   * A main task set aside takes its sub-tasks along: deferred or dropped, the open ones
+   * get that status too (deferred ones lose their dates as well) and are marked
+   * meta.along; done and dropped ones stay as they are. Active again (not done): the
+   * sub-tasks taken along are open again - their deadline does not come back. One set
+   * aside by hand stays so.
+   *   prev:  the doc before this step
+   *   outer: { status, was } - derived map: its main task in the other map now and before
+   * Changes doc in place; returns the number of sub-tasks changed.
+   */
+  TK.followStatus = function (doc, prev, outer) {
+    if (!prev) return 0;
+    const nodes = doc.nodes || {}, before = prev.nodes || {};
+    const { parent, children } = hierarchy(doc);
+    let count = 0;
+    // k is a sub-task of a main task with status `now`, `was` before this step
+    const fit = (k, now, was) => {
+      const m = nodes[k].meta;
+      if (!m || now === was) return;
+      const s = m.status || 'none';
+      if (ASIDE.includes(now)) {
+        if (s === 'done' || s === now || (s === 'dropped' && !m.along)) return;
+        m.status = now;
+        m.along = true;
+        if (now === 'deferred') Object.assign(m, { deadline: '', scheduled: '', scheduledTime: '' });
+        count++;
+      } else if (ASIDE.includes(was) && now !== 'done' && s === was && m.along) {
+        m.status = 'open';
+        delete m.along;
+        count++;
+      }
+    };
+    const visit = (id) => {
+      const now = statusOf(nodes[id]), was = before[id] ? statusOf(before[id]) : now;
+      for (const k of children.get(id) || []) {
+        fit(k, now, was);
+        visit(k);
+      }
+    };
+    if (outer) for (const n of Object.values(nodes)) if (isTask(n) && !parent.has(n.id)) fit(n.id, outer.status, outer.was);
+    for (const n of Object.values(nodes)) if (isTask(n) && !parent.has(n.id)) visit(n.id);
+    return count;
   };
 
   /**
@@ -174,6 +222,8 @@
    */
   TK.commit = function (doc, prev) {
     if (!Object.values(doc.nodes || {}).some(isTask)) return 0;
+    const along = TK.followStatus(doc, prev);
+    if (along && MM.ui) MM.ui.flash(MM.tr('{n} sub-task(s) changed along with their main task', { n: along }));
     const due = TK.outerDeadline();
     const limited = TK.enforceDeadlines(doc, prev, due === null ? null : { due, was: due });
     const raised = TK.raiseEstimates(doc);
@@ -182,8 +232,7 @@
         ? MM.tr('Estimate of "{t}" raised to its sub-tasks: {d}', { t: raised[0].title, d: MM.meta.formatDuration(raised[0].to) })
         : MM.tr('Estimate of {n} main tasks raised to their sub-tasks', { n: raised.length }));
     }
-    const moved = prev && Object.values(doc.nodes).some((n) => isTask(n) && n.derivedMap && prev.nodes[n.id] &&
-      ((n.meta && n.meta.deadline) || '') !== ((prev.nodes[n.id].meta || {}).deadline || ''));
+    const moved = prev && Object.values(doc.nodes).some((n) => isTask(n) && n.derivedMap && prev.nodes[n.id] && changedForSubs(n, prev.nodes[n.id]));
     if (moved) {
       const now = { nodes: JSON.parse(JSON.stringify(doc.nodes)) }; // as it is now, not after the next step
       const from = S.file.path;
@@ -192,7 +241,7 @@
           const n = await TK.syncDerived(now, prev, new Set([from]));
           if (n) {
             MM.load.scheduleRefresh();
-            MM.ui.flash(MM.tr('Deadline of the sub-tasks also changed in {n} derived map(s)', { n }));
+            MM.ui.flash(MM.tr('Sub-tasks also changed in {n} derived map(s)', { n }));
           }
         } catch (err) {
           MM.ui.flash(MM.tr('Could not update the derived maps: {err}', { err: (err && err.message) || err }));
@@ -238,11 +287,18 @@
     return max;
   };
 
+  /** Did main task n (old: as it was) change in a way its sub-tasks follow: deadline, or set aside / back? */
+  function changedForSubs(n, old) {
+    const dl = (x) => (x.meta && x.meta.deadline) || '';
+    const now = statusOf(n), was = statusOf(old);
+    return dl(n) !== dl(old) || (now !== was && (ASIDE.includes(now) || ASIDE.includes(was)));
+  }
+
   /**
-   * The deadline of a task with a derived map changed (doc before: prev): the
-   * derived maps follow - their top level tasks are its sub-tasks (and so on,
-   * for maps derived from those). Written in the background; returns the number
-   * of maps changed.
+   * The deadline or status of a task with a derived map changed (doc before: prev):
+   * the derived maps follow - their top level tasks are its sub-tasks (and so on,
+   * for maps derived from those). Written in the background, only when something
+   * changed there; returns the number of maps changed.
    */
   TK.syncDerived = async function (doc, prev, seen = new Set()) {
     const P = MM.project;
@@ -251,12 +307,13 @@
     for (const n of Object.values(doc.nodes || {})) {
       if (!isTask(n) || !n.derivedMap || seen.has(n.derivedMap) || n.derivedMap === S.file.path) continue;
       const old = prev && prev.nodes && prev.nodes[n.id];
-      const due = (n.meta && n.meta.deadline) || '', was = old ? (old.meta && old.meta.deadline) || '' : due;
-      if (due === was) continue;
+      if (!old || !changedForSubs(n, old)) continue;
+      const due = (n.meta && n.meta.deadline) || '', was = (old.meta && old.meta.deadline) || '';
       seen.add(n.derivedMap);
       const sub = P.find(n.derivedMap) ? await P.readMap(n.derivedMap) : null;
       if (!sub) continue;
       const before = JSON.parse(JSON.stringify(sub));
+      TK.followStatus(sub, before, { status: statusOf(n), was: statusOf(old) });
       TK.enforceDeadlines(sub, before, { due, was });
       if (JSON.stringify(sub.nodes) === JSON.stringify(before.nodes)) continue;
       if (!(await P.ensureWriteAccess())) throw new Error(MM.tr('no write access to the project folder'));
@@ -275,7 +332,8 @@
       if (memo.has(id)) return memo.get(id);
       const n = nodes[id];
       const m = n.meta || {};
-      const kids = (children.get(id) || []).map(effective);
+      // dropped sub-tasks are no part of the work any more
+      const kids = (children.get(id) || []).filter((k) => statusOf(nodes[k]) !== 'dropped').map(effective);
       const outside = n.derivedMap && external ? external(n.derivedMap) : null;
       if (outside) kids.push(...outside);
       const done = m.status === 'done';
@@ -294,7 +352,7 @@
     for (const n of Object.values(nodes)) {
       if (!isTask(n)) continue;
       const v = effective(n.id);
-      if (!parent.has(n.id)) roots.push(v);
+      if (!parent.has(n.id) && statusOf(n) !== 'dropped') roots.push(v);
     }
     return { info, roots };
   };

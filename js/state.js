@@ -100,8 +100,12 @@ window.MM = window.MM || {};
     open: { label: 'Open', color: '#3182ce' },
     progress: { label: 'In progress', color: '#d69e2e' },
     blocked: { label: 'Blocked', color: '#e53e3e' },
+    deferred: { label: 'Deferred', color: '#805ad5' }, // comes some day, no date yet: no deadline, not planned
     done: { label: 'Done', color: '#38a169' },
+    dropped: { label: 'Dropped', color: '#718096' },   // will not be done: kept as it was, not planned
   };
+  /** No work now: done, deferred or dropped - not in the workload, the plans' lists or "By deadline". */
+  MM.notPlanned = (status) => status === 'done' || status === 'deferred' || status === 'dropped';
 
   MM.SHAPES = {
     rect: 'Rectangle', rounded: 'Rounded', pill: 'Pill', ellipse: 'Ellipse',

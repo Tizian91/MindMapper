@@ -118,6 +118,24 @@ Den Typ änderst du per Rechtsklick → **Change type** oder im Panel. Wird eine
 - Die Werte erscheinen als kleine **Chips** unter der Note (Toolbar **Details** blendet sie ein/aus).
 - **In Tasks** genügt ein Klick auf einen Chip: Es öffnet sich direkt ein Auswahlmenü (z. B. *Tomorrow*, *Next Monday*, *1h 30m*, *50 %*).
 - Status und Fortschritt hängen zusammen: 100 % → *Done*; *Done* → 100 %.
+
+### Status: was bedeutet welcher?
+
+| Status | Bedeutung | In der Planung |
+|---|---|---|
+| *Open* (offen) | steht an, noch nicht begonnen | zählt als Arbeit |
+| *In progress* | du arbeitest daran | zählt als Arbeit (Restaufwand nach Fortschritt) |
+| *Blocked* (blockiert) | du würdest weitermachen, aber etwas von außen fehlt: Antwort, Zuarbeit, Material, eine andere Aufgabe | zählt **weiter** als Arbeit – sie muss ja trotzdem bis zur Deadline fertig werden. Im Filter findest du so, wo du nachhaken musst. |
+| *Deferred* (zurückgestellt) | kommt irgendwann, aber ein Datum lässt sich noch nicht setzen | **zählt nicht**: keine Auslastung, nicht in den Listen der Pläne, nicht in *By deadline* / Matrix |
+| *Done* (erledigt) | fertig | zählt nicht mehr |
+| *Dropped* (verworfen) | wird nicht gemacht – die Idee bleibt aber sichtbar | **zählt nicht**, wird aber auch nicht als „geschafft“ gezählt |
+
+- **Zurückstellen** löscht die Deadline (und einen Termin) der Task. Bekommt sie später wieder eine Deadline oder einen Termin, ist sie automatisch wieder *Open*.
+- **Verwerfen** lässt alles stehen, wie es war: Deadline, Schätzung, Fortschritt, Tags, Pfeile und abgeleitete Maps. Die Note wird durchgestrichen dargestellt.
+- **Untertasks ziehen mit:** Stellst du eine Haupttask zurück oder verwirfst sie, bekommen ihre offenen Untertasks denselben Status – beim Zurückstellen verlieren auch sie ihre Deadline. Das gilt ebenso für die Tasks einer **abgeleiteten Map** (die Map wird im Hintergrund angepasst, aber nur, wenn sich dort wirklich etwas ändert). Erledigte Untertasks bleiben erledigt, von Hand verworfene bleiben verworfen.
+- **Zurücknehmen:** Setzt du die Haupttask wieder auf *Open* (oder gibst ihr eine Deadline), werden die mitgezogenen Untertasks wieder offen; ihre alte Deadline kommt nicht zurück, sie übernehmen die neue der Haupttask.
+- Eine verworfene Untertask zählt nicht mehr zum Fortschritt (∑) und zur Schätzung ihrer Haupttask.
+- In der Overview stehen beide in der Ansicht **Set aside** (Kapitel 11).
 - **Priorität:** zwei Systeme zur Wahl – siehe unten **Prioritäten: Stufen oder Eisenhower**.
 - **Link** im Panel: eine Map des Projekts, eine Webadresse oder ein **Ordner / eine Datei auf dem PC** (`C:\Projekte\Abrechnung`, `\\server\share\Team`; „Als Pfad kopieren“ aus dem Explorer funktioniert auch). Der kleine **↗**-Knopf an der Note (oder `Ctrl+Klick`) öffnet ihn.
   - Ein Ordner öffnet sich als Dateiliste in einem neuen Browser-Tab. Den Windows-Explorer selbst darf der Browser nicht starten – dafür kopiert MindMapper den Pfad in die Zwischenablage: `Win+E`, `Ctrl+L`, `Ctrl+V`.
@@ -356,6 +374,13 @@ Die Seite rechnet aus Schätzung, Fortschritt, Deadline und Kapazität, wie voll
 ![Workload, unten: Puffer bis zu jeder Deadline (+ = Luft, − = geht nicht auf), Routinen mit Stunden pro Woche, Urlaub](docs/handbuch/overview-workload-2.png)
 
 - **So liest du es:** Zuerst auf rote Wochen und negative Puffer schauen – dort muss etwas weichen: eine Deadline verschieben, eine Schätzung ehrlicher machen, eine Routine streichen. Die rechte Spalte zeigt, wie viel deiner Zeit schon fest vergeben ist, bevor die erste Projektaufgabe dran ist.
+
+### Set aside: zurückgestellt und verworfen
+
+- Zwei Rubriken: **Deferred** (zurückgestellt – kommt irgendwann, noch ohne Datum) und **Dropped** (verworfen – bleibt mit allem erhalten, was die Aufgabe hatte, zum Nachschlagen).
+- Untertasks, die mit ihrer Haupttask beiseitegelegt wurden, stehen nicht einzeln da; du findest sie unter *By task*.
+- In *By deadline* und in der Matrix tauchen beide nicht auf. *Hide done* blendet in den anderen Ansichten auch verworfene Aufgaben aus.
+- Klick auf eine Zeile öffnet die Map. Willst du eine zurückgestellte Aufgabe angehen, gib ihr eine Deadline – dann ist sie wieder offen.
 
 ### Matrix: Wichtig oder nur dringend? (nur Eisenhower)
 
