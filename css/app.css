@@ -750,6 +750,21 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 /* dropped: crossed out and grey, but readable (the idea stays); deferred: faded, not crossed out */
 .task-dropped .outline-title { text-decoration: line-through; color: #718096; }
 .task-dropped .outline-list, .task-deferred .outline-list, .task-deferred .outline-title { opacity: 0.6; }
+/* stopwatch of a task (actual.js): quiet ▶, a running one in red with a slow pulse; its list small and grey */
+.task-timer {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 10px;
+  font: 500 11px/1 "Segoe UI", system-ui, sans-serif; color: #a0aec0; cursor: pointer;
+}
+.task-timer:hover { color: var(--accent); }
+.task-timer.running { color: #c53030; background: color-mix(in srgb, #e53e3e 10%, var(--mix-base)); animation: timer-pulse 2s ease-in-out infinite; }
+@keyframes timer-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .task-timer.running { animation: none; } }
+.task-log { margin: -2px 0 6px; font-size: 0.75em; font-weight: 400; color: var(--muted); }
+.task-log-row { display: flex; gap: 8px; align-items: baseline; }
+.task-log-row b { font-weight: 600; }
+.task-log-del { margin-left: auto; padding: 0 4px; cursor: pointer; opacity: 0; }
+.node:hover .task-log-del, .node.selected .task-log-del { opacity: 0.7; }
+.task-log-del:hover { opacity: 1; color: var(--danger); }
 /* estimate of a main task: the sum of its sub-tasks (no own estimate) / the part split up */
 .chip-time.chip-calc { font-style: italic; border-style: dashed; }
 .chip-part { opacity: 0.7; font-weight: 400; }

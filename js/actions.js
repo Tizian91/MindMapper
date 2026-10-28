@@ -507,6 +507,7 @@
       n.y += dy;
       if (n.items) n.items.forEach((i) => (i.id = MM.uid('i')));
       if (n.blocks) n.blocks.forEach((b) => (b.id = MM.uid('b')));
+      if (n.meta) n.meta.timerStart = null; // a copy does not run along (actual.js)
       map[src.id] = n.id;
       S.doc.nodes[n.id] = n;
       newIds.push(n.id);

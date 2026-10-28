@@ -162,6 +162,11 @@ Neben der Schätzung kannst du festhalten, wie lange eine Aufgabe **wirklich** g
 - **Abschalten:** Panel ohne Auswahl → **Planungskapazität** → *Beim Abhaken nach der Ist-Zeit fragen*. Die Einstellung gilt für den Projektordner (PC und Handy gleich). Die Ist-Zeit im Panel lässt sich immer setzen.
 - **Schätzung zu Beginn:** Sobald du an einer Task anfängst (*In progress*, Fortschritt über 0 % oder erledigt), merkt sich MindMapper ihre Schätzung. Korrigierst du die Schätzung danach, bleibt der Anfangswert für den Vergleich erhalten – das Panel zeigt ihn dann als Hinweis an. Die Planung rechnet weiter mit der aktuellen Schätzung.
 - Die Ist-Zeit ändert an der Planung nichts; sie wird nur gesammelt. Eine Auswertung (z. B. „du brauchst im Mittel 1,3× so lang“) folgt später.
+- **Stoppuhr (freiwillig):** Am Ende der Chip-Zeile einer Task steht ein unauffälliges **▶**. Ein Klick startet die Uhr – sie wird rot, pulsiert leicht und zeigt die Startzeit (`■ 09:12`); so siehst du, dass du sie später stoppen musst. Ein Klick auf **■** stoppt sie, und der Lauf kommt als Zeile unter die Chips: `28.10. 09:12–10:05  53m`.
+  - Die Liste wird **nicht verrechnet** – die Ist-Zeit trägst du weiterhin selbst ein. In der Abfrage beim Abhaken bietet ein Knopf **⏱ 1h 18m** die Summe der Liste an; übernommen wird sie nur, wenn du ihn drückst.
+  - Ein falscher Eintrag lässt sich mit **×** (erscheint beim Darüberfahren) löschen. Ein Lauf unter einer Minute (versehentlich geklickt) wird gar nicht erst eingetragen.
+  - Hakst du eine Task mit laufender Uhr ab (oder stellst sie zurück / verwirfst sie), wird die Uhr gestoppt und der Lauf eingetragen.
+  - Die laufende Uhr steht in der Map-Datei: Gestartet am PC, siehst und stoppst du sie auch auf dem Handy. Start und Stopp sind je eine normale Änderung der Map (Strg+Z nimmt sie zurück).
 
 ### Prioritäten: Stufen oder Eisenhower
 

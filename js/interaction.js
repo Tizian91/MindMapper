@@ -247,6 +247,18 @@
         return;
       }
 
+      // stopwatch of a task: start / stop, delete an entry of its list (actual.js)
+      if (t.closest('[data-timer]')) {
+        MM.select([id]);
+        MM.actual.toggle(n);
+        return;
+      }
+      const del = t.closest('[data-log-del]');
+      if (del) {
+        MM.actual.remove(n, Number(del.dataset.logDel));
+        return;
+      }
+
       const chip = t.closest('.task-meta .chip[data-meta]');
       // metadata chip of a task: drop-down with the values right at the chip
       if (chip) {

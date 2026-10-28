@@ -373,8 +373,10 @@
           wrap.append(bar);
         }
         const meta = el('div', 'task-meta');
-        meta.innerHTML = MM.meta.chipsHTML(n, true);
+        meta.innerHTML = MM.meta.chipsHTML(n, true) + MM.actual.buttonHTML(n); // ▶ / ■ stopwatch (actual.js)
         wrap.append(meta);
+        const log = MM.actual.logHTML(n);
+        if (log) wrap.insertAdjacentHTML('beforeend', log);
       }
       wrap.append(blockList(n), el('div', 'todo-add outline-add', '+ Add item'));
       c.append(wrap);

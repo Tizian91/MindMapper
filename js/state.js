@@ -228,7 +228,7 @@ window.MM = window.MM || {};
    * place on that day. A note has either a deadline or a scheduled date, never both.
    */
   MM.emptyMeta = () => ({ deadline: '', scheduled: '', scheduledTime: '', estimate: null, priority: 'none', quadrant: 'none', status: 'none', progress: null,
-    actual: null, estimateFirst: null }); // actual time and the estimate when work began (see actual.js)
+    actual: null, estimateFirst: null, timerStart: null }); // actual time, estimate when work began, stopwatch (see actual.js)
 
   /** Create a node of the given type centered on (cx, cy). */
   MM.createNode = function (type, cx, cy, overrides) {
@@ -481,6 +481,12 @@ window.MM = window.MM || {};
         const v = num(m[k], null);
         m[k] = v !== null && v >= 0 ? v : null;
       }
+      // stopwatch (actual.js): running since (ms) and the recorded runs
+      m.timerStart = num(m.timerStart, 0) > 0 ? num(m.timerStart, 0) : null;
+      if (Array.isArray(m.timeLog)) {
+        m.timeLog = m.timeLog.filter((x) => x && num(x.s, 0) > 0 && num(x.e, 0) > num(x.s, 0)).map((x) => ({ s: num(x.s, 0), e: num(x.e, 0) }));
+      }
+      if (!Array.isArray(m.timeLog) || !m.timeLog.length) delete m.timeLog;
       m.priority = oneOf(m.priority, MM.PRIORITIES, 'none');
       m.quadrant = oneOf(QUAD_LEGACY[m.quadrant] || m.quadrant, MM.QUADRANTS, 'none');
       m.status = oneOf(m.status, MM.STATUSES, 'none');
