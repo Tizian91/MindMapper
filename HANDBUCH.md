@@ -389,7 +389,9 @@ Die Seite rechnet aus Schätzung, Fortschritt, Deadline und Kapazität, wie voll
 
 ### Estimates: Wie gut schätze ich?
 
-Vergleicht Schätzung und Ist-Zeit (Kapitel 4). Zwei Teile, die nie zusammengezählt werden:
+Vergleicht Schätzung und Ist-Zeit (Kapitel 4). Oben wählst du den **Zeitraum**: *Alles*, *Letzte 30 Tage*, *Letzte 3 Monate*, *Letzte 12 Monate* oder *Dieses Jahr* – so siehst du, ob du besser wirst. Maßgeblich ist der Tag, an dem ein Schritt erledigt wurde (gespeichert seit dem 28.10.2026; davor abgehakte Tasks nehmen das Ende ihres letzten Stoppuhr-Laufs). Schritte ganz ohne Datum zählen nur bei *Alles* – wie viele das sind, steht oben. Bei den Projekten bleiben laufende immer sichtbar, abgeschlossene nur, wenn sie im Zeitraum fertig wurden. Die Auswahl gilt, solange die App offen ist, und wird nirgends gespeichert.
+
+Zwei Teile, die nie zusammengezählt werden:
 
 - **Schritte nach Tag:** alle **erledigten Tasks ohne Untertasks**, die eine Schätzung und eine Ist-Zeit haben – bei Projekten also die einzelnen Schritte (Probenpräparation, Messung …), nicht das Projekt selbst.
   - Gruppiert nach **Tags**. Ein Schritt zählt auch unter den Tags seiner Haupttask(s) – auch in einer abgeleiteten Map. Hat dein Projekt den Tag `#MoS2`, siehst du in der Zeile *MoS2* alle seine Schritte.

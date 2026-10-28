@@ -56,5 +56,21 @@ try {
   out.push('               | (expected: MoS2 first 20h, planned 4+4+8+8+4+4=32h, act 6+5+7+4=22h, 5/6 done, 4 recorded, running first;')
   out.push('               |  Altprojekt first 10h, planned 10h, act 15h own=true, finished)');
   out.push('summary empty  | ' + JSON.stringify(MM.stats.summary([])) + ' (n 0, factor/median/hit null)');
+
+  // ---- period: the day a step was finished (doneAt, else the end of its last stopwatch run)
+  const ST = MM.stats, today = new Date(2026, 9, 28);
+  out.push('since          | all="' + ST.since('all', today) + '" 30=' + ST.since('30', today) + ' 90=' + ST.since('90', today) +
+    ' year=' + ST.since('year', today) + ' (all="", 30=2026-09-29, 90=2026-07-31, year=2026-01-01)');
+  s1.meta.doneAt = '2026-10-20';
+  s2.meta.doneAt = '2026-05-02';
+  s3.meta.timeLog = [{ s: new Date(2026, 9, 1, 9).getTime(), e: new Date(2026, 9, 1, 11).getTime() }, { s: new Date(2026, 9, 25, 9).getTime(), e: new Date(2026, 9, 25, 10).getTime() }];
+  Q.meta.doneAt = '2026-03-01';
+  out.push('doneDay        | ' + [s1, s2, s3, b1].map((n) => n.text + '=' + (ST.doneDay(n.meta) || '-')).join(' ') + ' (2026-10-20, 2026-05-02, 2026-10-25 from the stopwatch, -)');
+  const m2 = MM.overview.model(new Map([['A.mindmap.json', A], ['B.mindmap.json', B]]));
+  const r30 = ST.compute(m2.items, ST.since('30', today));
+  out.push('last 30 days   | n=' + r30.all.n + ' steps=' + r30.all.steps.map((s) => s.it.title).join(',') + ' undated=' + r30.undated +
+    ' projects=' + r30.projects.map((p) => p.it.title).join(',') + ' (2: Proben 1, Messung; undated 2 (Proben 3, Allein); MoS2 running, Altprojekt finished in March left out)');
+  const rYear = ST.compute(m2.items, ST.since('year', today));
+  out.push('this year      | n=' + rYear.all.n + ' projects=' + rYear.projects.map((p) => p.it.title).join(',') + ' (3 with Proben 2; MoS2, Altprojekt)');
 } catch (e) { out.push('ERROR ' + e.stack); }
 fs.writeFileSync(process.argv[3], out.join('\n'));

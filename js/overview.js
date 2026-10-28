@@ -28,7 +28,8 @@
   const esc = (s) => MM.render.esc(s);
   const tr = (s, v) => MM.tr(s, v);
   let dialog, items = [], links = [], byKey = new Map();
-  const view = { text: '', hideDone: true, status: 'any', priority: 'any', type: 'any', mode: 'deadline' };
+  // period: of the view "Estimates" (stats.js); kept while the app runs, never saved
+  const view = { text: '', hideDone: true, status: 'any', priority: 'any', type: 'any', mode: 'deadline', period: 'all' };
   const collapsed = new Set(); // keys of collapsed tasks in the tree view
 
   const BUCKETS = [
@@ -384,6 +385,11 @@
     st.addEventListener('change', () => { view.status = st.value; render(); });
     pr.addEventListener('change', () => { view.priority = pr.value; render(); });
     initMatrixDrag();
+    dialog.querySelector('.ov-list').addEventListener('change', (e) => {
+      if (!e.target.matches('[data-st-period]')) return;
+      view.period = e.target.value;
+      render();
+    });
     dialog.querySelector('.ov-list').addEventListener('click', async (e) => {
       if (e.target.closest('[data-mx-undo]')) {
         undoQuadrant();
@@ -644,17 +650,25 @@
 
   /** View "Estimates": the steps by tag (each group opens to its steps), then the projects. */
   function renderStats() {
-    const r = MM.stats.compute(items);
+    const since = MM.stats.since(view.period);
+    const r = MM.stats.compute(items, since);
+    const periods = [['all', 'Everything'], ['30', 'Last 30 days'], ['90', 'Last 3 months'], ['365', 'Last 12 months'], ['year', 'This year']];
+    const bar = `<div class="st-bar"><label>${esc(tr('Period'))} <select data-st-period>` +
+      periods.map(([k, label]) => `<option value="${k}"${k === view.period ? ' selected' : ''}>${esc(tr(label))}</option>`).join('') +
+      `</select></label>${since ? `<span class="muted">${esc(tr('finished since {d}', { d: MM.meta.formatDate(since) }))}</span>` : ''}` +
+      (r.undated ? `<span class="muted" title="${esc(tr('Finished before the day was noted (28.10.2026) and without stopwatch runs: only in "Everything".'))}">` +
+        `${esc(tr('{n} step(s) without a day left out', { n: r.undated }))} ⓘ</span>` : '') + '</div>';
     const few = (g) => g.n < MM.stats.FEW;
     const row = (label, g, cls) => `<span class="st-tag">${label}</span><span>${g.n}</span><span>${dur(g.est)}</span><span>${dur(g.act)}</span>` +
       `<span class="st-f">${factorText(g.factor)}</span><span>${factorText(g.median)}</span><span>${pct(g.hit)}</span>`;
     const stepLine = (s) => `<div class="st-step" data-path="${esc(s.it.path)}" data-id="${esc(s.it.id)}" title="${esc(tr('Open the task'))}">` +
       `<span>${esc(s.it.title)}</span><span>${dur(s.est)} → ${dur(s.act)}</span><span class="st-f">${factorText(s.act / s.est)}</span></div>`;
     const title = tr('Factor = actual ÷ estimated: 1.5× means it took half as long again. Σ: of the totals (big tasks weigh more); Median: of the single tasks (outliers count less). On target: within ±25 %. Below {n} steps a group says little.', { n: MM.stats.FEW });
-    let h = `<div class="ov-group"><div class="ov-group-head">${tr('Steps by tag')}<span class="muted" title="${esc(title)}">` +
+    let h = bar + `<div class="ov-group"><div class="ov-group-head">${tr('Steps by tag')}<span class="muted" title="${esc(title)}">` +
       `${esc(tr('Done tasks without sub-tasks, with estimate and actual time'))} ⓘ</span></div>`;
     if (!r.all.n) {
-      h += `<p class="hint">${esc(tr('No step with an actual time yet. It is asked for when you check off a task with an estimate (or set it in the panel).'))}</p>`;
+      h += `<p class="hint">${esc(since ? tr('No step with an actual time finished in this period.')
+        : tr('No step with an actual time yet. It is asked for when you check off a task with an estimate (or set it in the panel).'))}</p>`;
     } else {
       h += `<div class="st-table"><div class="st-row st-head">${['Tag', 'n', 'Estimated', 'Actual', 'Σ factor', 'Median', 'On target']
         .map((x) => `<span>${esc(tr(x))}</span>`).join('')}</div>`;

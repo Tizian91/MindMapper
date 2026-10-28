@@ -371,6 +371,7 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .ov-row.done .ov-title { text-decoration: line-through; opacity: 0.55; }
 .ov-row.dropped .ov-title-text { text-decoration: line-through; color: #718096; }
 /* overview "Estimates" (stats.js): steps by tag as a small table, projects as rows */
+.st-bar { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 4px 8px 10px; font-size: 13px; }
 .st-table { font-size: 13px; }
 .st-row { display: grid; grid-template-columns: minmax(0, 1fr) 36px 70px 70px 64px 64px 72px; gap: 8px; padding: 5px 8px; align-items: baseline; }
 .st-row > span:not(.st-tag) { text-align: right; font-variant-numeric: tabular-nums; }

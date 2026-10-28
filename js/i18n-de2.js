@@ -425,6 +425,17 @@
     'Sum of the stopwatch list ({n} entries)': 'Summe der Stoppuhr-Liste ({n} Einträge)',
     'Estimated and actual time: steps by tag, projects': 'Geschätzte und tatsächliche Zeit: Schritte nach Tag, Projekte',
     'Estimates': 'Schätzung',
+    'Period': 'Zeitraum',
+    'Everything': 'Alles',
+    'Last 30 days': 'Letzte 30 Tage',
+    'Last 3 months': 'Letzte 3 Monate',
+    'Last 12 months': 'Letzte 12 Monate',
+    'This year': 'Dieses Jahr',
+    'finished since {d}': 'erledigt seit {d}',
+    'Finished before the day was noted (28.10.2026) and without stopwatch runs: only in "Everything".':
+      'Erledigt, bevor das Datum mitgespeichert wurde (28.10.2026), und ohne Stoppuhr-Läufe: nur bei „Alles“.',
+    '{n} step(s) without a day left out': '{n} Schritt(e) ohne Datum nicht dabei',
+    'No step with an actual time finished in this period.': 'In diesem Zeitraum wurde kein Schritt mit Ist-Zeit erledigt.',
     'Open the task': 'Task öffnen',
     'Factor = actual ÷ estimated: 1.5× means it took half as long again. Σ: of the totals (big tasks weigh more); Median: of the single tasks (outliers count less). On target: within ±25 %. Below {n} steps a group says little.':
       'Faktor = Ist ÷ geschätzt: 1,5× heißt, es hat anderthalbmal so lange gedauert. Σ: aus den Summen (große Aufgaben wiegen mehr); Median: aus den einzelnen Aufgaben (Ausreißer zählen weniger). Getroffen: innerhalb ±25 %. Unter {n} Schritten sagt eine Gruppe wenig.',
