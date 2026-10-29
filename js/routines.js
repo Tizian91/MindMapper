@@ -662,7 +662,11 @@
     queue = queue.then(() => syncOthers(changes, from));
   };
 
-  /** Write the changes into the other maps of the project folder (not `from`, it has them). */
+  /**
+   * Put the changes into the other maps of the project folder (not `from`, it has them).
+   * They are collected and written a moment later (project.js P.later): a few checks in
+   * a row write each plan once.
+   */
   async function syncOthers(changes, from) {
     const P = MM.project, T = MM.templates;
     if (!P || P.status !== 'ready') return;
@@ -682,13 +686,12 @@
         const cached = MM.load.docs().get(path);
         const hasNote = cached && cached.nodes && Object.keys(cached.nodes).some((id) => ids.has(id));
         if (!isPlan(path) && !hasNote) continue;
-        const doc = await P.readMap(path);
+        const doc = await P.readMap(path); // with what is collected for it already
         if (!doc) continue;
         let dirty = false;
         for (const c of changes) dirty = applyDone(doc, c) || dirty;
         if (!dirty) continue;
-        if (!(await P.ensureWriteAccess())) throw new Error(MM.tr('no write access to the project folder'));
-        await P.writeMap(path, doc);
+        P.later(path, (d) => changes.forEach((c) => applyDone(d, c)));
         count++;
       }
     } catch (err) {

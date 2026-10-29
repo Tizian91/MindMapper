@@ -74,6 +74,7 @@ const root = process.argv[2], out = [];
       status: 'ready', find: (p) => files.has(p), mapPaths: () => [], ensureWriteAccess: async () => true,
       readMap: async (p) => MM.normalizeDoc(JSON.parse(files.get(p))),
       writeMap: async (p, d) => { writes++; files.set(p, JSON.stringify(d)); },
+      later: (p, fn) => { const d = MM.normalizeDoc(JSON.parse(files.get(p))); fn(d); writes++; files.set(p, JSON.stringify(d)); },
     };
     const inSub = () => { const d = JSON.parse(files.get(T.derivedMap)); return st(d.nodes[X.id], d.nodes[Y.id]); };
     set(T, 'status', 'deferred');

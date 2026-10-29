@@ -230,12 +230,12 @@
     const byPath = new Map();
     for (const t of targets) byPath.set(t.path, [...(byPath.get(t.path) || []), t.id]);
     const ask = []; // checked off in another map: how long did it take? (actual.js)
-    const set = (n, path) => {
+    const set = (n, path, asking) => {
       n.meta = Object.assign(MM.emptyMeta(), n.meta || {});
       if (done) {
         if (path && n.meta.status !== 'done') {
           MM.actual.checkedOff(n);
-          if (MM.actual.askable(n)) ask.push({ path, node: n });
+          if (asking && MM.actual.askable(n)) ask.push({ path, node: n });
         }
         n.meta.status = 'done';
         if (n.type === 'task') n.meta.progress = 100;
@@ -250,10 +250,11 @@
           for (const id of ids) if (S.doc.nodes[id]) set(S.doc.nodes[id]); // saved with the entry below
           continue;
         }
+        // the question needs the tasks as they are; the map is written a moment later (project.js P.later)
         const doc = await P.readMap(path);
         if (!doc) continue;
-        for (const id of ids) if (doc.nodes[id]) set(doc.nodes[id], path);
-        await P.writeMap(path, doc);
+        for (const id of ids) if (doc.nodes[id]) set(doc.nodes[id], path, true);
+        P.later(path, (d) => ids.forEach((id) => d.nodes[id] && set(d.nodes[id], path, false)));
       }
     } catch (err) {
       alert(tr('Could not change the task: {err}', { err: (err && err.message) || err }));

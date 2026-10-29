@@ -496,6 +496,7 @@
   /** Load a map of the project folder (used by the project sidebar). */
   ST.openPath = async function (path) {
     const backend = MM.project.backend;
+    await MM.project.flushLater(path); // changes collected for it (other plans …) are written first
     const f = await MM.project.readDoc(path); // an empty file is no empty map (see there)
     if (!f) throw new Error('not found: ' + path);
     ST.load(f.doc, path.split('/').pop());
@@ -565,6 +566,7 @@
       ST.autosave();
       if (MM.diary) MM.diary.flush();
       if (S.dirty && inProject()) ST.writeFile();
+      if (MM.project.backend) MM.project.flushLater(); // other maps with collected changes (project.js P.later)
     };
     const back = () => {
       if (document.visibilityState !== 'visible' || !MM.project.backend) return;

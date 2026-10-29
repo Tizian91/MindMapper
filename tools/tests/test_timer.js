@@ -42,6 +42,16 @@ const root = process.argv[2], out = [];
     out.push('checked off    | running ' + !!n.meta.timerStart + ', list ' + rows() + ', asked ' + asked.length + ' (false, 25m, 10m, 1)');
     MM.history.undo();
     out.push('undo           | ' + S.doc.nodes[n.id].meta.status + ', running ' + !!S.doc.nodes[n.id].meta.timerStart + ' (open, true)');
+    // stopped after 4 hours: maybe forgotten - the run opens for a correction
+    let edited = null;
+    AT.editEntry = (node, i, note) => { edited = i + ' ' + (note || '').slice(0, 15); };
+    const m = S.doc.nodes[n.id];
+    m.meta.timerStart = null; // undo above left it running
+    m.meta.timeLog = [];
+    AT.toggle(m);
+    m.meta.timerStart -= 4 * 3600000;
+    AT.toggle(m);
+    out.push('long run       | ' + MM.meta.formatDuration(AT.logged(m)) + ', correction for entry ' + edited + ' (4h, entry 0 Running for 4h)');
     const d = MM.normalizeDoc({ nodes: { a: { id: 'a', type: 'task', meta: { timerStart: 'x', timeLog: [{ s: 5, e: 3 }, { s: 1000, e: 61000 }, null] } } }, edges: {} });
     out.push('normalize      | ' + JSON.stringify([d.nodes.a.meta.timerStart, d.nodes.a.meta.timeLog]) + ' ([null,[{"s":1000,"e":61000}]])');
   } catch (e) { out.push('ERROR ' + e.stack); }

@@ -789,7 +789,11 @@ details.st-group.few summary { color: var(--muted); }
 @keyframes timer-pulse { 50% { opacity: 0.55; } }
 @media (prefers-reduced-motion: reduce) { .task-timer.running { animation: none; } }
 .task-log { margin: -2px 0 6px; font-size: 0.75em; font-weight: 400; color: var(--muted); }
-.task-log-row { display: flex; gap: 8px; align-items: baseline; }
+.task-log-row { display: flex; gap: 8px; align-items: baseline; cursor: pointer; border-radius: 4px; }
+.task-log-row:hover { color: var(--accent); }
+/* + (enter a time by hand): only on the hovered / selected task */
+.task-timer-add { padding: 0 4px; opacity: 0; }
+.node:hover .task-timer-add, .node.selected .task-timer-add { opacity: 0.8; }
 .task-log-row b { font-weight: 600; }
 .task-log-del { margin-left: auto; padding: 0 4px; cursor: pointer; opacity: 0; }
 .node:hover .task-log-del, .node.selected .task-log-del { opacity: 0.7; }

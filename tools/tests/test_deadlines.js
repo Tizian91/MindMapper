@@ -81,6 +81,8 @@ const root = process.argv[2], out = [];
       status: 'ready', find: (p) => files.has(p), ensureWriteAccess: async () => true,
       readMap: async (p) => MM.normalizeDoc(JSON.parse(files.get(p))),
       writeMap: async (p, d) => files.set(p, JSON.stringify(d)),
+      // changes for other maps: applied to the file at once here (the app collects them, project.js P.later)
+      later: (p, fn) => { const d = MM.normalizeDoc(JSON.parse(files.get(p))); fn(d); files.set(p, JSON.stringify(d)); },
     };
     S.file.path = 'A.mindmap.json';
     S.doc = adoc;

@@ -342,9 +342,9 @@
   P.copyOf = function (name, loose) {
     let m = /^(.+?) \[conflicted(?: \d+)?\](\.[^.\s]+)?$/i.exec(name);
     if (m) return m[1] + (m[2] || '');
-    m = /^(.+?) \((?:conflict|konflikt) \d{4}-\d\d-\d\d \d{4}(?: \d+)?\)(\.mindmap\.json|\.json)$/i.exec(name) ||
-      /^(.+?) \([^()]*conflicted copy[^()]*\)(\.mindmap\.json|\.json)$/i.exec(name) ||
-      (loose && /^(.+?) \(\d{1,2}\)(\.mindmap\.json|\.json)$/i.exec(name));
+    m = /^(.+?) \((?:conflict|konflikt) \d{4}-\d\d-\d\d \d{4}(?: \d+)?\)(\.mindmap\.json|\.diary\.json|\.json)$/i.exec(name) ||
+      /^(.+?) \([^()]*conflicted copy[^()]*\)(\.mindmap\.json|\.diary\.json|\.json)$/i.exec(name) ||
+      (loose && /^(.+?) \(\d{1,2}\)(\.mindmap\.json|\.diary\.json|\.json)$/i.exec(name));
     return m ? m[1] + m[2] : null;
   };
 
@@ -366,15 +366,31 @@
   const DIARY_EXT = /\.diary\.json$/i;
   P.diaries = []; // [{ name, path }]
 
+  /**
+   * The diaries: [{ name, path, file, copies? }] - conflict copies of a diary file
+   * ("Arbeit.diary [conflicted].json") hang at their diary like the copies of a map (⚠ n).
+   */
   async function listDiaries() {
-    const out = [];
+    const out = [], files = [];
     try {
-      for (const { kind, name } of await P.backend.list(P.DIARY_FOLDER)) {
-        if (kind === 'file' && DIARY_EXT.test(name)) {
-          out.push({ name: name.replace(DIARY_EXT, ''), path: P.DIARY_FOLDER + '/' + name });
-        }
-      }
+      for (const { kind, name } of await P.backend.list(P.DIARY_FOLDER)) if (kind === 'file' && /\.json$/i.test(name)) files.push(name);
     } catch (e) { /* no diaries yet */ }
+    // a copy is a file whose original is there as well (a diary may be called "Notes (2)")
+    const all = new Set(files);
+    const originOf = (name) => P.originsOf(name, true).reverse().find((n) => all.has(n) && DIARY_EXT.test(n));
+    const byFile = new Map();
+    for (const name of files) {
+      if (!DIARY_EXT.test(name) || originOf(name)) continue;
+      const d = { name: name.replace(DIARY_EXT, ''), path: P.DIARY_FOLDER + '/' + name, file: name };
+      byFile.set(name, d);
+      out.push(d);
+    }
+    const coll = new Intl.Collator(undefined, { numeric: true });
+    for (const name of files) {
+      const orig = byFile.get(originOf(name));
+      if (orig) (orig.copies = orig.copies || []).push({ name, path: P.DIARY_FOLDER + '/' + name });
+    }
+    for (const d of out) if (d.copies) d.copies.sort((a, b) => coll.compare(a.name, b.name));
     return out.sort((a, b) => a.name.localeCompare(b.name));
   }
 
@@ -470,7 +486,9 @@
     } catch (err) {
       if (!MM.fsys.isConflict(err)) throw err;
       // the old version stays: further writes fail as well until the file is read again
-      throw new Error(tr('"{path}" was changed elsewhere in the meantime (other computer, other tab). It was not overwritten - open it again and repeat the step.', { path }));
+      const e = new Error(tr('"{path}" was changed elsewhere in the meantime (other computer, other tab). It was not overwritten - open it again and repeat the step.', { path }));
+      e.conflict = true; // the caller may merge and write again (e.g. a diary)
+      throw e;
     }
   }
 
@@ -514,6 +532,47 @@
       return;
     }
     await P.writeText(path, JSON.stringify(doc, null, 2));
+  };
+
+  // ---- Changes for other maps: collected, written once a moment later ----------------
+  //
+  // Checking off an entry checks it in the other plans and the appointment's map as well
+  // (routines.js), a plan's task list checks off its task in its map (tasklists.js), a
+  // main task's derived map follows it (tasks.js) … Written at once, a few checks in a
+  // row wrote the same file several times within seconds - sync programs (pCloud) keep
+  // conflict copies of that. Now each map collects its changes and is written once:
+  // after a pause (as the open map, storage.js), before it is opened, when the app is
+  // left. Reading it (P.readMap) shows the collected changes already.
+  const later = new Map(); // path -> { fns: [fn(doc)], timer }
+
+  /** Change map `path` (not the open one) with fn(doc) - written later, see above. */
+  P.later = function (path, fn) {
+    const job = later.get(path) || { fns: [], timer: null };
+    job.fns.push(fn);
+    clearTimeout(job.timer);
+    job.timer = setTimeout(() => P.flushLater(path), S.settings.syncedFolder ? MM.storage.SYNC_DELAY : 1200);
+    later.set(path, job);
+  };
+
+  /** Write the collected changes now: of map `path`, or of all. Only maps that really change are written. */
+  P.flushLater = async function (path) {
+    for (const p of path ? [path] : [...later.keys()]) {
+      const job = later.get(p);
+      if (!job) continue;
+      later.delete(p);
+      clearTimeout(job.timer);
+      try {
+        const doc = await P.readMap(p);
+        if (!doc) continue;
+        const before = JSON.stringify(doc.nodes);
+        job.fns.forEach((fn) => fn(doc));
+        if (JSON.stringify(doc.nodes) === before) continue;
+        if (!(await P.ensureWriteAccess())) throw new Error(tr('no write access to the project folder'));
+        await P.writeMap(p, doc);
+      } catch (err) {
+        MM.ui.flash(tr('Could not save "{map}": {err}', { map: P.mapName(p), err: (err && err.message) || err }));
+      }
+    }
   };
 
   /** Path -> name without the map extension. */
@@ -603,7 +662,10 @@
       const f = await P.readDoc(path);
       if (!f) return null;
       versions.set(path, { v: f.version, h: MM.fsys.hash(f.text) });
-      return MM.normalizeDoc(f.doc);
+      const doc = MM.normalizeDoc(f.doc);
+      const job = later.get(path);
+      if (job) job.fns.forEach((fn) => fn(doc)); // changes not written yet (see P.later)
+      return doc;
     } catch (err) {
       return null;
     }
@@ -988,7 +1050,7 @@
     if (!root) return;
     document.getElementById('main').classList.toggle('with-sidebar', !!S.settings.showProject);
     // rebuild only when something visible changed (keeps clicks from getting lost)
-    const key = JSON.stringify([P.status, P.backend && P.backend.name, paths(P.entries), S.file.path, S.file.name, [...collapsed], P.history, MM.getLang(), P.diaries.map((d) => d.name)]);
+    const key = JSON.stringify([P.status, P.backend && P.backend.name, paths(P.entries), S.file.path, S.file.name, [...collapsed], P.history, MM.getLang(), P.diaries.map((d) => [d.name, (d.copies || []).length])]);
     if (key === lastKey) return;
     lastKey = key;
     const back = P.history.length ? P.history[P.history.length - 1] : null;
@@ -1014,7 +1076,9 @@
         <div class="sb-diaries">
           <div class="sb-subhead"><span>${tr('Diaries')}</span>
             <button data-p="newDiary" title="${esc(tr('New diary…'))}">+</button></div>
-          ${P.diaries.map((d) => `<div class="sb-diary" data-diary="${esc(d.name)}" title="${esc(tr('Open the diary'))}">📖 ${esc(d.name)}</div>`).join('') ||
+          ${P.diaries.map((d) => `<div class="sb-diary" data-diary="${esc(d.name)}" title="${esc(tr('Open the diary'))}">📖 ${esc(d.name)}` +
+            (d.copies ? `<button class="sb-copies" data-diary-copies title="${esc(tr('{n} conflict copies of this diary (e.g. from a sync program) - keep one, clean up', { n: d.copies.length }))}">⚠ ${d.copies.length}</button>` : '') +
+            '</div>').join('') ||
             `<p class="hint">${tr('No diary yet. Diary entries are notes of the type "Diary entry".')}</p>`}
         </div>`;
       if (!S.file.path) {
@@ -1121,17 +1185,24 @@
 
   // ---- Conflict copies (see list / P.copyOf) ----------------------------------------
 
-  /** Menu of the ⚠ n button: each copy (time, same content?) with open / keep / delete. */
-  async function copiesMenu(path, x, y) {
-    const e = P.find(path);
+  /**
+   * Menu of the ⚠ n button: each copy (time, same content?) with open / keep / delete.
+   * kind 'diary': the copies of a diary file (no "open the copy" - a diary shows one file).
+   */
+  async function copiesMenu(path, x, y, kind = 'map') {
+    const diary = kind === 'diary';
+    const e = diary ? P.diaries.find((d) => d.path === path) : P.find(path);
     if (!e || !e.copies) return;
+    const label = diary ? e.name : P.mapName(path);
     const read = async (p) => { try { return await P.backend.read(p); } catch (err) { return null; } };
     const orig = await read(path);
     const hash = orig && MM.fsys.hash(orig.text);
     const when = (v) => (v ? new Date(v).toLocaleString(undefined, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '?');
-    const ext = /\.mindmap\.json$|\.json$/i;
-    const stem = (n) => n.replace(ext, '').replace(/\.mindmap(?= [[(])/gi, ''); // "W43.mindmap [conflicted]" -> "W43 [conflicted]"
-    const items = [{ label: tr('This map: {when}', { when: when(orig && orig.version) }), action: () => P.openMap(path) }, '-'];
+    const ext = /\.mindmap\.json$|\.diary\.json$|\.json$/i;
+    const stem = (n) => n.replace(ext, '').replace(/\.(mindmap|diary)(?= [[(])/gi, ''); // "W43.mindmap [conflicted]" -> "W43 [conflicted]"
+    const items = [diary
+      ? { label: tr('This diary: {when}', { when: when(orig && orig.version) }), action: () => MM.diary.open(e.name) }
+      : { label: tr('This map: {when}', { when: when(orig && orig.version) }), action: () => P.openMap(path) }, '-'];
     const dups = [];
     for (const c of e.copies) {
       const f = await read(c.path);
@@ -1142,21 +1213,22 @@
       items.push({
         label: `${tag} · ${when(f && f.version)}${dup ? ' · ' + tr('same content') : ''}`,
         submenu: [
-          { label: 'Open the copy', action: () => P.openMap(c.path) },
-          { label: 'Keep this version…', disabled: dup, action: () => keepCopy(path, c.path) },
+          !diary && { label: 'Open the copy', action: () => P.openMap(c.path) },
+          { label: 'Keep this version…', disabled: dup, action: () => keepCopy(path, c.path, diary) },
           '-',
-          { label: 'Delete the copy…', action: () => deleteCopies(path, [c.path]) },
+          { label: 'Delete the copy…', action: () => deleteCopies(path, [c.path], false, label) },
         ],
       });
     }
     items.push('-');
-    if (dups.length) items.push({ label: tr('Delete the {n} copies with the same content', { n: dups.length }), action: () => deleteCopies(path, dups, true) });
-    items.push({ label: tr('Delete all {n} copies…', { n: e.copies.length }), action: () => deleteCopies(path, e.copies.map((c) => c.path)) });
+    if (dups.length) items.push({ label: tr('Delete the {n} copies with the same content', { n: dups.length }), action: () => deleteCopies(path, dups, true, label) });
+    items.push({ label: tr('Delete all {n} copies…', { n: e.copies.length }), action: () => deleteCopies(path, e.copies.map((c) => c.path), false, label) });
     MM.menu.open(items, x, y);
   }
 
-  /** The copy becomes the map (its content replaces the file), the copy is removed. */
-  async function keepCopy(path, copy) {
+  /** The copy becomes the map / diary (its content replaces the file), the copy is removed. */
+  async function keepCopy(path, copy, diary) {
+    if (diary) return keepDiaryCopy(path, copy);
     if (!confirm(tr('Replace "{map}" with this copy?\n\nThe current content of "{map}" is lost, the copy is removed.', { map: P.mapName(path) }))) return;
     const open = S.file.path === path || S.file.path === copy;
     if (open && !(await MM.storage.confirmLeave('replace the map'))) return;
@@ -1184,10 +1256,42 @@
     }
   }
 
+  /**
+   * A copy replaces its diary file - the look, the pages' stickers and the closed pages;
+   * the entries are notes in the maps and stay. An open diary view is closed first,
+   * without saving (it would write the old state over the copy).
+   */
+  async function keepDiaryCopy(path, copy) {
+    const d = P.diaries.find((x) => x.path === path);
+    const name = d ? d.name : path;
+    if (!confirm(tr('Replace the diary "{name}" with this copy?\n\nWhat the diary file holds now is lost (look, stickers, closed pages - the entries are notes in the maps and stay), the copy is removed.', { name }))) return;
+    MM.diary.close(true);
+    try {
+      const f = await P.backend.read(copy);
+      if (!f) throw new Error('not found: ' + copy);
+      const r = await P.backend.write(path, f.text); // on purpose, without a check
+      versions.set(path, { v: r.version, h: MM.fsys.hash(f.text) });
+      await P.backend.remove(copy);
+      versions.delete(copy);
+      await P.scan();
+      const rest = ((P.diaries.find((x) => x.path === path) || {}).copies || []).map((c) => c.path);
+      if (rest.length && confirm(tr('The diary "{name}" now has the content of the copy.\n\nAlso delete the other {n} copies?', { name, n: rest.length }))) {
+        await deleteCopies(path, rest, true, name);
+        return;
+      }
+      MM.ui.flash(tr('The diary "{name}" now has the content of the copy', { name }));
+    } catch (err) {
+      alert(tr('Could not replace the diary: {err}', { err: err.message }));
+    }
+  }
+
   /** Remove conflict copies (quiet: copies with the map's content - nothing is lost). */
-  async function deleteCopies(path, list, quiet) {
+  async function deleteCopies(path, list, quiet, label) {
     if (!list.length) return;
-    if (!quiet && !confirm(tr('Delete {n} conflict copies of "{map}"?\n\nThe map itself stays.', { n: list.length, map: P.mapName(path) }))) return;
+    const diary = P.diaries.some((d) => d.path === path);
+    if (!quiet && !confirm(diary
+      ? tr('Delete {n} conflict copies of the diary "{map}"?\n\nThe diary itself stays.', { n: list.length, map: label })
+      : tr('Delete {n} conflict copies of "{map}"?\n\nThe map itself stays.', { n: list.length, map: label || P.mapName(path) }))) return;
     try {
       if (list.includes(S.file.path)) {
         if (!(await MM.storage.confirmLeave('delete the copy'))) return;
@@ -1260,6 +1364,12 @@
       return;
     }
     const diary = t.closest('[data-diary]');
+    if (diary && t.closest('[data-diary-copies]')) {
+      const r = t.closest('[data-diary-copies]').getBoundingClientRect();
+      const d = P.diaries.find((x) => x.name === diary.dataset.diary);
+      if (d) copiesMenu(d.path, r.left, r.bottom, 'diary');
+      return;
+    }
     if (diary) {
       MM.diary.open(diary.dataset.diary);
       return;

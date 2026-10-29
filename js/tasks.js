@@ -318,8 +318,12 @@
       TK.followStatus(sub, before, { status: statusOf(n), was: statusOf(old) });
       TK.enforceDeadlines(sub, before, { due, was });
       if (JSON.stringify(sub.nodes) === JSON.stringify(before.nodes)) continue;
-      if (!(await P.ensureWriteAccess())) throw new Error(MM.tr('no write access to the project folder'));
-      await P.writeMap(n.derivedMap, sub);
+      // written a moment later, with other changes for that map (project.js P.later)
+      const outer = { status: statusOf(n), was: statusOf(old) };
+      P.later(n.derivedMap, (d) => {
+        TK.followStatus(d, before, outer);
+        TK.enforceDeadlines(d, before, { due, was });
+      });
       count += 1 + (await TK.syncDerived(sub, before, seen));
     }
     return count;

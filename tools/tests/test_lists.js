@@ -72,7 +72,7 @@ try {
   MM.state.doc = plan;
   MM.state.file = { path: weekPath };
   MM.load = { refresh: async () => {}, docs, scheduleRefresh() {} };
-  MM.project = { status: 'ready', find: () => true, readMap: async () => work, writeMap: async () => { writes++; } };
+  MM.project = { status: 'ready', find: () => true, readMap: async () => work, writeMap: async () => { writes++; }, later: (p, fn) => { fn(work); writes++; } };
   MM.commit = () => {};
   MM.tasks.refreshExternal = () => {};
   MM.actual.askFor = (l) => out.push('             | asked for the actual time: ' + l.map((x) => x.node.text + ' (first ' + x.node.meta.estimateFirst + ')').join(', '));

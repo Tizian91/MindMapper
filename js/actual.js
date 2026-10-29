@@ -73,12 +73,16 @@
     if (n.meta.timerStart) {
       const min = AT.stop(n);
       MM.ui.flash(min ? tr('Stopped: {d}', { d: MM.meta.formatDuration(min) }) : tr('Stopped - less than a minute, not listed'));
-    } else {
-      AT.start(n);
-      MM.ui.flash(tr('Time is running - press ■ when you stop'));
+      MM.commit();
+      // that long: maybe it was not stopped in time - the run opens for a correction
+      if (min >= LONG_RUN) AT.editEntry(n, n.meta.timeLog.length - 1, tr('Running for {d} - was it stopped in time? Correct the end if not.', { d: MM.meta.formatDuration(min) }));
+      return;
     }
+    AT.start(n);
+    MM.ui.flash(tr('Time is running - press ■ when you stop'));
     MM.commit();
   };
+  const LONG_RUN = 3 * 60; // minutes
 
   /** × at an entry of the list. */
   AT.remove = function (n, i) {
@@ -96,9 +100,10 @@
   /** The ▶ / ■ button for the task's detail row. */
   AT.buttonHTML = function (n) {
     const s = n.meta.timerStart;
-    return s
+    return (s
       ? `<span class="task-timer running" data-timer title="${esc(tr('Running since {t} - click to stop', { t: dayOf(s) + ' ' + clock(s) }))}">■ ${esc(clock(s))}</span>`
-      : `<span class="task-timer" data-timer title="${esc(tr('Start the stopwatch (the time goes into a list below)'))}">▶</span>`;
+      : `<span class="task-timer" data-timer title="${esc(tr('Start the stopwatch (the time goes into a list below)'))}">▶</span>`) +
+      `<span class="task-timer task-timer-add" data-log-add title="${esc(tr('Enter a time by hand (the stopwatch was not running)'))}">+</span>`;
   };
 
   /** The list of recorded runs below the task's details ('' if none). */
@@ -107,9 +112,100 @@
     if (!log.length) return '';
     return '<div class="task-log">' + log.map((x, i) => {
       const end = dayOf(x.e) === dayOf(x.s) ? clock(x.e) : dayOf(x.e) + ' ' + clock(x.e);
-      return `<div class="task-log-row"><span>${dayOf(x.s)} ${clock(x.s)}–${end}</span><b>${MM.meta.formatDuration(minutesOf(x))}</b>` +
+      return `<div class="task-log-row" data-log-edit="${i}" title="${esc(tr('Click to correct the time'))}"><span>${dayOf(x.s)} ${clock(x.s)}–${end}</span><b>${MM.meta.formatDuration(minutesOf(x))}</b>` +
         `<span class="task-log-del" data-log-del="${i}" title="${esc(tr('Delete this entry'))}">×</span></div>`;
     }).join('') + '</div>';
+  };
+
+  // ---- Correcting an entry / entering one by hand ----------------------------------------
+
+  let entryDialog = null, editing = null; // editing: { doc, id, i } (i = -1: new entry)
+  const toDate = (day, time) => {
+    const [y, mo, d] = day.split('-').map(Number), [h, mi] = time.split(':').map(Number);
+    return new Date(y, mo - 1, d, h, mi).getTime();
+  };
+  const isoDay = (ms) => { const d = new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+
+  function buildEntryDialog() {
+    const d = document.createElement('dialog');
+    d.id = 'time-entry-dialog';
+    d.innerHTML = `
+      <form method="dialog" class="dlg">
+        <h3></h3>
+        <p class="hint te-note" hidden></p>
+        <label class="row"><span>${esc(tr('Day'))}</span><input type="date" name="day" required></label>
+        <label class="row"><span>${esc(tr('From'))}</span><input type="time" name="from" required></label>
+        <label class="row"><span>${esc(tr('To'))}</span><input type="time" name="to" required></label>
+        <label class="row"><span>${esc(tr('Duration'))}</span><input type="text" name="dur" placeholder="${esc(tr('e.g. 1h 30m'))}"></label>
+        <p class="hint">${esc(tr('"To" before "From" means the next day. Changing the duration moves "To".'))}</p>
+        <div class="dlg-buttons">
+          <button type="button" data-te="delete">${esc(tr('Delete'))}</button>
+          <span style="flex:1"></span>
+          <button type="button" data-te="cancel">${esc(tr('Cancel'))}</button>
+          <button type="submit" class="primary">${esc(tr('Save'))}</button>
+        </div>
+      </form>`;
+    document.body.appendChild(d);
+    const f = d.querySelector('form');
+    d.addEventListener('keydown', (e) => e.stopPropagation());
+    d.querySelector('[data-te="cancel"]').addEventListener('click', () => d.close());
+    d.querySelector('[data-te="delete"]').addEventListener('click', () => {
+      const n = editing && editing.doc === S.doc && S.doc.nodes[editing.id];
+      d.close();
+      if (n && editing.i >= 0) AT.remove(n, editing.i);
+    });
+    // the end and the duration follow each other
+    const span = () => {
+      if (!f.day.value || !f.from.value || !f.to.value) return null;
+      const s = toDate(f.day.value, f.from.value);
+      let e = toDate(f.day.value, f.to.value);
+      if (e <= s) e += 24 * 3600 * 1000;
+      return { s, e };
+    };
+    const showDur = () => { const x = span(); f.dur.value = x ? MM.meta.formatDuration(minutesOf(x)) : ''; };
+    f.from.addEventListener('input', showDur);
+    f.to.addEventListener('input', showDur);
+    f.dur.addEventListener('change', () => {
+      const min = MM.meta.parseDuration(f.dur.value);
+      f.dur.classList.toggle('invalid', !min);
+      if (!min || !f.day.value || !f.from.value) return;
+      f.to.value = clock(toDate(f.day.value, f.from.value) + min * 60000);
+    });
+    f.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const x = span(), n = editing && editing.doc === S.doc && S.doc.nodes[editing.id];
+      if (!x || !n) return d.close();
+      const log = (n.meta.timeLog || []).slice();
+      if (editing.i >= 0 && log[editing.i]) log[editing.i] = x;
+      else log.push(x);
+      n.meta.timeLog = log.sort((a, b) => a.s - b.s);
+      d.close();
+      MM.commit();
+    });
+    return d;
+  }
+
+  /** Correct entry i of task n's list, or (i = -1) enter one by hand. note: a hint above the fields. */
+  AT.editEntry = function (n, i, note) {
+    if (!entryDialog) entryDialog = buildEntryDialog();
+    const f = entryDialog.querySelector('form');
+    const x = i >= 0 && n.meta.timeLog ? n.meta.timeLog[i] : null;
+    // by hand: the last half hour, ending now (rounded to 5 minutes)
+    const end = x ? x.e : Math.round(Date.now() / 300000) * 300000;
+    const start = x ? x.s : end - 30 * 60000;
+    editing = { doc: S.doc, id: n.id, i: x ? i : -1 };
+    entryDialog.querySelector('h3').textContent = x ? tr('Correct the time') : tr('Enter a time');
+    const hint = entryDialog.querySelector('.te-note');
+    hint.textContent = note || '';
+    hint.hidden = !note;
+    entryDialog.querySelector('[data-te="delete"]').hidden = !x;
+    f.day.value = isoDay(start);
+    f.from.value = clock(start);
+    f.to.value = clock(end);
+    f.dur.value = MM.meta.formatDuration(minutesOf({ s: start, e: end }));
+    f.dur.classList.remove('invalid');
+    entryDialog.showModal();
+    f.to.focus();
   };
 
   /** Sum of the list in minutes (for the question after checking off). */
@@ -190,27 +286,14 @@
     return true;
   }
 
-  async function writeOthers(byPath) {
-    const P = MM.project;
-    try {
-      for (const [path, list] of byPath) {
-        const doc = await P.readMap(path);
-        if (!doc) continue;
-        let dirty = false;
-        for (const [id, v] of list) {
-          const n = doc.nodes[id];
-          if (!n || (has(n.meta.actual) ? n.meta.actual : null) === v) continue;
-          n.meta.actual = v;
-          dirty = true;
-        }
-        if (!dirty) continue;
-        if (!(await P.ensureWriteAccess())) throw new Error(tr('no write access to the project folder'));
-        await P.writeMap(path, doc);
-      }
-      MM.load.scheduleRefresh();
-    } catch (err) {
-      alert(tr('Could not save the actual time: {err}', { err: (err && err.message) || err }));
+  /** Actual times of tasks in other maps: written with the other changes for them (project.js P.later). */
+  function writeOthers(byPath) {
+    for (const [path, list] of byPath) {
+      MM.project.later(path, (doc) => {
+        for (const [id, v] of list) if (doc.nodes[id]) doc.nodes[id].meta.actual = v;
+      });
     }
+    MM.load.scheduleRefresh();
   }
 
   /** Ask for the actual time of notes of the open map (ids); shows their current value. */

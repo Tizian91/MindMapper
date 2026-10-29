@@ -205,7 +205,7 @@
 
   let dialog = null;
   // edit: overlays can be placed; tool: drawing shape being drawn; sel: selected overlay id
-  const view = { book: '', diary: null, entries: [], days: [], day: '', month: null, edit: false, tool: null, sel: null, scale: 1 }; // scale: of the page on screen (phones)
+  const view = { book: '', diary: null, base: '{}', entries: [], days: [], day: '', month: null, edit: false, tool: null, sel: null, scale: 1 }; // scale: of the page on screen (phones)
 
   function build() {
     dialog = document.createElement('dialog');
@@ -345,6 +345,7 @@
     view.book = book;
     userZoom = 1; // opened again: the page fits the width
     view.diary = diary;
+    view.base = JSON.stringify(diary); // as read: what is changed here is merged if the file changes elsewhere (see save)
     indexDiary(view.diary);
     if (S.settings.lastDiary !== book) {
       S.settings.lastDiary = book;
@@ -556,7 +557,18 @@
     }
     if (MM.project.status !== 'ready') return false;
     try {
-      await MM.project.writeDiary(view.diary);
+      try {
+        await MM.project.writeDiary(view.diary);
+      } catch (err) {
+        if (!err.conflict) throw err;
+        // changed on another device meanwhile: its state plus what was changed here, written again
+        const theirs = await MM.project.readDiary(view.book, { edit: true });
+        view.diary = mergeDiary(JSON.parse(view.base), view.diary, theirs);
+        await MM.project.writeDiary(view.diary);
+        if (view.day) show(view.day);
+        MM.ui.flash(tr('The diary was changed on another device as well - both are kept'));
+      }
+      view.base = JSON.stringify(view.diary);
       indexDiary(view.diary);
       MM.refresh(); // 🔒 marks of the notes
       return true;
@@ -566,10 +578,42 @@
     }
   }
 
+  /**
+   * Three-way merge of a diary file: base = as read here, ours = as it is here now,
+   * theirs = as the file is now. Per page and per setting: what was changed here wins,
+   * everything else comes from the file. Images: both.
+   */
+  function mergeDiary(base, ours, theirs) {
+    const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const out = JSON.parse(JSON.stringify(theirs));
+    for (const k of Object.keys(ours)) {
+      if (k !== 'pages' && k !== 'assets' && !same(ours[k], base[k])) out[k] = ours[k];
+    }
+    const bp = base.pages || {}, op = ours.pages || {};
+    out.pages = out.pages || {};
+    for (const day of new Set([...Object.keys(bp), ...Object.keys(op)])) {
+      if (same(op[day], bp[day])) continue; // not changed here
+      if (op[day] === undefined) delete out.pages[day];
+      else out.pages[day] = op[day];
+    }
+    out.assets = Object.assign({}, theirs.assets, ours.assets);
+    return out;
+  }
+  DY.mergeDiary = mergeDiary;
+
   function flushSave() {
     if (saveTimer) save(true);
   }
   DY.flush = flushSave; // leaving the app (storage.js initLifecycle)
+
+  /** Close the diary view; discard: without saving what is still pending (its file is replaced). */
+  DY.close = function (discard) {
+    if (discard) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    if (dialog && dialog.open) dialog.close();
+  };
 
   // ---- Page overlays: stickers, images, drawings ----------------------------------------
   //

@@ -258,6 +258,13 @@
         MM.actual.remove(n, Number(del.dataset.logDel));
         return;
       }
+      const entry = t.closest('[data-log-edit]');
+      if (entry || t.closest('[data-log-add]')) {
+        MM.select([id]);
+        MM.refresh();
+        MM.actual.editEntry(n, entry ? Number(entry.dataset.logEdit) : -1); // correct a run / enter one by hand
+        return;
+      }
 
       const chip = t.closest('.task-meta .chip[data-meta]');
       // metadata chip of a task: drop-down with the values right at the chip
