@@ -52,6 +52,47 @@
     return { box: boxOf(nodes, edges), nodeIds: null };
   }
 
+  // ---- Web links stay clickable in the PDF -------------------------------------------
+
+  /** Web address of a note link (http/https/www./mailto), or '' for maps, PC paths, file:. */
+  function webHref(link) {
+    const s = String(link || '').trim();
+    if (/^https?:\/\//i.test(s) || /^mailto:/i.test(s)) return s;
+    if (/^www\./i.test(s)) return 'https://' + s;
+    return '';
+  }
+
+  /**
+   * The print copy gets real <a href> elements: the browser's "Save as PDF" keeps
+   * them as clickable areas. Link notes become clickable as a whole and show the full
+   * address (readable on paper), other notes with a web link get it on their ↗ button.
+   * Only the copy is changed - the map itself still opens links via MM.links.open.
+   */
+  function webLinks(world) {
+    world.querySelectorAll('.node[data-id]').forEach((div) => {
+      const n = S.doc.nodes[div.dataset.id];
+      const href = n && webHref(n.link);
+      if (!href) return;
+      const a = document.createElement('a');
+      a.href = href;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'mp-link';
+      if (n.type === 'link') {
+        const target = div.querySelector('.link-target');
+        if (target) {
+          target.textContent = '→ ' + href.replace(/^mailto:/i, '');
+          target.classList.add('mp-link-full');
+        }
+        div.appendChild(a);
+      } else {
+        const btn = div.querySelector('.node-linkbtn');
+        if (!btn || btn.hidden) return;
+        btn.appendChild(a);
+      }
+    });
+  }
+
   // ---- Printing --------------------------------------------------------------------
 
   X.print = function () {
@@ -86,6 +127,7 @@
         world.querySelectorAll(`[data-id="${CSS.escape(e.id)}"]`).forEach((x) => x.remove());
       }
     }
+    webLinks(world);
     const offX = (W - box.w * scale) / 2, offY = (H - box.h * scale) / 2;
     world.style.transform = `translate(${offX - box.x * scale}px, ${offY - box.y * scale}px) scale(${scale})`;
 

@@ -1448,6 +1448,10 @@ button.dy-cal-day.current { background: var(--accent); color: #fff; }
 #map-print .mp-page { position: relative; overflow: hidden; }
 #map-print .mp-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 #map-print .mp-world > div { position: absolute; left: 0; top: 0; }
+/* web links stay clickable in the PDF (export.js webLinks): invisible area over the note / ↗ button */
+#map-print a.mp-link { position: absolute; inset: 0; z-index: 3; display: block; color: inherit; text-decoration: none; background: transparent; }
+#map-print .node-linkbtn { overflow: visible; }
+#map-print .link-target.mp-link-full { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
 #map-print .mp-title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3mm;
   font-family: system-ui, sans-serif; font-size: 12px; color: #333; }
 .mp-line { display: flex; flex-wrap: wrap; gap: 4px 14px; }
