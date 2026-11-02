@@ -324,6 +324,8 @@
     failed = bad;
     othersVersion++;
     if (MM.ui) MM.ui.update();
+    // entries of "Overdue" / "Open tasks" show the state of their tasks in the other maps
+    if (MM.render && Object.values(S.doc.nodes).some((n) => n.taskList)) MM.render.all();
   }
 
   // ---- Display ---------------------------------------------------------------------

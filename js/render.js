@@ -321,17 +321,21 @@
       const head = el('div', 'todo-head');
       const title = el('div', 'todo-title', n.text);
       title.dataset.field = 'text';
+      // "Overdue" / "Open tasks": an entry shows the state of its task (tasklists.js shownDone)
+      const docs = n.taskList && MM.taskLists && MM.load && MM.load.loaded() ? MM.load.docs() : null;
+      const isDone = (i) => (n.taskList && MM.taskLists ? MM.taskLists.shownDone(n, i, docs) : i.done);
       const counted = n.items.filter((i) => !i.moved);
-      const done = counted.filter((i) => i.done).length;
+      const done = counted.filter(isDone).length;
       head.append(title, el('span', 'todo-progress', `${done}/${counted.length}`));
       const list = el('ul', 'todo-list');
       for (const it of n.items) {
-        const li = el('li', it.moved ? 'moved' : it.done ? 'done' : '');
+        const shown = !it.moved && isDone(it);
+        const li = el('li', it.moved ? 'moved' : shown ? 'done' : '');
         li.dataset.item = it.id;
         if (it.moved) li.title = 'Moved to ' + it.moved;
         const check = el('span', it.moved ? 'todo-moved' : 'todo-check', it.moved ? '→' : undefined);
         check.setAttribute('role', 'checkbox');
-        check.setAttribute('aria-checked', it.done);
+        check.setAttribute('aria-checked', shown);
         const text = el('span', 'todo-text');
         text.dataset.field = 'item';
         // the 🔁 of a routine entry as a mark of its own, coloured the same on every device

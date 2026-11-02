@@ -173,6 +173,38 @@
     return snapshot() !== before;
   };
 
+  /**
+   * Is the task of an entry done now? Entries are references, so every plan shows the
+   * state of the task - also a past one, whose lists are not brought up to date any more.
+   * Only shown: the plan file is not written. A moved task is followed to its copy.
+   * null: task unknown (deleted, or the other maps not read yet).
+   */
+  TL.taskDone = function (item, docs) {
+    if (!item.ref || !item.ref.id) return null;
+    let path = item.ref.path, id = item.ref.id;
+    for (let hop = 0; hop < 10; hop++) {
+      const doc = docs.get(path);
+      const n = doc && doc.nodes && doc.nodes[id];
+      if (!n) return null;
+      if (n.movedTo && n.movedCopyId) {
+        path = n.movedTo;
+        id = n.movedCopyId;
+        continue;
+      }
+      return (n.meta && n.meta.status) === 'done';
+    }
+    return null;
+  };
+
+  /** Checked state an entry of the to-do note `list` shows (the task's for "Overdue" / "Open tasks"). */
+  TL.shownDone = function (list, item, docs) {
+    if (!list.taskList || !item.ref || !item.ref.id) return !!item.done;
+    const S = MM.state;
+    if (!docs) docs = MM.load && MM.load.loaded() ? MM.load.docs() : new Map([[S.file.path, S.doc]]);
+    const d = TL.taskDone(item, docs);
+    return d === null ? !!item.done : d;
+  };
+
   // ---- From the list to the task -------------------------------------------------------
 
   /** ↗ of an entry: open the map of its task and show the task. */
@@ -210,7 +242,7 @@
    */
   TL.toggle = async function (list, item) {
     const S = MM.state, P = MM.project, tr = MM.tr;
-    const done = !item.done;
+    const done = !TL.shownDone(list, item); // what the box shows, not what the plan once saved
     const plain = () => {
       item.done = done;
       MM.commit();

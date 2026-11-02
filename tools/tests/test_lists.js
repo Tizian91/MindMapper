@@ -71,7 +71,7 @@ try {
   ctx.alert = (m) => out.push('ALERT ' + m);
   MM.state.doc = plan;
   MM.state.file = { path: weekPath };
-  MM.load = { refresh: async () => {}, docs, scheduleRefresh() {} };
+  MM.load = { refresh: async () => {}, docs, scheduleRefresh() {}, loaded: () => true };
   MM.project = { status: 'ready', find: () => true, readMap: async () => work, writeMap: async () => { writes++; }, later: (p, fn) => { fn(work); writes++; } };
   MM.commit = () => {};
   MM.tasks.refreshExternal = () => {};
@@ -79,6 +79,21 @@ try {
   MM.ui = { flash: (m) => out.push('             | flash: ' + m) };
   const overdueList = Object.values(plan.nodes).find((n) => n.taskList === 'overdue');
   const entry = overdueList.items.find((i) => i.ref && i.ref.id === poster.id);
+  // a past plan is not filled any more: its entries show the state of their tasks (not written)
+  const oldPath = 'Weeks/2025-W44.mindmap.json';
+  const pastDoc = MM.emptyDoc();
+  const oldList = MM.createNode('todo', 0, 0, { text: 'Open tasks' });
+  oldList.taskList = 'open';
+  const mk = (ref, done) => Object.assign(MM.createTodoItem('x'), { ref, done });
+  const moved = add(pastDoc, 'task', 'Abbildungen (moved)', { status: 'open' });
+  moved.movedTo = 'Projekte/Work.mindmap.json';
+  moved.movedCopyId = s1.id;
+  oldList.items = [mk({ id: antrag.id, path: 'Projekte/Work.mindmap.json' }, false), mk({ id: poster.id, path: 'Projekte/Work.mindmap.json' }, true),
+    mk({ id: moved.id, path: oldPath }, false), mk({ id: 'gone', path: 'Projekte/Work.mindmap.json' }, true), mk(null, true)];
+  pastDoc.nodes[oldList.id] = oldList;
+  const oldDocs = new Map([...docs(), [oldPath, pastDoc]]);
+  out.push('past plan    | ' + oldList.items.map((i) => TL.shownDone(oldList, i, oldDocs)).join(', ') + ', saved ' + oldList.items.map((i) => i.done).join(', ') +
+    ' (true, ' + (poster.meta.status === 'done') + ', true, true, true - done elsewhere / task state / moved copy done / task gone: as saved / by hand; saved: false, true, false, true, true)');
   (async () => {
     answer = false;
     await TL.toggle(overdueList, entry);
