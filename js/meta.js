@@ -158,18 +158,20 @@
     } else if (placeholders) {
       h += `<span class="chip chip-empty" data-meta="${pKey}">${ICONS[pKey]}${tr(pKey === 'quadrant' ? 'Eisenhower' : 'Priority')}</span>`;
     }
-    if (m.deadline) {
+    // a routine has no date of its own: its rule (chip below) says when
+    const dated = !n.repeat;
+    if (m.deadline && dated) {
       // a finished task is never "overdue"
       const st = status === 'done' || status === 'dropped' ? 'finished' : META.deadlineStatus(m.deadline);
       h += `<span class="chip chip-date ${st}" data-meta="deadline" title="${esc(tr('Deadline {d}', { d: m.deadline }))}">${ICONS.deadline}${META.formatDate(m.deadline)}</span>`;
-    } else if (placeholders && !m.scheduled) {
+    } else if (placeholders && dated && !m.scheduled) {
       h += `<span class="chip chip-empty" data-meta="deadline">${ICONS.deadline}${tr('Deadline')}</span>`;
     }
-    if (m.scheduled) {
+    if (m.scheduled && dated) {
       const st = status === 'done' || status === 'dropped' ? 'finished' : META.deadlineStatus(m.scheduled);
       const label = META.formatDate(m.scheduled) + (m.scheduledTime ? ' ' + m.scheduledTime : '');
       h += `<span class="chip chip-date chip-scheduled ${st}" data-meta="scheduled" title="${esc(tr('Scheduled {d}', { d: m.scheduled + (m.scheduledTime ? ' ' + m.scheduledTime : '') }))}">${ICONS.scheduled}${esc(label)}</span>`;
-    } else if (placeholders && !m.deadline) {
+    } else if (placeholders && dated && !m.deadline) {
       h += `<span class="chip chip-empty" data-meta="scheduled">${ICONS.scheduled}${tr('Scheduled')}</span>`;
     }
     // a main task: how much of it the sub-tasks estimate (∑), see tasks.js

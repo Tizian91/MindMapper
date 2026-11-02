@@ -112,11 +112,13 @@ Den Typ änderst du per Rechtsklick → **Change type** oder im Panel. Wird eine
 
 ## 4. Details: Status, Priorität, Deadline, Termin, Schätzung, Tags
 
-- Im Panel unter **Details**: **Deadline**, **Scheduled** (Termin), **Estimate** (z. B. `1h 30m`, `90m`, `2h`, `1d` = ein Arbeitstag, also so viele Stunden wie unter *Hours / work day* eingestellt; gespeichert wird beim Eintippen der Stundenwert), **Progress** (nur Tasks), **Status**, **Priority**, **Tags**, **Link**.
+- Im Panel unter **Details**: **Datum** (Frist oder Termin), **Estimate** (z. B. `1h 30m`, `90m`, `2h`, `1d` = ein Arbeitstag, also so viele Stunden wie unter *Hours / work day* eingestellt; gespeichert wird beim Eintippen der Stundenwert), **Progress** (nur Tasks), **Status**, **Priority**, **Tags**, **Link**.
 - **Deadline oder Termin – nie beides:**
   - **Deadline** = bis wann es fertig sein muss. Die Zeit wird auf die Tage bis dahin verteilt (Projektarbeit).
   - **Scheduled / Termin** = an welchem Tag (optional mit Uhrzeit) es stattfindet, z. B. ein einmaliger Workshop. Die geschätzte Zeit wird wie bei einer Routine von der **Kapazität dieses Tages** abgezogen (📌-Chip).
   - Wer eins setzt, löscht das andere.
+  - Im Panel gibt es dafür **ein Datumsfeld** mit dem Umschalter **Frist | Termin**. Bei *Termin* kommt die Uhrzeit (*um*) dazu. Steht schon ein Datum drin, wird es beim Umschalten mitgenommen (aus einer Frist wird ein Termin am selben Tag und umgekehrt; die Uhrzeit fällt bei einer Frist weg).
+  - **Routinen** haben kein eigenes Datum: Ist eine Wiederholung (*Repeat*) eingestellt, verschwindet das Datumsfeld, und Frist- / Termin-Chips werden nicht angezeigt. Wann es stattfindet, steht in der Regel. Machst du aus einem Termin eine Routine, werden Wochentag, Uhrzeit und Startdatum (*von*) aus dem Termin übernommen, danach ist der Termin weg.
 - Die Werte erscheinen als kleine **Chips** unter der Note (Toolbar **Details** blendet sie ein/aus).
 - **In Tasks** genügt ein Klick auf einen Chip: Es öffnet sich direkt ein Auswahlmenü (z. B. *Tomorrow*, *Next Monday*, *1h 30m*, *50 %*).
 - Status und Fortschritt hängen zusammen: 100 % → *Done*; *Done* → 100 %.
@@ -233,7 +235,7 @@ Es gilt die **erste** Zeile, die passt:
 | nichts davon | offene Aufgabe | keine | Overview |
 
 **Gut zu wissen:**
-- **Repeat schlägt alles.** Eine Task mit Regel ist immer eine Routine; Deadline oder Termin daneben spielen keine Rolle. Routinen stehen nicht in den Aufgabenlisten des Overview, sondern auf der Workload-Seite unter *Routines* (mit Verlauf ▣□).
+- **Repeat schlägt alles.** Eine Task mit Regel ist immer eine Routine; Deadline oder Termin daneben spielen keine Rolle (und werden darum gar nicht erst angezeigt). Routinen stehen nicht in den Aufgabenlisten des Overview, sondern auf der Workload-Seite unter *Routines* (mit Verlauf ▣□).
 - **Termin oder Deadline – nie beides.** Wer eins setzt, löscht das andere (Kapitel 4).
 - **Erledigt** (*Done*, 100 %) oder **verschoben** (→ andere Map) zählt nicht mehr als Arbeit. Ausnahme **Termin**: Abgehakt bleibt seine Zeit an dem Tag reserviert – er hat ja stattgefunden. Vergangene Tage zählen nie.
 - **Fortschritt** verringert den Restaufwand: 10 h geschätzt, 40 % erledigt → 6 h werden noch verteilt.
@@ -335,7 +337,7 @@ Alles, was MindMapper in Tages- und Wochenpläne von selbst einträgt oder ände
 
 ## 10. Map aus einer Note ableiten
 
-- Rechtsklick auf eine Note → **Create map from note…**: Es entsteht eine neue Map mit dem Titel der Note (Stichpunkte / Einträge werden als Startpunkt übernommen). Die Note verweist danach auf die Map (**Open derived map ↗**).
+- Rechtsklick auf eine Note → **Create map from note…**: Ein kleiner Dialog fragt nach **Name** (vorgeschlagen: Titel der Note) und **Ordner** (vorgeschlagen: Ordner der aktuellen Map; Auswahl aus den Projektordnern oder einen neuen eintippen). Es entsteht eine neue Map (Stichpunkte / Einträge werden als Startpunkt übernommen). Die Note verweist danach auf die Map (**Open derived map ↗**).
 - Typischer Einsatz: Eine große Aufgabe bekommt ihre eigene Map für die Detailplanung.
 
 ## 11. Overview: alle Aufgaben aller Maps

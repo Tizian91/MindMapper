@@ -97,7 +97,8 @@
     '"{map}" does not exist any more.\nCreate it now?': '„{map}“ existiert nicht mehr.\nJetzt anlegen?',
     'Maps live in a project folder.\nOpen a folder in the "Project" sidebar first.':
       'Maps liegen in einem Projektordner.\nÖffne zuerst einen Ordner in der Seitenleiste „Projekt“.',
-    'Name of the new map:': 'Name der neuen Map:',
+    'Create map from note': 'Map aus Notiz erstellen',
+    'Pick a folder or type a new one – it is created if needed.': 'Ordner auswählen oder einen neuen eintippen – er wird bei Bedarf angelegt.',
     'Could not insert {name}: {err}': '{name} konnte nicht eingefügt werden: {err}',
     'image': 'Bild',
     // ---- Views / auto-layout ----

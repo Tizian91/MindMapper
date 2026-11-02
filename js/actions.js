@@ -177,11 +177,9 @@
     }
     if (n.derivedMap) return A.openDerivedMap(n);
     const title = MM.project.sanitizeName((n.text || '').split('\n')[0]) || 'New map';
-    const folder = MM.project.folderOf(S.file.path);
-    const answer = prompt(MM.tr('Name of the new map:'), title);
-    if (answer === null) return;
-    const name = MM.project.sanitizeName(answer);
-    if (!name) return;
+    const answer = await MM.project.askNewMap(title, MM.project.folderOf(S.file.path));
+    if (!answer) return;
+    const { name, folder } = answer;
 
     const t = MM.templates.blank(name);
     const doc = t.doc;

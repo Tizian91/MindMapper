@@ -23,6 +23,7 @@
   const head = (title) => `<div class="panel-head-row"><h3>${title}</h3>${closeBtn()}</div>`;
   let root;
   let lastKey = '';
+  let dateKind = 'deadline'; // date row of a note without a date yet: deadline or appointment
 
   // ---- Small icons -------------------------------------------------------
 
@@ -243,14 +244,21 @@
       ? `<div class="row"><label>${t('progress')}</label><span class="ov-progress">${MM.meta.progressBar(calc.progress)}<b>${calc.progress} % ∑</b></span></div>
         <p class="hint">${t(calc.count === 1 ? 'calcFromOne' : 'calcFromMany').replace('{n}', calc.count)}</p>`
       : `<p class="hint">${t('calcSome')}</p>`;
-    return `<section><h3>${t('details')}</h3>
-      <div class="row"><label>${t('deadline')}</label><input type="date" data-meta="deadline" value="${esc(m.deadline || '')}"
+    // one date: a deadline or an appointment (they exclude each other, see meta.setValue);
+    // routines have neither - their rule says when (they are left out of all date views)
+    const kind = m.scheduled ? 'scheduled' : m.deadline ? 'deadline' : dateKind;
+    const dateRows = nodes.every((n) => n.repeat) ? '' : `
+      <div class="row"><label>${t('date')}</label><span class="seg seg-mini">${['deadline', 'scheduled'].map((k) =>
+        `<button class="${k === kind ? 'active' : ''}" data-date-kind="${k}" title="${esc(t('dateKind_' + k))}">${t(k)}</button>`).join('')}</span></div>
+      ${kind === 'deadline'
+    ? `<div class="row"><label>${t('dateBy')}</label><input type="date" data-meta="deadline" value="${esc(m.deadline || '')}"
           ${maxDl ? `max="${maxDl}"` : ''} title="${esc(maxDl ? MM.tr('Sub-task: due by {d} at the latest (deadline of the main task)', { d: MM.meta.formatDate(maxDl) }) : t('deadlineTitle'))}">
-        <button class="icon-btn" data-clear-meta="deadline" title="${t('clearDeadline')}">×</button></div>
-      <div class="row"><label>${t('scheduled')}</label><input type="date" data-meta="scheduled" value="${esc(m.scheduled || '')}"
+        <button class="icon-btn" data-clear-meta="deadline" title="${t('clearDeadline')}">×</button></div>`
+    : `<div class="row"><label>${t('dateOn')}</label><input type="date" data-meta="scheduled" value="${esc(m.scheduled || '')}"
           title="${esc(t('scheduledTitle'))}">
-        <input type="time" data-meta="scheduledTime" value="${esc(m.scheduledTime || '')}" title="${esc(t('scheduledTimeTitle'))}">
         <button class="icon-btn" data-clear-meta="scheduled" title="${t('clearScheduled')}">×</button></div>
+      <div class="row"><label>${t('atTime')}</label><input type="time" data-meta="scheduledTime" value="${esc(m.scheduledTime || '')}" title="${esc(t('scheduledTimeTitle'))}"></div>`}`;
+    return `<section><h3>${t('details')}</h3>${dateRows}
       <div class="row"><label>${t('estimate')}</label><input type="text" data-meta="estimate"
         placeholder="${calc && calc.split ? esc(MM.tr('∑ {d} (sub-tasks)', { d: MM.meta.formatDuration(calc.split) })) : t('estimatePlaceholder')}"
         value="${esc(MM.meta.formatDuration(m.estimate))}"></div>
@@ -333,6 +341,10 @@
 
   /** Focus a metadata field (used when a chip in a task note is clicked). */
   P.focusField = function (key) {
+    if ((key === 'deadline' || key === 'scheduled') && !root.querySelector(`[data-meta="${key}"]`)) {
+      dateKind = key; // the date row shows the other kind: switch it
+      P.update(true);
+    }
     const elx = root.querySelector(key === 'repeat' ? '[data-repeat="kind"]' : `[data-meta="${key}"]`);
     if (!elx) return;
     elx.scrollIntoView({ block: 'nearest' });
@@ -593,6 +605,15 @@
     return raw;
   }
 
+  /** Rule parts taken over from an appointment when a note becomes a routine: its day, weekday and time. */
+  function apptRule(m, kind) {
+    const [y, mo, d] = m.scheduled.split('-').map(Number);
+    const wd = new Date(y, mo - 1, d).getDay();
+    return kind === 'off'
+      ? { from: m.scheduled, until: m.scheduled }
+      : { from: m.scheduled, time: m.scheduledTime, days: [wd], weekday: wd, day: d };
+  }
+
   /** Apply a control's value to the model. Returns true if something changed. */
   function apply(el, raw) {
     const ds = el.dataset;
@@ -658,7 +679,13 @@
         }
       }
       if (ds.repeat === 'kind') {
-        n.repeat = raw === 'none' ? null : MM.normalizeRepeat(Object.assign(MM.routines.defaults(raw), n.repeat || {}, { kind: raw }));
+        const fromAppt = !n.repeat && raw !== 'none' && n.meta.scheduled ? apptRule(n.meta, raw) : {};
+        n.repeat = raw === 'none' ? null : MM.normalizeRepeat(Object.assign(MM.routines.defaults(raw), n.repeat || {}, fromAppt, { kind: raw }));
+        if (n.meta.scheduled && n.repeat) {
+          // a routine has no appointment of its own: its day and time went into the rule
+          n.meta.scheduled = '';
+          n.meta.scheduledTime = '';
+        }
         return true;
       }
       if (!n.repeat) return false;
@@ -783,6 +810,21 @@
       P.update(true);
       return;
     }
+    if (btn.dataset.dateKind) {
+      // switch deadline <-> appointment; a date already set moves over (the time is lost on a deadline)
+      dateKind = btn.dataset.dateKind;
+      let changed = false;
+      for (const n of MM.selectedNodes()) {
+        const date = n.meta.deadline || n.meta.scheduled;
+        if (date && !n.meta[dateKind]) {
+          MM.meta.setValue([n], dateKind, date);
+          changed = true;
+        }
+      }
+      if (changed) MM.commit();
+      P.update(true);
+      return;
+    }
     if (btn.dataset.removeTag !== undefined) {
       for (const n of MM.selectedNodes()) n.tags = n.tags.filter((t) => t !== btn.dataset.removeTag);
       MM.commit();
@@ -790,6 +832,7 @@
     }
     if (btn.dataset.clearMeta) {
       // via setValue: clearing the appointment clears its time as well
+      if (btn.dataset.clearMeta === 'deadline' || btn.dataset.clearMeta === 'scheduled') dateKind = btn.dataset.clearMeta; // the row stays as it was
       MM.meta.setValue(MM.selectedNodes(), btn.dataset.clearMeta, MM.emptyMeta()[btn.dataset.clearMeta]);
       MM.commit();
       return;

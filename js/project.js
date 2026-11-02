@@ -1023,6 +1023,52 @@
     renameDialog.showModal();
   };
 
+  // ---- Name + folder of a new map (create map from note) ---------------------------
+
+  let newMapDialog = null;
+
+  function buildNewMapDialog() {
+    const d = document.createElement('dialog');
+    d.id = 'derive-map-dialog';
+    d.innerHTML = `
+      <form method="dialog" class="dlg">
+        <h3>${tr('Create map from note')}</h3>
+        <label class="row"><span>${tr('Name')}</span><input type="text" name="name" required></label>
+        <label class="row"><span>${tr('Folder')}</span><input type="text" name="folder" list="derive-folders" placeholder="${esc(tr('(top level)'))}"></label>
+        <datalist id="derive-folders"></datalist>
+        <p class="hint">${tr('Pick a folder or type a new one – it is created if needed.')}</p>
+        <div class="dlg-buttons">
+          <button type="button" data-dlg="cancel">${tr('Cancel')}</button>
+          <button type="submit" class="primary">${tr('Create')}</button>
+        </div>
+      </form>`;
+    document.body.appendChild(d);
+    d.addEventListener('keydown', (e) => e.stopPropagation());
+    d.querySelector('[data-dlg="cancel"]').addEventListener('click', () => d.close());
+    d.querySelector('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      d.returnValue = 'ok';
+      d.close();
+    });
+    return d;
+  }
+
+  /** Ask for the name and folder of a new map. Resolves { name, folder } or null (cancelled). */
+  P.askNewMap = function (name, folder) {
+    if (!newMapDialog) newMapDialog = buildNewMapDialog();
+    const d = newMapDialog, f = d.querySelector('form');
+    f.name.value = name;
+    f.folder.value = folder || '';
+    d.querySelector('#derive-folders').innerHTML = P.folders().map((p) => `<option value="${esc(p)}">`).join('');
+    d.returnValue = '';
+    d.showModal();
+    f.name.select();
+    return new Promise((resolve) => d.addEventListener('close', () => {
+      const n = P.sanitizeName(f.name.value);
+      resolve(d.returnValue === 'ok' && n ? { name: n, folder: P.sanitizeFolder(f.folder.value) } : null);
+    }, { once: true }));
+  };
+
   // ---- Sidebar ---------------------------------------------------------------------
 
   function tree(entries, depth) {
