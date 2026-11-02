@@ -223,18 +223,20 @@
       const weights = days.map((k) => baseOf(parse(k)) || 1);
       const total = weights.reduce((a, b) => a + b, 0);
       days.forEach((k, i) => byDay.set(k, (byDay.get(k) || 0) + (it.minutes * weights[i]) / total));
-      sched.push({ due: dl < t0 ? t0 : dl, minutes: it.minutes });
+      sched.push({ due: dl < t0 ? t0 : dl, minutes: it.minutes, path: it.path, id: it.id, title: it.title });
     }
 
     // buffer per deadline: work due until D vs. hours available until D
     sched.sort((a, b) => a.due - b.due);
     const buffers = [];
-    let work = 0;
+    let work = 0, due = [];
     sched.forEach((s, i) => {
       work += s.minutes;
+      due.push(s); // what is due on this day (overdue work counts for today)
       if (i + 1 < sched.length && sched[i + 1].due.getTime() === s.due.getTime()) return;
       const avail = workdays(t0, s.due).reduce((sum, k) => sum + capOf(parse(k)), 0);
-      buffers.push({ date: iso(s.due), work, cap: avail, buffer: avail - work });
+      buffers.push({ date: iso(s.due), work, cap: avail, buffer: avail - work, due });
+      due = [];
     });
     const critical = buffers.reduce((m, b) => (!m || b.buffer < m.buffer ? b : m), null);
 
@@ -469,6 +471,32 @@
     return h + '</div>';
   };
 
+  /** Top main task of every task (Overview model): key "path#id" -> { path, id, title }. */
+  function mainTasks(docs) {
+    const model = MM.overview.model(docs);
+    const top = new Map();
+    for (const [key, it] of model.byKey) {
+      let r = it;
+      for (let hop = 0; r.parent && model.byKey.get(r.parent) && hop < 50; hop++) r = model.byKey.get(r.parent);
+      top.set(key, { path: r.path, id: r.id, title: r.title });
+    }
+    return top;
+  }
+
+  /** Work due on one day (buffer.due), grouped by main task: [{ path, id, title, minutes, steps }]. */
+  function dueTasks(due, mains) {
+    const by = new Map();
+    for (const s of due || []) {
+      const m = mains.get(s.path + '#' + s.id) || { path: s.path, id: s.id, title: s.title };
+      const k = m.path + '#' + m.id;
+      if (!by.has(k)) by.set(k, Object.assign({ minutes: 0, steps: [] }, m));
+      const t = by.get(k);
+      t.minutes += s.minutes;
+      t.steps.push(s.title);
+    }
+    return [...by.values()].sort((a, b) => b.minutes - a.minutes);
+  }
+
   /** Workload page of the overview: bars for days and weeks, buffers, warnings. */
   L.overviewHTML = function () {
     const sum = L.summary();
@@ -506,8 +534,14 @@
     }
     h += `</div><div class="ov-group"><div class="ov-group-head">${tr('Buffer until each deadline')}</div>`;
     if (!sum.buffers.length) h += `<p class="hint">${tr('No open work with an estimate and a deadline.')}</p>`;
+    const mains = sum.buffers.length ? mainTasks(allDocs()) : null;
     for (const b of sum.buffers.slice(0, 15)) {
-      h += `<div class="load-row${b.buffer < 0 ? ' over' : ''}"><span class="load-label">${esc(tr('Until {d}', { d: fmtDate(b.date) }))}</span>` +
+      // the main tasks due that day (their steps added up); a click opens the task
+      const tasks = dueTasks(b.due, mains).map((t) => `<span class="load-task" data-path="${esc(t.path)}" data-id="${esc(t.id)}" ` +
+        `title="${esc(tr('Open the task') + (t.steps.length > 1 || t.steps[0] !== t.title ? '\n' + t.steps.join('\n') : ''))}">${esc(t.title)} ` +
+        `<span class="muted">${L.hours(t.minutes)}</span></span>`).join(' · ');
+      h += `<div class="load-row${b.buffer < 0 ? ' over' : ''}"><span class="load-label">${esc(tr('Until {d}', { d: fmtDate(b.date) }))}` +
+        `${tasks ? `<br><span class="load-tasks">${tasks}</span>` : ''}</span>` +
         `${bar(b.work, b.cap)}<span class="load-val">${L.hours(b.work)} / ${L.hours(b.cap)}</span>` +
         `<span class="load-buf">${b.buffer < 0 ? '−' : '+'}${L.hours(Math.abs(b.buffer))}</span></div>`;
     }

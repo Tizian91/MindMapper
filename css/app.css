@@ -1219,6 +1219,10 @@ dl.keys dd { margin: 0; color: var(--label); }
 .load-box .over, .load-row.over .load-val, .load-row.over .load-buf { color: var(--danger); font-weight: 600; }
 .load-row { display: grid; grid-template-columns: minmax(0, 220px) 1fr 110px 130px; gap: 10px; align-items: center; padding: 4px 8px; font-size: 13px; }
 .load-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* buffer rows: the main tasks due that day, a click opens the task */
+.load-tasks { display: inline-block; white-space: normal; font-size: 12px; line-height: 1.35; margin-top: 2px; }
+.load-task { cursor: pointer; color: var(--accent); }
+.load-task:hover { text-decoration: underline; }
 .load-val, .load-buf { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
 .load-buf { overflow: hidden; text-overflow: ellipsis; }
 .load-bar { display: block; height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }

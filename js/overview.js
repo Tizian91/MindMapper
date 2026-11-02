@@ -704,7 +704,8 @@
   function renderTree(matches) {
     const visible = new Set();
     for (const it of items) {
-      if (!matches(it)) continue;
+      // appointments have their own view; one with sub-tasks stays as their (faded) context
+      if (!matches(it) || isAppointment(it)) continue;
       for (let k = keyOf(it); k && !visible.has(k); k = byKey.get(k).parent) visible.add(k);
     }
     const kids = (it) => it.children.map((k) => byKey.get(k)).filter((c) => visible.has(keyOf(c))).sort(byDeadlineLast);
@@ -713,7 +714,7 @@
       const list = kids(it);
       const key = keyOf(it);
       const closed = collapsed.has(key);
-      h += rowHTML(it, { depth, caret: list.length ? (closed ? 'closed' : 'open') : 'leaf', context: !matches(it) });
+      h += rowHTML(it, { depth, caret: list.length ? (closed ? 'closed' : 'open') : 'leaf', context: !matches(it) || isAppointment(it) });
       if (!closed) for (const c of list) walk(c, depth + 1);
     };
     const roots = items.filter((it) => !it.parent && visible.has(keyOf(it))).sort(byDeadlineLast);

@@ -360,7 +360,7 @@ Toolbar **Overview** (*Übersicht*) sammelt die Aufgaben **aller Maps** des Proj
 - **Alle Termine** (Notes mit *Scheduled*) aller Maps, nach Tag gruppiert: *Past* (vergangen), *Today*, *Tomorrow*, *Next 7 days*, *Later* – innerhalb des Tages nach Uhrzeit.
 - **Routinen mit Uhrzeit** (🔁, wöchentlich oder monatlich, z. B. „jeden Dienstag 10:00“) stehen hier ebenfalls – mit ihren Terminen heute und in den nächsten 7 Tagen, nicht an einem freien Tag (🏖). Ein Klick öffnet die Routine. *Nice-to-have*-Routinen sind blasser und blocken keine Zeit. Routinen ohne Uhrzeit, Zeitbudgets und „mehrmals pro Woche“ haben keinen festen Zeitpunkt und fehlen hier; in den Listen der Pläne und unter *By deadline* stehen Routinen weiterhin nicht.
 - **Kopf jeder Gruppe:** Anzahl der Termine · die Zeit, die ihre Schätzungen an ihren Tagen **blocken**.
-- **By deadline** und die **Matrix** zeigen Termine nicht mehr, dort stehen nur Aufgaben. Ein vergangener Termin ist nicht „überfällig“, er ist vorbei – und über einen festen Termin muss man nicht nach wichtig / dringend entscheiden.
+- **By deadline**, **By task** und die **Matrix** zeigen Termine nicht, dort stehen nur Aufgaben. Ein vergangener Termin ist nicht „überfällig“, er ist vorbei – und über einen festen Termin muss man nicht nach wichtig / dringend entscheiden. Hat ein Termin Untertasks, steht er in *By task* blass als Rahmen über ihnen. Vergessen wird trotzdem nichts: Jeder Tages- und Wochenplan bekommt seine Termine als 📌-Eintrag (Kapitel 8).
 - *Hide done* blendet abgehakte Termine aus – so bleiben unter *Past* nur die, die du noch nicht abgehakt hast.
 
 ### By task: Was gehört wozu?
@@ -380,7 +380,7 @@ Die Seite rechnet aus Schätzung, Fortschritt, Deadline und Kapazität, wie voll
 - **Abschnitte:** *Appointment conflicts* (nur wenn es welche gibt) · *Weeks* · *Days* · *Buffer until each deadline* · *Routines* · *Days off*.
 - **Jede Zeile:** Bezeichnung · **Balken** · **verplant / verfügbar** (z. B. `26 h / 32 h`) · rechts, was Routinen (🔁) und Termine (📌) schon von der Kapazität genommen haben.
 - **Farbe des Balkens:** **grün** = passt, **gelb** = über 85 % verplant, **rot** = mehr Arbeit als Zeit.
-- **Puffer:** Für jede Deadline: Passt die **gesamte** bis dahin fällige Arbeit in die Zeit von heute bis dahin? `+6 h` = Luft, `−3 h` = geht so nicht auf, auch wenn die einzelnen Tage noch grün sind.
+- **Puffer:** Für jede Deadline: Passt die **gesamte** bis dahin fällige Arbeit in die Zeit von heute bis dahin? `+6 h` = Luft, `−3 h` = geht so nicht auf, auch wenn die einzelnen Tage noch grün sind. Unter dem Datum stehen die **Haupttasks, die an diesem Tag fällig sind**, mit ihren Stunden – Untertasks (auch aus einer abgeleiteten Map) unter ihrer Haupttask zusammengefasst, Überfälliges bei heute. Ein Klick auf den Namen öffnet die Task; fährst du mit der Maus darüber, siehst du die einzelnen Schritte.
 - **Routinen:** jede mit ihrer Regel, der nächsten Fälligkeit und den Stunden pro Woche. *Nice to have*-Routinen sind ausgegraut, sie zählen nicht.
 
 ![Workload, unten: Puffer bis zu jeder Deadline (+ = Luft, − = geht nicht auf), Routinen mit Stunden pro Woche, Urlaub](docs/handbuch/overview-workload-2.png)
