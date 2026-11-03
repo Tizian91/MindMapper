@@ -52,7 +52,25 @@
     if (P.status === 'needs-permission' || P.status === 'none') showLock();
   };
 
-  P.choose = async function () {
+  /**
+   * Shown in a page that is embedded in another window (e.g. the preview inside VS Code):
+   * there the browser does not open its folder picker - it gives up at once, like "Cancel".
+   */
+  const BLOCKED = 'This window cannot open a folder (e.g. the preview inside VS Code). Please open MindMapper in Edge or Chrome itself.';
+  P.embedded = (() => {
+    try {
+      return window.self !== window.top;
+    } catch (e) {
+      return true; // a foreign window around us
+    }
+  })();
+
+  /**
+   * Choose a project folder. msgEl: where to say that the picker is blocked (else an alert).
+   * Cancelled at once, without a picker to be seen (well under a human "Cancel"): blocked.
+   */
+  P.choose = async function (msgEl) {
+    const t0 = Date.now();
     try {
       const b = await MM.fsys.local.pick();
       const before = S.file.path;
@@ -68,7 +86,11 @@
       }
       MM.refresh();
     } catch (err) {
-      if (err.name !== 'AbortError') alert(tr('Could not open folder: {err}', { err: err.message }));
+      const blocked = err.name === 'SecurityError' || (err.name === 'AbortError' && (P.embedded || Date.now() - t0 < 300));
+      if (blocked) {
+        if (msgEl) msgEl.textContent = tr(BLOCKED);
+        else alert(tr(BLOCKED));
+      } else if (err.name !== 'AbortError') alert(tr('Could not open folder: {err}', { err: err.message }));
     }
   };
 
@@ -145,9 +167,11 @@
       });
     }
     d.querySelector('[data-lock="choose"]').addEventListener('click', async () => {
-      await P.choose(); // the folder picker (cancelled: the lock stays)
+      await P.choose(d.querySelector('.lock-msg')); // the folder picker (cancelled: the lock stays)
       if (P.status === 'ready') close();
     });
+    // an embedded page (VS Code preview): say it right away instead of a button that does nothing
+    if (P.embedded) d.querySelector('.lock-msg').textContent = tr(BLOCKED);
     d.showModal();
   }
 

@@ -314,7 +314,10 @@ window.MM = window.MM || {};
   MM.toMarkdown = function (n) {
     const lines = [];
     if (n.type === 'todo') n.items.forEach((i) => lines.push(`- [${i.done ? 'x' : ' '}] ${i.text}`));
-    if (MM.hasBlocks(n)) n.blocks.filter((b) => b.text).forEach((b) => lines.push('  '.repeat(b.level) + '- ' + b.text));
+    if (MM.hasBlocks(n)) {
+      n.blocks.filter((b) => b.text).forEach((b) =>
+        lines.push('  '.repeat(b.level) + '- ' + (b.check === undefined ? '' : `[${b.check ? 'x' : ' '}] `) + b.text));
+    }
     const title = String(n.text || '').trim();
     if (!lines.length) return n.text || '';
     return (title ? `## ${title}\n\n` : '') + lines.join('\n');
@@ -329,11 +332,12 @@ window.MM = window.MM || {};
     if (type === 'markdown' && !MM.isMarkdown(n)) n.text = MM.toMarkdown(n);
     if (type === 'todo' && !n.items.length) {
       n.items = n.blocks.length
-        ? n.blocks.filter((b) => b.text).map((b) => MM.createTodoItem(b.text))
+        ? n.blocks.filter((b) => b.text).map((b) => Object.assign(MM.createTodoItem(b.text), { done: !!b.check }))
         : [MM.createTodoItem('First task')];
     }
     if ((type === 'outline' || type === 'task') && !n.blocks.length) {
-      n.blocks = n.items.length ? n.items.map((i) => MM.createBlock(i.text, 0)) : [MM.createBlock('', 0)];
+      // to-do entries stay check boxes (ticked ones ticked)
+      n.blocks = n.items.length ? n.items.map((i) => Object.assign(MM.createBlock(i.text, 0), { check: !!i.done })) : [MM.createBlock('', 0)];
     }
     // text alignment: the new type's own (a centered note becomes a left-aligned list), unless it was changed by hand
     const align = (t) => ((NODE_PRESETS[t] || {}).style || {}).align || MM.DEFAULT_NODE_STYLE.align;
@@ -364,6 +368,21 @@ window.MM = window.MM || {};
     },
 
     hasChildren: (blocks, idx) => idx + 1 < blocks.length && blocks[idx + 1].level > blocks[idx].level,
+
+    /**
+     * Check boxes: a block is a bullet point unless it has `check` (false = open,
+     * true = ticked). Only on demand - they do not change the progress of a task.
+     */
+    isCheck: (b) => b.check !== undefined,
+    setCheck(b, on) {
+      if (on) b.check = !!b.check;
+      else delete b.check;
+    },
+    /** { done, total } of the check boxes with text (total 0: none). */
+    checks(blocks) {
+      const list = (blocks || []).filter((b) => b.check !== undefined && b.text.trim());
+      return { done: list.filter((b) => b.check).length, total: list.length };
+    },
 
     /** Indices of blocks not hidden by a collapsed ancestor. */
     visible(blocks) {
@@ -468,7 +487,12 @@ window.MM = window.MM || {};
       node.items = (Array.isArray(n.items) ? n.items : []).filter((i) => i && typeof i === 'object')
         .map((i) => Object.assign(i, { id: str(i.id) || MM.uid('i'), text: str(i.text), done: !!i.done }));
       node.blocks = (Array.isArray(n.blocks) ? n.blocks : []).filter((b) => b && typeof b === 'object')
-        .map((b) => Object.assign(b, { id: str(b.id) || MM.uid('b'), text: str(b.text), level: Math.max(0, num(b.level, 0)) }));
+        .map((b) => {
+          Object.assign(b, { id: str(b.id) || MM.uid('b'), text: str(b.text), level: Math.max(0, num(b.level, 0)) });
+          if (b.check === undefined || b.check === null) delete b.check; // a bullet point
+          else b.check = !!b.check; // a check box: ticked or not (MM.outline.toggleCheck)
+          return b;
+        });
       node.tags = (Array.isArray(n.tags) ? n.tags : []).map(str).filter(Boolean);
       node.link = str(n.link);
       const m = Object.assign(MM.emptyMeta(), n.meta && typeof n.meta === 'object' ? n.meta : {});

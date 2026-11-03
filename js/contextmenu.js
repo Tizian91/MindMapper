@@ -292,6 +292,17 @@
       list = [
         !multi && one.link && { label: 'Open link ↗', shortcut: 'Ctrl+click', action: A.openLink },
         !multi && { label: hasImage ? 'Edit caption' : 'Edit text', shortcut: 'Enter', action: A.editSelected },
+        // the line under the mouse: bullet point <-> check box (outline and task notes)
+        ...(() => {
+          const li = !multi && MM.hasBlocks(one) && t.closest('li[data-block]');
+          const b = li && one.blocks.find((x) => x.id === li.dataset.block);
+          if (!b) return [];
+          const on = !MM.outline.isCheck(b);
+          return [{
+            label: on ? 'Line as check box' : 'Line as bullet point', shortcut: on ? '[] ' : '',
+            action: () => { MM.outline.setCheck(b, on); MM.commit(); },
+          }];
+        })(),
         !multi && !one.overlay && { label: 'Add connected note', submenu: MM.insertItems((ty) => A.addChild(ty)) },
         // ---- emoji / symbols (F9) ----
         {

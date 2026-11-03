@@ -102,7 +102,7 @@
   const HANDBOOK = [
     ['1 · Starten & Speichern', ['index.html in Edge oder Chrome öffnen', 'Projektordner: links „Project“ → Open folder…',
       'Maps im Projektordner speichern sich automatisch', 'Knopf „?“ oben rechts: Handbuch und diese Beispiel-Map']],
-    ['2 · Bedienung', ['Rechtsklick: einfügen und alle Befehle', 'Doppelklick oder Enter: Text bearbeiten', 'Tab: verbundene Note anlegen',
+    ['2 · Bedienung', ['Rechtsklick: einfügen und alle Befehle', 'Doppelklick oder Enter: Text bearbeiten', 'Tab: verbundene Note anlegen', 'N / T / L: Note / Task / To-Do einfügen (markiert: verbunden)',
       'Blauen Punkt ziehen: verbinden', 'Leertaste + Ziehen: Ansicht verschieben', 'Ctrl+Z / Ctrl+Y: rückgängig / wiederholen']],
     ['3 · Notiztypen', ['Note, Heading, To-Do, Outline, Task', 'Link, Code, Group, Image, File',
       'Typ ändern: Rechtsklick → Change type', 'Dateien auf die Fläche ziehen → Datennote (Assets/)']],

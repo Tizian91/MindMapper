@@ -58,7 +58,7 @@ window.MM = window.MM || {};
       tbHelpAria: 'Handbuch und Beispiel-Map',
 
       // Statusbar & hints
-      defaultHint: 'Rechtsklick: einfügen · Blauen Punkt ziehen: verbinden · Tab: Kindnotiz',
+      defaultHint: 'Rechtsklick: einfügen · Blauen Punkt ziehen: verbinden · Tab: Kindnotiz · N / T / L: Note / Task / To-Do',
       st_counts: '{nodes} Notizen · {edges} Verbindungen',
       st_selected: '{n} ausgewählt',
       st_filterShown: 'Filter: {n} sichtbar',
@@ -399,7 +399,7 @@ window.MM = window.MM || {};
       tbHelpAria: 'Handbook and example map',
 
       // Statusbar & hints
-      defaultHint: 'Right-click: insert · Drag a blue dot: connect · Tab: child note',
+      defaultHint: 'Right-click: insert · Drag a blue dot: connect · Tab: child note · N / T / L: note / task / to-do',
       st_counts: '{nodes} notes · {edges} connections',
       st_selected: '{n} selected',
       st_filterShown: 'filter: {n} shown',

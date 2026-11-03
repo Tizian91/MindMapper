@@ -295,6 +295,13 @@
         MM.commit();
         return;
       }
+      // a line as a check box: tick / untick (the task's progress stays as it is)
+      if (t.classList.contains('outline-check')) {
+        const b = n.blocks.find((x) => x.id === t.closest('li').dataset.block);
+        if (b) b.check = !b.check;
+        MM.commit();
+        return;
+      }
       // outline: collapse/expand, add block
       if (t.classList.contains('outline-toggle') || t.classList.contains('outline-bullet')) {
         const li = t.closest('li');
@@ -817,7 +824,9 @@
     else if (key === 'Escape' && S.tool) MM.draw.setTool(null);
     else if (key === 'Escape') A.deselect();
     else if (key === 'Enter' || key === 'F2') A.editSelected();
-    else if (key === 'Tab') A.addChild();
+    else if (key === 'Tab') A.insertByKey('text');
+    // N, T, L, G, H, M, C: insert a note (connected to the selected one)
+    else if (!e.altKey && !e.shiftKey && A.INSERT_KEYS[key] && !document.querySelector('dialog[open]')) A.insertByKey(A.INSERT_KEYS[key]);
     else if (key === 'ArrowLeft') A.nudge(-step, 0);
     else if (key === 'ArrowRight') A.nudge(step, 0);
     else if (key === 'ArrowUp') A.nudge(0, -step);

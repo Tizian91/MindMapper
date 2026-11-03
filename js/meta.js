@@ -207,6 +207,11 @@
         h += `<span class="chip chip-empty" data-meta="progress">${ICONS.percent}${tr('Progress')}</span>`;
       }
     }
+    // check boxes in the body (on demand): only counted, the progress stays as it is
+    const checks = MM.hasBlocks && n.blocks && MM.hasBlocks(n) ? MM.outline.checks(n.blocks) : null;
+    if (checks && checks.total) {
+      h += `<span class="chip chip-checks${checks.done === checks.total ? ' all' : ''}" title="${esc(tr('Check boxes ticked'))}">☑ ${checks.done}/${checks.total}</span>`;
+    }
     // routine: its rule ("Every Tue 10:00")
     if (n.repeat && MM.routines) {
       const minutes = n.repeat.kind === 'budget' || n.repeat.kind === 'off' ? m.estimate : 0; // others: the estimate chip shows it

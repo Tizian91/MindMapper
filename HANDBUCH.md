@@ -25,6 +25,7 @@ MindMapper ist eine Planungssoftware für Menschen, denen lineare Zeitpläne sch
 - **Projektordner (empfohlen):** In der linken Seitenleiste **Project** → **Open folder…** einen Ordner wählen. Alle Maps darin erscheinen als Liste, Unterordner (z. B. `Weeks/`, `Months/`, `Days/`) werden angezeigt.
   - Maps aus dem Projektordner werden **automatisch gespeichert** (Einstellung „Auto-save project maps into their file“ im Panel rechts, wenn nichts markiert ist).
   - Nach einem Neustart fragt der Browser einmal nach der Erlaubnis: **Reconnect**. Damit du nicht aus Versehen ohne Ordner weiterarbeitest, legt MindMapper dann eine Sperre über die Map: **Ordner „…“ verbinden**. **Verbinden** holt die Erlaubnis und entsperrt, **Anderen Ordner wählen…** öffnet die Ordnerauswahl. **Ohne Ordner weiterarbeiten** geht auch – dann landen Änderungen nur im Browser, und Maps speicherst und öffnest du über **File → Save as…** / **Open file…**. Bis der Ordner verbunden ist, steht unter der Toolbar ein roter Balken mit **Verbinden**. Ist noch kein Ordner gewählt (erster Start, oder der Browser hat ihn vergessen), fragt dieselbe Sperre **Projektordner wählen**: **Ordner wählen…** oder **Erst einmal ohne Ordner ausprobieren** – dann sagt der Balken „Kein Projektordner“ und bietet **Ordner wählen…** an. Eine Map, die du als einzelne Datei geöffnet hast (**Open file…**), wird in diese Datei gespeichert; dann steht kein Balken da.
+  - **Nur im richtigen Browserfenster:** In eingebetteten Fenstern – z. B. der Vorschau in VS Code – lässt der Browser keine Ordnerauswahl zu. Sie bricht dort sofort ab, und die Freigabe, die du Edge oder Chrome für deinen Ordner gegeben hast, gilt dort auch nicht. MindMapper sagt das dann rot im Dialog; öffne es in so einem Fall direkt in Edge oder Chrome.
 - **Rein lokal:** Diese Version (`index.html`) baut **keine Verbindung nach außen** auf – der Browser blockiert sie (Content-Security-Policy im Kopf von `index.html`). MindMapper hat keine eigene Cloud-Anbindung und spricht mit keinem Server, und Bilder aus dem Netz (Markdown `![…](https://…)`) werden nicht geladen; Links öffnest du weiterhin per Klick in einem neuen Tab.
 - **Eigene Kopie – die sicherste Art:** Öffnest du MindMapper über eine Internetadresse (z. B. GitHub Pages), lädt der Browser das Programm jedes Mal frisch vom Server. Wer die Konten dahinter übernähme, könnte dort ein anderes Programm hinstellen. Eine Kopie auf deinem Rechner kann dagegen niemand aus der Ferne austauschen:
   1. Auf GitHub im Repo **Code → Download ZIP**.
@@ -57,9 +58,9 @@ MindMapper ist eine Planungssoftware für Menschen, denen lineare Zeitpläne sch
 
 | Aktion | So geht's |
 |---|---|
-| Note einfügen | Rechtsklick auf die leere Fläche → **Insert**, oder **+ Insert** in der Toolbar |
+| Note einfügen | Rechtsklick auf die leere Fläche → **Insert**, oder **+ Insert** in der Toolbar – oder per Taste (siehe unten) |
 | Text bearbeiten | Doppelklick, oder `Enter` / `F2` |
-| Verbundene Note anlegen | `Tab` (rechts neben der markierten Note) |
+| Verbundene Note anlegen | `Tab` (rechts neben der markierten Note; ohne Markierung eine freie Note) |
 | Verbinden | Maus über eine Note → blauen Punkt auf eine andere Note ziehen (auf die leere Fläche ziehen = neue Note). Ankerpunkte: drei je Seite, bei großen Notes (breiter oder höher als eine Standard-Task-Note) fünf. Bei gedrehten Bildern und Emoji-Notes drehen die Ankerpunkte mit. |
 | Verschieben / Größe | Ziehen; Ecken und Kanten der Markierung ziehen |
 | Mehrere markieren | Rahmen aufziehen, oder `Shift` / `Ctrl` + Klick |
@@ -68,6 +69,23 @@ MindMapper ist eine Planungssoftware für Menschen, denen lineare Zeitpläne sch
 | Kopieren / Einfügen / Duplizieren | `Ctrl+C` / `Ctrl+V` / `Ctrl+D` |
 | Rückgängig / Wiederholen | `Ctrl+Z` / `Ctrl+Y` |
 | Löschen | `Entf`; bei Tasks auch der Papierkorb an der Unterkante rechts (beim Überfahren / Markieren) |
+
+**Notes per Taste einfügen:** einfach den Buchstaben drücken – ohne `Ctrl`, `Alt` oder `Shift`.
+
+| Taste | Note |
+|---|---|
+| `N` | Note (einfache Notiz) |
+| `T` | Task |
+| `L` | To-Do-Liste |
+| `G` | Gliederung (Outline) |
+| `H` | Überschrift (Heading) |
+| `M` | Markdown |
+| `C` | Code |
+
+- **Nichts markiert:** Die Note erscheint dort, wo die Maus auf der Map steht (sonst in der Bildmitte).
+- **Eine Note markiert:** Die neue Note erscheint rechts daneben und ist mit einem Pfeil verbunden. Eine Task an einer Task wird so gleich zur **Untertask**.
+- **Mehrere markiert:** Die Note wird frei eingefügt, ohne Verbindung.
+- Danach schreibst du sofort in die neue Note. Solange du in einer Note oder einem Eingabefeld tippst, sind die Buchstaben ganz normaler Text – erst nach `Esc` oder einem Klick daneben fügen sie wieder Notes ein. Im Menü **Insert** stehen die Tasten neben den Typen.
 
 - **Rechtsklick** auf eine Note, eine Verbindung oder die Fläche öffnet ein Menü mit allen passenden Befehlen.
 - **Am Handy / Tablet (Finger):**
@@ -97,11 +115,19 @@ MindMapper ist eine Planungssoftware für Menschen, denen lineare Zeitpläne sch
 | **Heading** | Überschrift, größer und fett |
 | **To-Do** | Abhakbare Liste (`Enter` = neuer Eintrag) |
 | **Outline** | Gegliederte Stichpunkte (`Tab` / `Shift+Tab` = ein-/ausrücken, Klick auf den Punkt = zuklappen) |
-| **Task** | Aufgabe mit Stichpunkten und immer sichtbaren Details (Status, Priorität, Deadline, Schätzung, Fortschritt) |
+| **Task** | Aufgabe mit Stichpunkten und immer sichtbaren Details (Status, Priorität, Deadline, Schätzung, Fortschritt). Einzelne Zeilen können **Kästchen** zum Abhaken sein (siehe unten) |
 | **Link** | Verweis auf eine andere Map oder eine Webadresse |
 | **Code** | Text in Festbreitenschrift |
 | **Markdown** | Formatierter Text: Tabellen, Überschriften, Listen, Kästchen, Links, Bilder – geschrieben mit ein paar Zeichen (siehe **Markdown-Zeichen** in Kapitel 16). Wächst mit ihrem Inhalt. Wie ein Tagebuch-Eintrag, nur ohne Tagebuch und Datum |
 | **Diary entry** | Tagebuch-Eintrag mit Tag und Uhrzeit, erscheint im gewählten Tagebuch (siehe Kapitel 16) |
+
+**Kästchen in Tasks und Outlines:** Die Zeilen einer Task (und einer Outline) sind normalerweise **Stichpunkte** – für Notizen, Ergebnisse, Fragen. Eine Zeile, die du abhaken willst, machst du bei Bedarf zum **Kästchen**:
+
+- **Beim Schreiben:** die Zeile mit `[] ` beginnen (mit `[x] ` gleich abgehakt).
+- **Per Rechtsklick** auf die Zeile → **Zeile als Kästchen**, zurück mit **Zeile als Stichpunkt**.
+- **Abhaken:** Klick aufs Kästchen; die Zeile wird durchgestrichen.
+- `Enter` in einer Kästchen-Zeile macht die nächste Zeile auch zum Kästchen; `Enter` in einem **leeren** Kästchen macht es wieder zum Stichpunkt. Stichpunkte und Kästchen lassen sich mischen und einrücken wie bisher – z. B. oben Notizen, unten die Kästchen.
+- Die Task zeigt einen Zähler **☑ 2/5**. Der **Fortschritt** bleibt davon unberührt – den setzt du weiter selbst (oder er kommt aus den Untertasks). Kästchen sind kleine Teilschritte ohne Frist und Schätzung; braucht ein Schritt eigene Zeit und Frist, mach eine **Untertask** daraus (Pfeil Task → Task).
 | **Group** | Rahmen – Notes darin werden mitbewegt |
 | **Image** | Bild (einfügen per Drag & Drop oder `Ctrl+V`); auch als **Overlay** über allem |
 | **File** | Datennote: eine beliebige Datei (siehe Kapitel 16) |
@@ -212,7 +238,7 @@ Fast alles in MindMapper dreht sich um Aufgaben: Auslastung, Pläne, Overview, R
 Das Besondere an MindMapper ist die **freie Struktur**: Du musst nicht vorher wissen, was aus einem Gedanken wird. Jede Note – eine einfache Note, eine Überschrift, eine To-do-Liste oder eine Outline – lässt sich jederzeit in eine Task umwandeln, ohne sie neu anzulegen.
 
 **Beispiel:** Du notierst einen Gedanken als einfache Note – „Workshop für die neuen Studierenden?“. In den nächsten Tagen hängen sich weitere Notes daran: Themen, Raum, wer hilft mit. Irgendwann ist klar: Das ist kein Gedanke mehr, das ist eine Aufgabe.
-1. Rechtsklick auf die Note → **Change type → Task**. Text, Tags und alle Verbindungen bleiben erhalten (Einträge einer To-do-Liste werden zu Stichpunkten).
+1. Rechtsklick auf die Note → **Change type → Task**. Text, Tags und alle Verbindungen bleiben erhalten (Einträge einer To-do-Liste werden zu Kästchen, abgehakte bleiben abgehakt).
 2. Hängen an ihr weitere Notes, fragt MindMapper: *„Auch die 3 Note(s) darunter zu Tasks machen?“* – mit **Ja** wird der ganze Zweig zu Tasks, und die angehängten Notes sind jetzt ihre **Untertasks** (geteilte Schätzung, Fortschritt ∑, Kapitel 12). Später geht das auch per Rechtsklick → **Make tasks (with notes below)**.
 3. Details setzen: *Estimate* `6h` und *Deadline* – fertig ist die Projektaufgabe. Mit *Scheduled* statt Deadline wird sie zum Termin, mit *Repeat* zur Routine.
 

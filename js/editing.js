@@ -158,6 +158,17 @@
     const ed = MM.editing;
     if (!ed) return;
     const n = MM.node(ed.nodeId), div = MM.render.nodeEls.get(ed.nodeId);
+    // "[] " / "[x] " at the start of a line: it becomes a check box
+    if (n && ed.field === 'block') {
+      const m = /^\[( |x|X)?\][  ]/.exec(readText(ed.el));
+      const b = m && n.blocks.find((x) => x.id === ed.itemId);
+      if (b) {
+        b.text = readText(ed.el).slice(m[0].length);
+        b.check = !!m[1] && m[1] !== ' ';
+        jump(n.id, 'block', b.id, 0);
+        return;
+      }
+    }
     if (n && div && MM.render.autoGrow(div, n)) MM.render.edges();
   }
 
@@ -287,6 +298,13 @@
     switch (e.key) {
       case 'Enter': {
         if (e.shiftKey) return false;
+        if (text === '' && O.isCheck(b)) {
+          // an empty check box: back to a bullet point (like in other editors)
+          b.text = '';
+          O.setCheck(b, false);
+          jump(n.id, 'block', b.id, 0);
+          return true;
+        }
         if (text === '' && b.level > 0) {
           b.text = '';
           O.outdent(blocks, idx);
@@ -295,6 +313,7 @@
         }
         b.text = text.slice(0, off);
         const nb = MM.createBlock(text.slice(off), b.level);
+        if (O.isCheck(b)) nb.check = false; // the next line of a check list is a check box as well
         if (O.hasChildren(blocks, idx) && !b.collapsed) {
           nb.level = b.level + 1; // becomes first child
           blocks.splice(idx + 1, 0, nb);

@@ -262,12 +262,19 @@
     for (const i of MM.outline.visible(blocks)) {
       const b = blocks[i];
       const kids = MM.outline.hasChildren(blocks, i);
-      const li = el('li', (kids ? 'has-children' : '') + (kids && b.collapsed ? ' collapsed' : ''));
+      const check = MM.outline.isCheck(b);
+      const li = el('li', (kids ? 'has-children' : '') + (kids && b.collapsed ? ' collapsed' : '') + (check && b.check ? ' checked' : ''));
       li.dataset.block = b.id;
       li.style.setProperty('--lvl', b.level);
       const text = el('span', 'outline-text', b.text);
       text.dataset.field = 'block';
-      li.append(el('span', 'outline-toggle'), el('span', 'outline-bullet'), text);
+      // a line is a bullet point, or - on demand - a check box
+      const mark = el('span', check ? 'outline-check' : 'outline-bullet');
+      if (check) {
+        mark.setAttribute('role', 'checkbox');
+        mark.setAttribute('aria-checked', !!b.check);
+      }
+      li.append(el('span', 'outline-toggle'), mark, text);
       list.append(li);
     }
     return list;

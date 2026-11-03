@@ -91,7 +91,9 @@
    * at: world point for images, files and emoji; omit to leave those out.
    */
   MM.insertItems = function (fn, at) {
-    const items = MM.TEXT_TYPES.map((type) => ({ label: MM.NODE_TYPES[type], action: () => fn(type) }));
+    const keys = {};
+    for (const [k, type] of Object.entries(A.INSERT_KEYS)) keys[type] = k.toUpperCase();
+    const items = MM.TEXT_TYPES.map((type) => ({ label: MM.NODE_TYPES[type], shortcut: keys[type], action: () => fn(type) }));
     if (at) {
       items.push('-',
         { label: 'Image…', action: () => A.insertImage(at, false) },
@@ -394,6 +396,19 @@
     return out;
   }
   A.subNotesToConvert = subNotesToConvert;
+
+  /** Keys that insert a note (no Ctrl / Alt / Shift, see interaction.js onKeyDown). */
+  A.INSERT_KEYS = { n: 'text', t: 'task', l: 'todo', g: 'outline', h: 'heading', m: 'markdown', c: 'code' };
+
+  /**
+   * Insert by key: one note selected -> connected to it (a task below a task is its
+   * sub-task); otherwise free, at the mouse pointer over the map (else the view center).
+   */
+  A.insertByKey = function (type) {
+    if (MM.selectedNodes().length === 1) return A.addChild(type);
+    const over = document.getElementById('viewport').matches(':hover');
+    return A.addNode(type, over && MM.interaction.lastPoint ? MM.interaction.lastPoint : null);
+  };
 
   /** Tab: create a connected child note to the right of the selected note. */
   A.addChild = function (type) {

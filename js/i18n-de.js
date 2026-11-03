@@ -244,6 +244,8 @@
     'Stored as {path}': 'Gespeichert als {path}',
     // ---- project.js ----
     'Could not open folder: {err}': 'Ordner konnte nicht geöffnet werden: {err}',
+    'This window cannot open a folder (e.g. the preview inside VS Code). Please open MindMapper in Edge or Chrome itself.':
+      'In diesem Fenster kann kein Ordner geöffnet werden (z. B. in der Vorschau von VS Code). Bitte MindMapper direkt in Edge oder Chrome öffnen.',
     '"{path}" was changed on disk after your last session here (e.g. on another computer).\n\nOK: load the file (recommended).\nCancel: keep the local copy - it will overwrite the file.':
       '„{path}“ wurde nach deiner letzten Sitzung hier auf der Festplatte geändert (z. B. an einem anderen Computer).\n\nOK: Datei laden (empfohlen).\nAbbrechen: lokale Kopie behalten – sie überschreibt die Datei.',
     'Could not load {path}: {err}': '{path} konnte nicht geladen werden: {err}',
