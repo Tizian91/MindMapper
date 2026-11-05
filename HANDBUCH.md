@@ -389,6 +389,82 @@ Toolbar **Overview** (*Übersicht*) sammelt die Aufgaben **aller Maps** des Proj
 - **By deadline**, **By task** und die **Matrix** zeigen Termine nicht, dort stehen nur Aufgaben. Ein vergangener Termin ist nicht „überfällig“, er ist vorbei – und über einen festen Termin muss man nicht nach wichtig / dringend entscheiden. Hat ein Termin Untertasks, steht er in *By task* blass als Rahmen über ihnen. Vergessen wird trotzdem nichts: Jeder Tages- und Wochenplan bekommt seine Termine als 📌-Eintrag (Kapitel 8).
 - *Hide done* blendet abgehakte Termine aus – so bleiben unter *Past* nur die, die du noch nicht abgehakt hast.
 
+### Termine und Fristen in Outlook übertragen (Windows)
+
+MindMapper kann deine Fristen und Termine in deinen **Outlook-Kalender** schreiben – **nur in diese Richtung**. Was du in Outlook änderst, kommt nie in deine Maps zurück. Eine Browser-App darf Outlook nicht erreichen; deshalb erledigt das ein kleines Windows-Programm (ein PowerShell-Skript), das neben deinen Maps im Projektordner liegt und das **du** startest – von Hand oder, wenn du es einschaltest, stündlich.
+
+**Voraussetzungen**
+
+- Windows und das **klassische Outlook**, eingerichtet mit deinem Konto. Ob du es hast: *Datei → Office-Konto → Info zu Outlook* zeigt eine Versionsnummer (z. B. „Version 2108 … Klick-und-Los“).
+- **Nicht** möglich mit dem „neuen Outlook“ (Schalter *Neues Outlook* oben rechts), Outlook im Web oder auf dem Mac – die lassen sich von einem Programm auf dem PC nicht ansteuern.
+
+**Einrichten (einmal)**
+
+1. *Overview → Appointments*, oben rechts **📅 Nach Outlook übertragen…** (der Knopf erscheint nur unter Windows).
+2. Bestätigen. MindMapper legt zwei Dateien in den Projektordner (ein erneuter Klick auf den Knopf ersetzt beide durch die neueste Version):
+   - `outlook-sync.ps1` – das Programm. Es ist reiner Text; du kannst es mit jedem Editor öffnen und nachlesen, was es tut.
+   - `Outlook-Abgleich.cmd` – startet es per Doppelklick.
+3. Projektordner im Explorer öffnen, **Doppelklick auf `Outlook-Abgleich.cmd`**. Beim ersten Mal warnt Windows eventuell („Der Computer wurde durch Windows geschützt“), weil die Datei aus dem Browser kommt: *Weitere Informationen → Trotzdem ausführen*.
+
+**Das Menü**
+
+Nach dem Doppelklick öffnet sich ein schwarzes Fenster mit Planungsordner, Stand des stündlichen Abgleichs, letztem Lauf und:
+
+- **[1] Jetzt abgleichen** (oder einfach Enter) – überträgt alles von Hand und zeigt, was angelegt, geändert und gelöscht wurde.
+- **[2] Probelauf** – zeigt nur an, was [1] tun würde. Outlook wird dabei nicht verändert. Gut für den Anfang.
+- **[3] Stündlich automatisch abgleichen** ein- bzw. ausschalten (siehe unten).
+- **[4] Alle MindMapper-Einträge aus Outlook entfernen** – zeigt sie erst an und fragt nach; schaltet auch den stündlichen Abgleich aus, damit er sie nicht wieder anlegt.
+- **[Q]** beendet.
+
+**Was übertragen wird**
+
+| In MindMapper | In Outlook |
+|---|---|
+| Frist (*Deadline*) | ganztägig, „⏰ Titel“, als *frei* (blockt den Kalender nicht). Erinnerung **eine Woche vorher um 9:00**, danach **am Vortag um 9:00** |
+| Termin mit Uhrzeit | ab der Uhrzeit, so lang wie die Schätzung (ohne Schätzung 30 min), als *gebucht*, Erinnerung 15 min vorher |
+| Termin ohne Uhrzeit | ganztägig, als *frei*, Erinnerung am Vortag um 9:00 |
+
+- **Untertasks:** Hat eine Untertask dieselbe Frist wie ihre Haupttask, steht nur die Haupttask in Outlook. Sonst steht die Haupttask im Titel dabei: „⏰ Schreiben (zu: Budget Plan)“.
+- **Vergangenes** (auch überfällige, offene Fristen) wird übertragen, aber **ohne Erinnerung**.
+- **Nicht übertragen:** Routinen – Serientermine legst du in Outlook selbst an, sonst stünden sie doppelt da. Ebenso erledigte oder verworfene Fristen, verworfene und zurückgestellte Aufgaben, die 📌-Einträge der Pläne (sie verweisen nur auf den Termin) und Konfliktkopien von Maps.
+- Jeder Eintrag bekommt die Kategorie **„MindMapper“**, ist als **privat** markiert und hat im Text „Aus MindMapper: *Map*“.
+- Outlook kennt nur **eine** Erinnerung je Eintrag. Deshalb setzt ein Lauf nach der Erinnerung eine Woche vorher sie auf den Vortag um – das klappt, wenn das Programm danach noch einmal läuft (stündlich oder von Hand).
+
+**Wie der Abgleich arbeitet**
+
+- Jeder Lauf vergleicht die Maps mit den Outlook-Einträgen der Kategorie „MindMapper“: Neues wird angelegt, Geändertes (Datum, Uhrzeit, Titel, Schätzung) angepasst, was es in MindMapper nicht mehr gibt (gelöscht, erledigt, ohne Datum), entfernt.
+- Seine eigenen Einträge erkennt das Programm an einer unsichtbaren Kennung der Note. **Deine anderen Outlook-Termine fasst es nie an** – auch dann nicht, wenn du ihnen von Hand die Kategorie „MindMapper“ gibst.
+- **Ändere die übertragenen Einträge in MindMapper, nicht in Outlook.** Eine Änderung in Outlook überschreibt der nächste Lauf; einen in Outlook gelöschten Eintrag legt er wieder an.
+
+**Von Hand übertragen**
+
+Ohne stündlichen Abgleich passiert nur etwas, wenn du `Outlook-Abgleich.cmd` startest und **[1]** wählst. Danach steht Outlook auf dem Stand deiner Maps – bis zum nächsten Mal. Vorher kannst du mit **[2]** nachsehen, was sich ändern würde.
+
+**Stündlich automatisch – was dabei genau passiert**
+
+- **[3]** legt in der **Windows-Aufgabenplanung** eine Aufgabe namens **„MindMapper Outlook-Abgleich“** an – unter deinem Benutzerkonto, ohne Administratorrechte.
+- Sie startet **jede Stunde**, solange du angemeldet bist, und tut genau dasselbe wie **[1]**, nur **ohne Fenster**. Läuft Outlook gerade nicht, tut sie nichts (sie startet Outlook nicht von selbst). Nach spätestens 10 Minuten wird sie beendet.
+- **Nachsehen und abschalten:** Das Menü zeigt *AN* / *aus* und den letzten Lauf; **[3]** schaltet ab. Oder: Startmenü → „Aufgabenplanung“ → *Aufgabenplanungsbibliothek* → „MindMapper Outlook-Abgleich“. Unter *Aktionen* steht der genaue Befehl, der stündlich ausgeführt wird; dort kannst du die Aufgabe auch deaktivieren oder löschen.
+- **Protokoll:** `%LOCALAPPDATA%\MindMapper\outlook-sync.log` – je Lauf eine Zeile mit Zeitpunkt und Anzahlen (z. B. „automatisch: 1 neu, 0 geändert, 0 gelöscht, 13 unverändert“), bei einem Fehler die Fehlermeldung. Keine Titel, keine Inhalte.
+- Die Aufgabe gilt **nur für diesen PC**. Liegt der Projektordner in einem Sync-Ordner, kommen die beiden Dateien auch auf deine anderen PCs – dort tun sie nichts, bis du sie startest.
+
+**Deine Daten**
+
+- Das Programm **liest nur** die Maps im Projektordner – es schreibt dort nichts – und **schreibt nur** in deinen Outlook-Kalender.
+- Es baut **selbst keine Internetverbindung** auf und schickt nichts an MindMapper, GitHub oder sonst wohin. Es braucht kein Passwort: Es benutzt das Konto, das in deinem Outlook schon eingerichtet ist.
+- Wie jeden Termin gleicht **Outlook** die Einträge mit **deinem eigenen Postfach** ab (bei der Arbeit z. B. Exchange) – deshalb erscheinen sie auch auf dem Handy und in Outlook im Web. Weil sie als **privat** markiert sind, sehen Kollegen, für die dein Kalender freigegeben ist, nur „gebucht“ bzw. „privater Termin“, keine Titel.
+
+**Wieder loswerden**
+
+**[4]** im Menü entfernt alle MindMapper-Einträge aus Outlook und schaltet den stündlichen Abgleich aus. Danach die beiden Dateien aus dem Projektordner löschen – sonst bleibt nichts zurück (außer dem Protokoll, siehe oben).
+
+**Wenn etwas nicht klappt**
+
+- „Outlook ist nicht ansteuerbar“: Es läuft das *neue* Outlook – oder gar keins. Nur das klassische Outlook geht.
+- Outlook fragt „Ein Programm versucht, auf … zuzugreifen“: Das ist Outlooks Schutz vor fremden Programmen. Erlauben – oder den Virenschutz aktualisieren, dann fragt Outlook normalerweise nicht.
+- Das Fenster schließt sofort oder PowerShell ist gesperrt: Manche Firmen-PCs verbieten Skripte. Dann hilft nur die IT.
+- Ohne die App, z. B. für Fortgeschrittene: `powershell -ExecutionPolicy Bypass -File outlook-sync.ps1 -Folder "D:\Planung" -Apply` (ohne `-Apply`: Probelauf).
+
 ### By task: Was gehört wozu?
 
 ![By task: Haupttasks mit ihren Untertasks und wie viel der Schätzung schon verteilt ist](docs/handbuch/overview-task.png)

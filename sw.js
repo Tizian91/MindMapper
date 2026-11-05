@@ -20,6 +20,7 @@ const FILES = [
   'icons/icon.svg',
   'icons/icon-192.png',
   'icons/icon-512.png',
+  'js/outlook-sync-ps1.js', // loaded on demand: Overview → Appointments → Outlook
   'js/state.js',
   'js/i18n.js',
   'js/i18n-de.js',

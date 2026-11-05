@@ -356,6 +356,7 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .ov-head [hidden] { display: none !important; }
 .ov-search { width: 200px; }
 .ov-list { flex: 1; overflow-y: auto; padding: 6px 16px 16px; }
+.ov-outlook { display: flex; justify-content: flex-end; margin-top: 6px; }
 .ov-group-head {
   display: flex; gap: 8px; align-items: baseline;
   margin: 14px 0 4px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;

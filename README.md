@@ -40,6 +40,7 @@ load the example map again (it is shown on the very first start and contains a s
 | `js/transfer.js` | Moving notes between maps (copy + "moved" marker on the original) and the map picker |
 | `js/links.js` | Links of notes: other maps of the project, web addresses, or folders / files on the PC (file list in a new tab + path copied for Explorer) |
 | `js/overview.js` | Overview of the tasks of all maps in the project folder (type filter, progress, derived maps) |
+| `tools/outlook-sync.ps1` | Windows / classic Outlook: writes deadlines and appointments of the maps to the Outlook calendar (one way). The app puts it into the project folder (Overview → Appointments); `js/outlook-sync-ps1.js` carries its text and is built by `tools/make_outlook_js.ps1` after every change |
 | `js/main.js` | Startup, toolbar, status bar, demo map |
 | `sw.js`, `manifest.webmanifest`, `icons/` | Installable web app and offline copy (only when served over https / localhost) |
 

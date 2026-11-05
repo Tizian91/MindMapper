@@ -287,6 +287,14 @@
     'Checked off "{task}"': '„{task}“ abgehakt',
     '"{task}" is open again': '„{task}“ ist wieder offen',
     'Appointments (Scheduled) and routines with a time of all maps by day': 'Termine (Scheduled) und Routinen mit Uhrzeit aller Maps nach Tag',
+    'Transfer to Outlook…': 'Nach Outlook übertragen…',
+    'Puts a small Windows program into the project folder that transfers deadlines and appointments to the Outlook calendar (classic Outlook)':
+      'Legt ein kleines Windows-Programm in den Projektordner, das Fristen und Termine in den Outlook-Kalender überträgt (klassisches Outlook)',
+    'Transfer deadlines and appointments to Outlook?\n\nThis puts two files into the project folder:\n  {a} – the program\n  {b} – double-click to start it\n\nIt runs outside the browser, works with the classic Outlook for Windows (not the "new Outlook") and only writes to Outlook – never to your maps.':
+      'Fristen und Termine nach Outlook übertragen?\n\nDazu kommen zwei Dateien in den Projektordner:\n  {a} – das Programm\n  {b} – per Doppelklick starten\n\nEs läuft außerhalb des Browsers, funktioniert mit dem klassischen Outlook für Windows (nicht dem „neuen Outlook“) und schreibt nur in Outlook – nie in deine Maps.',
+    'Could not put the Outlook files into the project folder: {err}': 'Die Outlook-Dateien konnten nicht in den Projektordner gelegt werden: {err}',
+    'Done. Open the project folder in Explorer and double-click "{b}".\n\nA menu opens: transfer now, dry run (only shows what would change), transfer hourly by itself, remove all entries again.\n\nWindows may warn the first time: "More info" → "Run anyway".':
+      'Fertig. Öffne den Projektordner im Explorer und doppelklicke auf „{b}“.\n\nEin Menü öffnet sich: jetzt übertragen, Probelauf (zeigt nur, was sich ändern würde), stündlich von selbst übertragen, alle Einträge wieder entfernen.\n\nWindows warnt beim ersten Start eventuell: „Weitere Informationen“ → „Trotzdem ausführen“.',
     'Tasks with a deadline, grouped by it (appointments: own view)': 'Aufgaben mit Deadline, danach gruppiert (Termine: eigene Ansicht)',
     'Past': 'Vergangen',
     '1 appointment': '1 Termin',

@@ -391,6 +391,10 @@
       render();
     });
     dialog.querySelector('.ov-list').addEventListener('click', async (e) => {
+      if (e.target.closest('[data-ov-outlook]')) {
+        setupOutlook();
+        return;
+      }
       if (e.target.closest('[data-mx-undo]')) {
         undoQuadrant();
         return;
@@ -542,10 +546,54 @@
       : view.mode === 'aside' ? renderAside(items.filter((it) => isAside(it) && matches(it)))
         : view.mode === 'appts' ? renderAppointments(items.filter((it) => matches(it) && it.status !== 'dropped'), matches)
           : renderBuckets(items.filter((it) => matches(it) && !isAside(it)));
-    dialog.querySelector('.ov-list').innerHTML = h ||
+    dialog.querySelector('.ov-list').innerHTML = (view.mode === 'appts' ? outlookBar() : '') + (h ||
       `<p class="hint">${view.mode === 'aside' ? tr('Nothing set aside. Status "Deferred": some day, no date yet. "Dropped": will not be done - kept as it was.')
         : view.mode === 'appts' ? tr('No appointments. An appointment is a note with a "Scheduled" date (panel → Details) - or a routine with a time.')
-        : items.length ? tr('Nothing matches.') : tr('No tasks yet. Give notes a status, priority or deadline – or use task / to-do notes.')}</p>`;
+        : items.length ? tr('Nothing matches.') : tr('No tasks yet. Give notes a status, priority or deadline – or use task / to-do notes.')}</p>`);
+  }
+
+  // ---- Outlook ---------------------------------------------------------------------
+  // A browser app cannot reach Outlook. tools/outlook-sync.ps1 (Windows, classic Outlook)
+  // does it: it reads the maps of its folder and writes their deadlines and appointments
+  // to the Outlook calendar - one way only. The button puts it and a starter to
+  // double-click into the project folder (again: the newest version).
+  // Its text comes with js/outlook-sync-ps1.js (built by tools/make_outlook_js.ps1), loaded
+  // on demand: opened as a file (file://) the app may load scripts, but not fetch() files.
+  const OUTLOOK_SCRIPT = 'outlook-sync.ps1', OUTLOOK_STARTER = 'Outlook-Abgleich.cmd';
+
+  function outlookScriptText() {
+    if (MM.OUTLOOK_SYNC_PS1) return Promise.resolve(MM.OUTLOOK_SYNC_PS1);
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'js/outlook-sync-ps1.js';
+      s.onload = () => (MM.OUTLOOK_SYNC_PS1 ? resolve(MM.OUTLOOK_SYNC_PS1) : reject(new Error('js/outlook-sync-ps1.js is empty')));
+      s.onerror = () => reject(new Error('js/outlook-sync-ps1.js not found'));
+      document.head.appendChild(s);
+    });
+  }
+
+  function outlookBar() {
+    if (!/Windows/i.test(navigator.userAgent)) return '';
+    return `<div class="ov-outlook"><button data-ov-outlook title="${esc(tr('Puts a small Windows program into the project folder that transfers deadlines and appointments to the Outlook calendar (classic Outlook)'))}">📅 ${tr('Transfer to Outlook…')}</button></div>`;
+  }
+
+  async function setupOutlook() {
+    const P = MM.project;
+    if (!confirm(tr('Transfer deadlines and appointments to Outlook?\n\nThis puts two files into the project folder:\n  {a} – the program\n  {b} – double-click to start it\n\nIt runs outside the browser, works with the classic Outlook for Windows (not the "new Outlook") and only writes to Outlook – never to your maps.', { a: OUTLOOK_SCRIPT, b: OUTLOOK_STARTER }))) return;
+    try {
+      // with BOM: Windows PowerShell 5.1 reads a .ps1 without one as ANSI (umlauts)
+      const text = await outlookScriptText();
+      await P.backend.writeBlob(OUTLOOK_SCRIPT, new Blob(['﻿' + text], { type: 'text/plain' }));
+      // cmd wants CRLF; the menu of the script does the rest
+      const starter = ['@echo off', 'chcp 65001 >nul',
+        'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0' + OUTLOOK_SCRIPT + '" -Menu',
+        'if errorlevel 1 pause', ''].join('\r\n');
+      await P.backend.writeBlob(OUTLOOK_STARTER, new Blob([starter], { type: 'text/plain' }));
+    } catch (err) {
+      alert(tr('Could not put the Outlook files into the project folder: {err}', { err: err.message || err }));
+      return;
+    }
+    alert(tr('Done. Open the project folder in Explorer and double-click "{b}".\n\nA menu opens: transfer now, dry run (only shows what would change), transfer hourly by itself, remove all entries again.\n\nWindows may warn the first time: "More info" → "Run anyway".', { b: OUTLOOK_STARTER }));
   }
 
   /**
