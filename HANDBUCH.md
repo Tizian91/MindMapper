@@ -642,6 +642,17 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **Nicht verankert** (beim Zeichnen `Alt` halten, oder **Detach**): Die Zeichnung bewegt sich nur, wenn sie selbst ausgewählt ist – auch eine Gruppe nimmt sie nicht mit.
 - Panel bzw. Rechtsklick: Form, **Anchor to the note below** / **Detach**, Linienfarbe und -stärke, Strichart, Füllung (Rechteck / Ellipse), Deckkraft. Die nächste Zeichnung übernimmt die zuletzt eingestellte Farbe und Stärke.
 
+### Freihand mit Stift (Tablet) oder Maus
+
+- Toolbar **✍ Pen** (oder Taste `P`) schaltet Freihand ein – und es bleibt an, bis du es wieder ausschaltest (**✍ Pen**, `P`, `Esc` oder **✕** in der Palette). Unter der Toolbar erscheint eine kleine **Palette**: **✏️ Stift**, **🖍️ Textmarker**, **🧽 Radierer**, dazu Farben (der bunte Kreis: eigene Farbe) und drei Stärken. Die Einstellungen merkt sich der Browser.
+- **Stift schreibt, Finger navigieren:** Mit dem Stift (oder der Maus) schreibst und zeichnest du – auch über Notes und Bilder hinweg. Mit den Fingern verschiebst und zoomst du die Map wie immer. Solange der Stift den Bildschirm berührt oder knapp darüber ist, zählen Berührungen nicht – die Hand kann also aufliegen.
+- **Druck:** Mit einem drucksensitiven Stift wird der Strich bei leichtem Druck dünner, bei festem Druck voll breit. Der Textmarker ist immer gleich breit und durchscheinend; was du mit ihm übermalst, bleibt lesbar.
+- **Radieren:** In der Palette **🧽 Radierer** wählen und über die Striche fahren – es verschwinden ganze Striche. **Automatisch:** Das Radiererende eines Stifts (Windows) und die **Seitentaste** des Stifts (z. B. S Pen) radieren, solange du sie benutzt; danach schreibt der Stift wieder.
+- **Ein Wort, eine Skizze = eine Zeichnung:** Striche, die du dicht beim vorherigen und mit demselben Stift setzt, landen in derselben Freihand-Zeichnung. So verschiebst, kopierst oder löschst du ein Wort oder eine Skizze als Ganzes. Andere Farbe oder Stärke, weiter weg oder auf einer anderen Note: eine neue Zeichnung.
+- **Verankert** wie alle Zeichnungen: Beginnst du auf einer Note oder einem Bild (z. B. Noten, ein Foto), hängt die Schrift daran und wandert und skaliert mit. `Alt` beim ersten Strich (Maus): nicht verankert.
+- **Rückgängig:** Jeder Strich ist ein Schritt (`Ctrl+Z` bzw. ↶), ein Radier-Zug ebenso.
+- **Bearbeiten:** Freihand ausschalten, dann die Schrift antippen oder anklicken (auf der Linie). Im Panel: Farbe, Stärke, Deckkraft, Anker; Verschieben, Vergrößern, Kopieren und Löschen wie bei jeder Zeichnung. Im PDF wird sie mitgedruckt.
+
 ### Tagebuch / Laborbuch
 
 - **Tagebuch anlegen:** Seitenleiste → Bereich **Diaries** → **+**. Jedes Tagebuch ist eine Datei im Ordner `Diaries/` des Projektordners.

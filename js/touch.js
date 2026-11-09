@@ -55,8 +55,35 @@
     return !!(t.closest && t.closest('.handle-resize, .handle-endpoint, .handle-rotate'));
   }
 
+  /** Forget the touches in progress (the stylus came down: the hand resting on the screen does nothing). */
+  T.reset = function () {
+    if (start) clearTimeout(start.timer);
+    if (mode === 'pan') MM.storage.scheduleAutosave();
+    for (const id of touches.keys()) ignored.add(id);
+    touches.clear();
+    mode = null;
+    start = null;
+    pan = pinch = twist = null;
+  };
+  const ignored = new Set(); // touches of the resting hand: nothing they do counts, up to their end
+
+  /** A touch of the resting hand: its events go nowhere. Returns true if it was one. */
+  function swallow(e) {
+    if (!ignored.has(e.pointerId)) return false;
+    stop(e);
+    if (e.type === 'pointerup' || e.type === 'pointercancel') ignored.delete(e.pointerId);
+    return true;
+  }
+
   function down(e) {
     if (e.pointerType !== 'touch') return;
+    // freehand (ink.js): while the stylus is on or near the screen, a touch is the hand resting on it
+    if (MM.ink && MM.ink.penNear()) {
+      ignored.add(e.pointerId);
+      stop(e);
+      e.preventDefault();
+      return;
+    }
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (touches.size === 2) {
       startPinch();
@@ -91,7 +118,7 @@
   }
 
   function move(e) {
-    if (e.pointerType !== 'touch' || !touches.has(e.pointerId)) return;
+    if (e.pointerType !== 'touch' || swallow(e) || !touches.has(e.pointerId)) return;
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (mode === 'direct' || mode === 'drag') return; // interaction.js moves it
     stop(e);
@@ -119,7 +146,7 @@
   }
 
   function up(e) {
-    if (e.pointerType !== 'touch' || !touches.has(e.pointerId)) return;
+    if (e.pointerType !== 'touch' || swallow(e) || !touches.has(e.pointerId)) return;
     touches.delete(e.pointerId);
     if (mode === 'direct' || mode === 'drag') {
       if (!touches.size) {
@@ -159,7 +186,7 @@
   }
 
   function cancel(e) {
-    if (e.pointerType !== 'touch' || !touches.has(e.pointerId)) return;
+    if (e.pointerType !== 'touch' || swallow(e) || !touches.has(e.pointerId)) return;
     touches.delete(e.pointerId);
     if (start) clearTimeout(start.timer);
     if (mode === 'direct' || mode === 'drag') {

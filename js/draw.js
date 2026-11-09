@@ -1,7 +1,7 @@
 'use strict';
 /*
  * Drawings: rectangles, ellipses, lines and arrows on top of the map (note type 'draw').
- *   n.draw   = 'rect' | 'ellipse' | 'line' | 'arrow'
+ *   n.draw   = 'rect' | 'ellipse' | 'line' | 'arrow' | 'ink' (freehand, see ink.js)
  *   n.line   = { x1, y1, x2, y2 }: end points of a line / arrow as fractions of the box
  *   n.anchor = { node, box: { x, y, w, h } } or null
  *
@@ -33,6 +33,7 @@
 
   /** SVG path of a drawing in its own box (0,0 .. w,h). */
   D.path = function (n) {
+    if (n.draw === 'ink') return MM.ink.path(n); // freehand: filled outlines of the strokes (ink.js)
     const w = n.w, h = n.h, sw = Number(n.style.strokeWidth) || 0, k = sw / 2;
     if (n.draw === 'ellipse') {
       const rx = Math.max(0.5, (w - sw) / 2), ry = Math.max(0.5, (h - sw) / 2);
@@ -179,6 +180,7 @@
   /** Choose a tool: the next drag on the canvas draws that shape (Esc cancels). */
   D.setTool = function (kind) {
     S.tool = kind || null;
+    if (S.tool && S.settings.penMode) MM.ink.toggle(false); // a shape now, not freehand
     document.getElementById('viewport').classList.toggle('drawing', !!S.tool);
     if (S.tool) MM.ui.flash(MM.tr('Drag to draw – over a note or image it is anchored to it (Alt: not anchored). Esc cancels.'));
   };
@@ -209,6 +211,9 @@
   };
 
   A.drawTool = (kind) => D.setTool(kind);
+
+  /** ✍ in the toolbar (P): freehand with the pen or the mouse (ink.js). */
+  A.togglePen = () => MM.ink.toggle();
 
   /**
    * Ctrl+G (like grouping in Inkscape): anchor the selected drawings. With

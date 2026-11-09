@@ -526,6 +526,16 @@
     'No sub folders.': 'Keine Unterordner.',
     'Use this folder': 'Diesen Ordner nehmen',
     'Name of the new folder:': 'Name des neuen Ordners:',
+    // ---- Freehand (ink.js) ----
+    'Freehand': 'Freihand',
+    'Pen': 'Stift',
+    'Marker': 'Textmarker',
+    'Eraser': 'Radierer',
+    'Own colour': 'Eigene Farbe',
+    'Thin': 'Dünn',
+    'Medium': 'Mittel',
+    'Thick': 'Dick',
+    'End freehand (P / Esc)': 'Freihand beenden (P / Esc)',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

@@ -34,6 +34,8 @@ window.MM = window.MM || {};
       tbEmojiTitle: 'Emoji / Symbol (Strg+. oder Strg+Umschalt+E)',
       tbDraw: '✎ Zeichnen ▾',
       tbDrawTitle: 'Rechteck, Ellipse, Linie oder Pfeil zeichnen',
+      tbPen: '✍ Stift',
+      tbPenTitle: 'Freihand mit Stift oder Maus – Finger verschieben weiter die Map (P)',
       tbGuides: 'Hilfslinien',
       tbGuidesTitle: 'An anderen Notizen ausrichten (Smart Guides). Alt beim Ziehen gedrückt halten zum Deaktivieren.',
       tbGrid: 'Raster',
@@ -375,6 +377,8 @@ window.MM = window.MM || {};
       tbEmojiTitle: 'Emoji / symbol (Ctrl+. or Ctrl+Shift+E)',
       tbDraw: '✎ Draw ▾',
       tbDrawTitle: 'Draw a rectangle, ellipse, line or arrow',
+      tbPen: '✍ Pen',
+      tbPenTitle: 'Freehand with a pen or the mouse – fingers keep moving the map (P)',
       tbGuides: 'Smart guides',
       tbGuidesTitle: 'Snap to other notes (smart guides). Hold Alt while dragging to bypass.',
       tbGrid: 'Grid',
@@ -770,6 +774,7 @@ window.MM = window.MM || {};
       redo: { title: MM.t('tbRedoTitle'), aria: MM.t('tbRedoAria') },
       insertMenu: { text: MM.t('tbInsert'), title: MM.t('tbInsertTitle'), aria: MM.t('tbInsertTitle') },
       drawMenu: { text: MM.t('tbDraw'), title: MM.t('tbDrawTitle'), aria: MM.t('tbDrawTitle') },
+      togglePen: { text: MM.t('tbPen'), title: MM.t('tbPenTitle'), aria: MM.t('tbPenTitle') },
       toggleGuides: { text: MM.t('tbGuides'), title: MM.t('tbGuidesTitle'), aria: MM.t('tbGuidesTitle') },
       toggleGrid: { text: MM.t('tbGrid'), title: MM.t('tbGridTitle'), aria: MM.t('tbGridTitle') },
       toggleMeta: { text: MM.t('tbDetails'), title: MM.t('tbDetailsTitle'), aria: MM.t('tbDetailsTitle') },
@@ -795,6 +800,7 @@ window.MM = window.MM || {};
     }
 
     MM.applyTheme();
+    if (MM.ink && MM.ink.refreshPalette) MM.ink.refreshPalette(); // the freehand palette in the new language
 
     if (MM.ui) {
       MM.ui.defaultHint = MM.t('defaultHint');

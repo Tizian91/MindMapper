@@ -527,8 +527,20 @@ window.MM = window.MM || {};
         // drawing: shape, line end points (fractions of the box) and anchor note (see draw.js)
         const frac = (v, d) => Math.max(0, Math.min(1, num(v, d)));
         const l = n.line && typeof n.line === 'object' ? n.line : {};
-        node.draw = oneOf(n.draw, MM.DRAW_KINDS, 'rect');
+        node.draw = n.draw === 'ink' ? 'ink' : oneOf(n.draw, MM.DRAW_KINDS, 'rect');
         node.line = { x1: frac(l.x1, 0), y1: frac(l.y1, 0), x2: frac(l.x2, 1), y2: frac(l.y2, 1) };
+        if (node.draw === 'ink') {
+          // freehand (ink.js): strokes as flat [x, y, pressure, …] lists, fractions of the box
+          node.ink = (Array.isArray(n.ink) ? n.ink : []).filter(Array.isArray).map((s) => {
+            const v = s.map(Number).filter(Number.isFinite);
+            return v.slice(0, v.length - (v.length % 3));
+          }).filter((s) => s.length);
+          node.marker = !!n.marker;
+          delete node.line;
+        } else {
+          delete node.ink;
+          delete node.marker;
+        }
         const a = n.anchor && typeof n.anchor === 'object' && n.anchor.node ? n.anchor : null;
         const b = (a && a.box && typeof a.box === 'object') ? a.box : {};
         node.anchor = a ? { node: str(a.node), box: { x: num(b.x, 0), y: num(b.y, 0), w: num(b.w, 0), h: num(b.h, 0) } } : null;
@@ -536,6 +548,8 @@ window.MM = window.MM || {};
         delete node.draw;
         delete node.line;
         delete node.anchor;
+        delete node.ink;
+        delete node.marker;
       }
       if (type === 'diary') {
         // diary entry: which diary, day and time (see diary.js)

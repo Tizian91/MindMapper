@@ -822,6 +822,9 @@
     else if (ctrl) handled = false;
     else if (key === 'Delete' || key === 'Backspace') A.deleteSelection();
     else if (key === 'Escape' && S.tool) MM.draw.setTool(null);
+    else if (key === 'Escape' && S.settings.penMode) MM.ink.toggle(false);
+    // P: freehand on / off (ink.js)
+    else if (key === 'p' && !e.altKey && !e.shiftKey && !document.querySelector('dialog[open]')) MM.ink.toggle();
     else if (key === 'Escape') A.deselect();
     else if (key === 'Enter' || key === 'F2') A.editSelected();
     else if (key === 'Tab') A.insertByKey('text');

@@ -89,11 +89,13 @@
     const kinds = {};
     Object.entries(MM.DRAW_KINDS).forEach(([k, label]) => (kinds[k] = MM.tr(label)));
     const line = n.draw === 'line' || n.draw === 'arrow';
+    // freehand (ink.js): no other shape, no line style, no fill - colour, width, opacity
+    const ink = nodes.some((x) => x.draw === 'ink');
     const filled = st.fill && st.fill !== 'none';
     const label = MM.draw.anchorLabel(n);
     const op = st.opacity === undefined ? 1 : st.opacity;
-    return `<section>${head(esc(MM.tr('Drawing')) + count)}
-      <div class="row"><label>${esc(MM.tr('Shape'))}</label>${seg('data-node-prop="draw" data-value', n.draw, kinds, drawIcon)}</div>
+    return `<section>${head(esc(MM.tr(ink ? 'Freehand' : 'Drawing')) + count)}
+      ${ink ? '' : `<div class="row"><label>${esc(MM.tr('Shape'))}</label>${seg('data-node-prop="draw" data-value', n.draw, kinds, drawIcon)}</div>`}
       <div class="row"><label>${esc(MM.tr('Anchor'))}</label><span class="file-sub">${label
         ? esc(MM.tr('Anchored to "{note}" – moves and scales with it', { note: label }))
         : esc(MM.tr('Not anchored – moves only when selected'))}</span></div>
@@ -104,10 +106,11 @@
     </section>
     <section><h3>${t('style')}</h3>
       <div class="row"><label>${esc(MM.tr('Line'))}</label><input type="color" data-node-style="stroke" value="${esc(st.stroke)}">
-        <input type="number" data-node-style="strokeWidth" value="${esc(st.strokeWidth)}" min="0.5" max="24" step="0.5" title="${t('borderWidth')}"></div>
+        <input type="number" data-node-style="strokeWidth" value="${esc(st.strokeWidth)}" min="0.5" max="${ink ? 48 : 24}" step="0.5" title="${t('borderWidth')}"></div>` +
+      (ink ? '' : `
       <div class="row"><label>${t('borderLine')}</label>${seg('data-node-style="strokeStyle" data-value', st.strokeStyle,
-        { solid: t('solid'), dashed: t('dashed'), dotted: t('dotted') }, lineIcon)}</div>` +
-      (line ? '' : `
+        { solid: t('solid'), dashed: t('dashed'), dotted: t('dotted') }, lineIcon)}</div>`) +
+      (line || ink ? '' : `
       <div class="row"><label>${t('fill')}</label><input type="color" data-node-style="fill" value="${esc(filled ? st.fill : '#ffffff')}">
         <button data-node-style="fill" data-value="none" class="${filled ? '' : 'active'}">${esc(MM.tr('No fill'))}</button></div>`) + `
       <div class="row"><label>${t('opacity')}</label><input type="range" data-node-style="opacity" min="0.1" max="1" step="0.05" value="${esc(op)}"></div>

@@ -303,6 +303,7 @@
     MM.menu.init();
     MM.filterbar.init();
     MM.storage.loadSettings();
+    MM.ink.init(); // freehand (after the settings: the palette's colours and widths)
     MM.applyTheme();
     MM.updateUIStrings();
     MM.filterbar.rebuild();

@@ -19,6 +19,7 @@ ELECTRON_RUN_AS_NODE=1 "/c/Users/<Name>/AppData/Local/Programs/Microsoft VS Code
 | `test_hist.js` | Verlauf und Serie der Routinen |
 | `test_fsys.js` | lokaler Speicher-Anbieter inkl. Konfliktschutz (Version + Inhalts-Hash) |
 | `test_dropbox.js` | Dropbox-Anbieter gegen ein nachgebautes Dropbox (Anmeldung mit PKCE, Dateien, Konflikt per Revision, gemerkte Dateien, Token-Erneuerung, Umlaute) |
+| `test_ink.js` | Freihand: Umriss mit Druck, weniger Punkte, Rahmen, Striche zusammenfassen, Verankern, Radieren, Speichern (`ink.js`) |
 | `test_queue.js` | eine Schreibaktion pro Datei zur Zeit (`project.js writeText`) |
 | `test_touch.js` | Finger-Gesten (`touch.js`) |
 | `test_rotate.js` | Drehen: Einrasten, Speichern, zwei Finger auf dem Bild |

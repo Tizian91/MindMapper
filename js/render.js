@@ -220,13 +220,24 @@
     if (isImage) content.style.opacity = st.opacity === undefined ? 1 : st.opacity;
   };
 
+  /** Short fingerprint of the strokes of a freehand drawing (redraw only when they changed). */
+  function inkKey(n) {
+    let sum = 0, count = 0;
+    for (const s of n.ink || []) {
+      count += s.length;
+      for (let i = 0; i < s.length; i++) sum = (sum * 31 + Math.round(s[i] * 10000)) % 2147483647;
+    }
+    return (n.ink || []).length + ':' + count + ':' + sum + ':' + !!n.marker;
+  }
+
   /**
    * Drawing (draw.js): the shape in the note's SVG, plus a wide invisible copy
    * of its line that takes the clicks (the note itself lets clicks through).
    */
   function drawFrame(div, n) {
     const st = n.style;
-    const key = [n.draw, JSON.stringify(n.line), n.w, n.h, st.fill, st.stroke, st.strokeWidth, st.strokeStyle, st.opacity].join('|');
+    const ink = n.draw === 'ink'; // freehand (ink.js): filled outlines, the colour is the fill
+    const key = [n.draw, ink ? inkKey(n) : JSON.stringify(n.line), n.w, n.h, st.fill, st.stroke, st.strokeWidth, st.strokeStyle, st.opacity].join('|');
     if (div._shapeKey === key) return;
     div._shapeKey = key;
     const svg = div._shape, path = svg.firstElementChild;
@@ -239,14 +250,14 @@
     svg.setAttribute('height', n.h);
     const d = MM.draw.path(n), sw = Number(st.strokeWidth) || 0;
     const line = n.draw === 'line' || n.draw === 'arrow';
-    const filled = !line && st.fill && st.fill !== 'none';
+    const filled = !line && !ink && st.fill && st.fill !== 'none';
     path.setAttribute('d', d);
-    path.setAttribute('fill', filled ? st.fill : 'none');
-    path.setAttribute('stroke', sw ? st.stroke : 'none');
-    path.setAttribute('stroke-width', sw);
+    path.setAttribute('fill', ink ? st.stroke : filled ? st.fill : 'none');
+    path.setAttribute('stroke', sw && !ink ? st.stroke : 'none');
+    path.setAttribute('stroke-width', ink ? 0 : sw);
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('stroke-linejoin', 'round');
-    const dash = st.strokeStyle === 'solid' ? '' : MM.geo.dashArray(st.strokeStyle, sw);
+    const dash = ink || st.strokeStyle === 'solid' ? '' : MM.geo.dashArray(st.strokeStyle, sw);
     if (dash) path.setAttribute('stroke-dasharray', dash);
     else path.removeAttribute('stroke-dasharray');
     div._hit.setAttribute('d', d);
