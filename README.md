@@ -52,6 +52,7 @@ load the example map again (it is shown on the very first start and contains a s
 | `tools/outlook-sync.ps1` | Windows / classic Outlook: writes deadlines and appointments of the maps to the Outlook calendar (one way). The app puts it into the project folder (Overview → Appointments); `js/outlook-sync-ps1.js` carries its text and is built by `tools/make_outlook_js.ps1` after every change |
 | `js/fsys.js` | Storage backends of the project folder: the local folder (File System Access API); same interface for Dropbox |
 | `js/cloud-dropbox.js` | `cloud.html` only: Dropbox backend (sign-in, files by revision, copies of texts read in IndexedDB) and the folder chooser |
+| `js/export.js` | The map as PDF (print dialog) or as a PNG picture into the clipboard (copy of the map in an SVG `<foreignObject>`, drawn onto a canvas; no library) |
 | `js/main.js` | Startup, toolbar, status bar, demo map |
 | `sw.js`, `manifest.webmanifest`, `manifest-cloud.webmanifest`, `icons/` | Installable web app and offline copy (only when served over https / localhost) |
 

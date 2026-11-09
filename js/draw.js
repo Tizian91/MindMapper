@@ -271,6 +271,7 @@
       anyAnchored && { label: 'Detach (not anchored)', shortcut: 'Ctrl+Shift+G', action: A.drawDetach },
       '-',
       { label: 'Copy', shortcut: 'Ctrl+C', action: A.copy },
+      { label: 'Copy as picture (PNG)', shortcut: 'Ctrl+Alt+C', action: A.copyPng },
       { label: 'Cut', shortcut: 'Ctrl+X', action: A.cut },
       { label: 'Duplicate', shortcut: 'Ctrl+D', action: A.duplicate },
       '-',

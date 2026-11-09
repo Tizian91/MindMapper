@@ -329,6 +329,7 @@
       { label: 'Save as…', shortcut: 'Ctrl+Shift+S', action: A.saveAs },
       '-',
       { label: 'Map as PDF / print…', shortcut: 'Ctrl+P', action: A.exportPdf },
+      { label: MM.selectedNodes().length ? 'Copy selection as picture (PNG)' : 'Copy map as picture (PNG)', shortcut: 'Ctrl+Alt+C', action: () => A.copyPng() },
     ], r.left, r.bottom + 2);
   };
 
@@ -649,4 +650,6 @@
   A.save = () => MM.storage.save(false);
   A.saveAs = () => MM.storage.save(true);
   A.exportPdf = () => MM.mapPrint.open();
+  /** The selected notes (none selected: the whole map) as a PNG into the clipboard (export.js). */
+  A.copyPng = () => MM.mapPrint.copyPng();
 })(window.MM);

@@ -536,6 +536,19 @@
     'Medium': 'Mittel',
     'Thick': 'Dick',
     'End freehand (P / Esc)': 'Freihand beenden (P / Esc)',
+    // ---- Picture (PNG) into the clipboard (export.js) ----
+    'Copy selection as picture (PNG)': 'Auswahl als Bild kopieren (PNG)',
+    'Copy map as picture (PNG)': 'Map als Bild kopieren (PNG)',
+    'Copy as picture (PNG)': 'Als Bild kopieren (PNG)',
+    'Copy as PNG': 'Als PNG kopieren',
+    'Copy as PNG puts a picture into the clipboard (paper and orientation do not matter) - paste it with Ctrl+V.':
+      'Als PNG kopieren legt ein Bild in die Zwischenablage (Papier und Ausrichtung spielen keine Rolle) – einfügen mit Strg+V.',
+    'There is nothing to copy.': 'Es gibt nichts zu kopieren.',
+    'the browser could not draw the map': 'der Browser konnte die Map nicht zeichnen',
+    'the picture is too large': 'das Bild ist zu groß',
+    'Could not create the picture: {err}': 'Das Bild ließ sich nicht erstellen: {err}',
+    'The clipboard does not take pictures here - saved as {name}': 'Die Zwischenablage nimmt hier keine Bilder an – als {name} gespeichert',
+    'Copied as a picture - paste it with Ctrl+V': 'Als Bild kopiert – mit Strg+V einfügen',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

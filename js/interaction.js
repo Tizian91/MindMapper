@@ -813,6 +813,7 @@
     else if (ctrl && key === 'o') A.open();
     else if (ctrl && key === 'p') A.exportPdf(); // the map as PDF instead of printing the screen
     else if (ctrl && key === 'a') A.selectAll();
+    else if (ctrl && e.altKey && key === 'c') A.copyPng(); // as a picture (Ctrl+Shift+C opens the browser's tools)
     else if (ctrl && key === 'c') A.copy();
     else if (ctrl && key === 'x') A.cut();
     else if (ctrl && key === 'v') handled = false; // handled by the 'paste' event (images or notes)
