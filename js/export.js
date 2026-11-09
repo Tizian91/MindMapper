@@ -67,6 +67,7 @@
     for (const sel of ['#overlay-layer', '#ui-layer']) world.querySelectorAll(sel).forEach((x) => x.remove());
     if (!keepIds) world.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id')); // no second #node-layer etc.
     world.querySelectorAll('.selected').forEach((x) => x.classList.remove('selected'));
+    world.querySelectorAll('.edge-sel').forEach((x) => x.remove()); // the halo of a selected connection
     const vp = document.getElementById('viewport');
     if (vp.classList.contains('filter-hide')) world.querySelectorAll('.filtered-out').forEach((x) => x.remove());
     else if (vp.classList.contains('filter-dim')) world.querySelectorAll('.filtered-out').forEach((x) => (x.style.opacity = '0.13'));
@@ -280,6 +281,7 @@
     } else {
       world = copyOfWorld(nodeIds, true, embedImages);
     }
+    world.querySelectorAll('.node-linkbtn').forEach((x) => x.remove()); // ↗: clickable in the app / PDF, not in a picture
     world.id = 'world';
     Object.assign(world.style, {
       position: 'absolute', left: '0', top: '0', transformOrigin: '0 0',
