@@ -28,9 +28,18 @@
     root.addEventListener('click', onClick);
     root.addEventListener('contextmenu', onContextMenu);
     buildDialog();
+    const bar = document.getElementById('offline-bar');
+    if (bar) {
+      bar.addEventListener('click', (e) => {
+        if (e.target.closest('[data-bar="connect"]')) P.reconnect();
+        if (e.target.closest('[data-bar="choose"]')) (P.cloud && P.cloud.allowed ? P.connectDropbox() : P.choose());
+      });
+    }
+    if (P.cloud && (await initCloud())) return; // Dropbox folder in use - otherwise the local one as usual
     if (!P.supported) {
       P.status = 'unsupported';
       P.render();
+      if (P.cloud && P.cloud.allowed) showLock(); // a browser without local folders: Dropbox
       return;
     }
     try {
@@ -41,13 +50,6 @@
         else P.status = 'needs-permission';
       }
     } catch (e) { /* no stored folder */ }
-    const bar = document.getElementById('offline-bar');
-    if (bar) {
-      bar.addEventListener('click', (e) => {
-        if (e.target.closest('[data-bar="connect"]')) P.reconnect();
-        if (e.target.closest('[data-bar="choose"]')) P.choose();
-      });
-    }
     P.render();
     if (P.status === 'needs-permission' || P.status === 'none') showLock();
   };
@@ -76,6 +78,7 @@
       const before = S.file.path;
       if (!(await leaveFolder())) return;
       P.backend = b;
+      if (P.cloud) P.cloud.setActive(false); // the local folder now, not Dropbox
       S.settings.showProject = true;
       MM.saveSettings();
       await connected();
@@ -96,6 +99,8 @@
 
   P.reconnect = async function () {
     if (!P.backend) return;
+    // Dropbox, signed out (revoked, or never on this device): sign in - the page comes back
+    if (P.backend.kind === 'dropbox' && !P.cloud.signedIn()) return P.cloud.login();
     try {
       let perm = await P.backend.access(true);
       // Android: the answer may come before the permission is noted - ask once more
@@ -120,6 +125,96 @@
     P.render();
   };
 
+  // ---- Dropbox (cloud version only: cloud.html loads cloud-dropbox.js) --------------
+  // The cloud version offers both: a folder in the user's Dropbox and a local folder
+  // (Edge / Chrome) - one of them is open at a time. index.html never loads Dropbox code.
+
+  P.cloud = MM.fsys.dropbox || null;
+
+  /** Start: open the Dropbox folder if it was the one in use. Returns true if it was. */
+  async function initCloud() {
+    const C = P.cloud;
+    await C.ready; // back from the Dropbox sign-in: the code is traded for the tokens first
+    if (C.loginError) alert(tr('The Dropbox sign-in did not work: {err}', { err: C.loginError }));
+    if (C.justLoggedIn && C.folder() === null) {
+      await P.chooseDropboxFolder(); // just signed in for the first time: choose the folder
+      if (P.backend && P.backend.kind === 'dropbox') return true;
+    }
+    const b = C.restore();
+    if (!b) return false;
+    P.backend = b;
+    if ((await b.access(false)) === 'granted') {
+      try {
+        await connected();
+      } catch (err) {
+        P.status = 'needs-permission'; // e.g. offline: "Connect" tries again
+        MM.ui.flash(tr('Could not open the Dropbox folder: {err}', { err: err.message }));
+      }
+    } else {
+      P.status = 'needs-permission';
+    }
+    P.render();
+    if (P.status !== 'ready') showLock();
+    return true;
+  }
+
+  /** "Connect Dropbox…": sign in first (leaves the page), then choose the folder. */
+  P.connectDropbox = async function () {
+    if (!P.cloud.signedIn()) await P.cloud.login();
+    else await P.chooseDropboxFolder();
+  };
+
+  P.chooseDropboxFolder = async function () {
+    const folder = await P.cloud.chooseFolder();
+    if (folder === null) return;
+    if (!(await leaveFolder())) return;
+    P.cloud.setFolder(folder);
+    P.backend = P.cloud.restore();
+    S.settings.showProject = true;
+    MM.saveSettings();
+    try {
+      await connected();
+    } catch (err) {
+      P.status = 'needs-permission';
+      alert(tr('Could not open the Dropbox folder: {err}', { err: err.message }));
+    }
+    MM.refresh();
+    P.render();
+  };
+
+  P.disconnectDropbox = async function () {
+    if (!confirm(tr('Disconnect Dropbox?\n\nThis browser forgets the sign-in and the folder. Your maps stay in your Dropbox.'))) return;
+    const wasOpen = P.backend && P.backend.kind === 'dropbox';
+    if (wasOpen && !(await leaveFolder())) return;
+    await P.cloud.disconnect();
+    if (wasOpen) {
+      P.backend = null;
+      P.status = P.supported ? 'none' : 'unsupported';
+      P.entries = [];
+      P.diaries = [];
+    }
+    MM.refresh();
+    P.render();
+  };
+
+  /** "…" next to the folder name in the cloud version: Dropbox or a local folder, disconnect. */
+  function cloudMenu(x, y) {
+    const C = P.cloud, items = [];
+    if (C.allowed) {
+      items.push({ label: C.signedIn() ? 'Choose a Dropbox folder…' : 'Connect Dropbox…', action: () => P.connectDropbox() });
+    }
+    if (P.supported) items.push({ label: 'Open a local folder…', action: () => P.choose() });
+    if (C.allowed && C.signedIn()) items.push('-', { label: 'Disconnect Dropbox…', action: () => P.disconnectDropbox() });
+    MM.menu.open(items, x, y);
+  }
+
+  /** A line about the other version: local only <-> with Dropbox (not for a file opened from disk). */
+  function otherVersion() {
+    if (P.cloud) return `<p class="hint">${tr('Without any cloud connection: <a href="index.html">the local version</a>.')}</p>`;
+    if (!/^https?:$/.test(location.protocol)) return '';
+    return `<p class="hint">${tr('Working on several devices? <a href="cloud.html">The version with Dropbox</a> keeps your maps in your own Dropbox.')}</p>`;
+  }
+
   // ---- Not connected: a lock at the start, then a bar ------------------------------
   // Without the folder every change goes into this browser only - easy to miss on a phone,
   // where the folder needs "Reconnect" after each start. The lock asks first (its button is
@@ -134,23 +229,35 @@
     const d = document.createElement('dialog');
     d.className = 'lock-dialog';
     const offline = lockBtn('offline', first ? 'Try it without a folder first' : 'Work without the folder', 'Then save and open maps with File → Save as… / Open file…');
+    // cloud version: Dropbox first; a local folder where the browser has folder access
+    const cloud = !!(P.cloud && P.cloud.allowed);
+    const isDropbox = !first && P.backend.kind === 'dropbox';
+    const dropbox = cloud && !isDropbox ? lockBtn('dropbox', 'Connect Dropbox…', 'Your maps live in your own Dropbox - on all your devices', first ? 'primary' : '') : '';
+    const choose = !P.supported ? '' : first
+      ? lockBtn('choose', cloud ? 'Choose a folder on this device…' : 'Choose folder…', 'Your maps are saved into it by themselves', cloud ? '' : 'primary')
+      : lockBtn('choose', 'Choose another folder…', 'e.g. another project, or the folder on this device');
     d.innerHTML = first ? `
       <form method="dialog" class="dlg">
         <h3>${tr('Choose a project folder')}</h3>
-        <p>${tr('MindMapper keeps your maps as files in a folder you choose - e.g. one that pCloud or another sync program keeps in step with your other devices. Without a folder a map stays in this browser only.')}</p>
+        <p>${cloud
+          ? tr('MindMapper keeps your maps as files - in your Dropbox or in a folder on this device. Without one a map stays in this browser only.')
+          : tr('MindMapper keeps your maps as files in a folder you choose - e.g. one that pCloud or another sync program keeps in step with your other devices. Without a folder a map stays in this browser only.')}</p>
         <p class="lock-msg"></p>
         <div class="conflict-buttons">
-          ${lockBtn('choose', 'Choose folder…', 'Your maps are saved into it by themselves', 'primary')}
+          ${dropbox}
+          ${choose}
           ${offline}
         </div>
+        ${otherVersion()}
       </form>` : `
       <form method="dialog" class="dlg">
         <h3>${tr('Connect the folder "{name}"', { name: esc(P.backend.name) })}</h3>
         <p>${tr('Without the connection your changes go into this browser only - not into your files, and your other devices do not see them.')}</p>
         <p class="lock-msg"></p>
         <div class="conflict-buttons">
-          ${lockBtn('connect', 'Connect', 'The browser asks for your OK', 'primary')}
-          ${lockBtn('choose', 'Choose another folder…', 'e.g. another project, or the folder on this device')}
+          ${lockBtn('connect', 'Connect', isDropbox ? 'Signs in to Dropbox again if needed' : 'The browser asks for your OK', 'primary')}
+          ${dropbox}
+          ${choose}
           ${offline}
         </div>
       </form>`;
@@ -158,20 +265,26 @@
     d.addEventListener('keydown', (e) => e.stopPropagation());
     d.addEventListener('cancel', (e) => e.preventDefault()); // Esc: a decision is needed
     const close = () => { d.close(); d.remove(); };
-    d.querySelector('[data-lock="offline"]').addEventListener('click', close);
-    if (!first) {
-      d.querySelector('[data-lock="connect"]').addEventListener('click', async () => {
-        await P.reconnect();
-        if (P.status === 'ready') close();
-        else d.querySelector('.lock-msg').textContent = tr('Not connected yet - tap "Connect" again.');
-      });
-    }
-    d.querySelector('[data-lock="choose"]').addEventListener('click', async () => {
+    const on = (key, fn) => {
+      const b = d.querySelector(`[data-lock="${key}"]`);
+      if (b) b.addEventListener('click', fn);
+    };
+    on('offline', close);
+    on('connect', async () => {
+      await P.reconnect();
+      if (P.status === 'ready') close();
+      else d.querySelector('.lock-msg').textContent = tr('Not connected yet - tap "Connect" again.');
+    });
+    on('dropbox', async () => {
+      await P.connectDropbox(); // not signed in: leaves the page for Dropbox's sign-in
+      if (P.status === 'ready') close();
+    });
+    on('choose', async () => {
       await P.choose(d.querySelector('.lock-msg')); // the folder picker (cancelled: the lock stays)
       if (P.status === 'ready') close();
     });
     // an embedded page (VS Code preview): say it right away instead of a button that does nothing
-    if (P.embedded) d.querySelector('.lock-msg').textContent = tr(BLOCKED);
+    if (P.embedded && P.supported) d.querySelector('.lock-msg').textContent = tr(BLOCKED);
     d.showModal();
   }
 
@@ -574,7 +687,7 @@
     const job = later.get(path) || { fns: [], timer: null };
     job.fns.push(fn);
     clearTimeout(job.timer);
-    job.timer = setTimeout(() => P.flushLater(path), S.settings.syncedFolder ? MM.storage.SYNC_DELAY : 1200);
+    job.timer = setTimeout(() => P.flushLater(path), MM.storage.syncedNow() ? MM.storage.SYNC_DELAY : 1200);
     later.set(path, job);
   };
 
@@ -1120,7 +1233,7 @@
     if (!root) return;
     document.getElementById('main').classList.toggle('with-sidebar', !!S.settings.showProject);
     // rebuild only when something visible changed (keeps clicks from getting lost)
-    const key = JSON.stringify([P.status, P.backend && P.backend.name, paths(P.entries), S.file.path, S.file.name, [...collapsed], P.history, MM.getLang(), P.diaries.map((d) => [d.name, (d.copies || []).length])]);
+    const key = JSON.stringify([P.status, P.backend && P.backend.name, P.cloud && P.cloud.signedIn(), paths(P.entries), S.file.path, S.file.name, [...collapsed], P.history, MM.getLang(), P.diaries.map((d) => [d.name, (d.copies || []).length])]);
     if (key === lastKey) return;
     lastKey = key;
     const back = P.history.length ? P.history[P.history.length - 1] : null;
@@ -1128,18 +1241,26 @@
       ${P.status === 'ready' ? `<button data-p="overview" title="${esc(tr('Tasks of all maps'))}">${tr('Overview')}</button>` : ''}
       ${P.status === 'ready' ? `<button data-p="scan" title="${esc(tr('Reload folder'))}">⟳</button>` : ''}
       <button data-p="hide" title="${esc(tr('Hide sidebar'))}">✕</button></div>`;
+    // cloud version: Dropbox next to the local folder (only Dropbox where the browser has no folder access)
+    const cloud = !!(P.cloud && P.cloud.allowed);
+    if (cloud && P.status !== 'ready' && !(P.backend && P.backend.kind === 'dropbox')) {
+      h += `<p class="hint">${tr('Keep your maps in your own Dropbox – on the PC and on the phone.')}</p>
+        <button class="sb-wide primary" data-p="dropbox">${tr(P.cloud.signedIn() ? 'Choose a Dropbox folder…' : 'Connect Dropbox…')}</button>`;
+    }
     if (P.status === 'unsupported') {
-      h += `<p class="hint">${tr('Project folders need Edge or Chrome. You can still open and save single maps.')}</p>`;
+      if (!cloud) h += `<p class="hint">${tr('Project folders need Edge or Chrome. You can still open and save single maps.')}</p>`;
     } else if (P.status === 'none') {
       h += `<p class="hint">${tr('Keep several maps together in one folder – e.g. weekly and monthly plans.')}</p>
-        <button class="sb-wide" data-p="choose">${tr('Open folder…')}</button>`;
+        <button class="sb-wide" data-p="choose">${tr(cloud ? 'Open a local folder…' : 'Open folder…')}</button>`;
     } else if (P.status === 'needs-permission') {
-      h += `<p class="hint">${tr('The browser needs your OK to use the folder <b>{name}</b> again.', { name: esc(P.backend.name) })}</p>
+      h += `<p class="hint">${P.backend.kind === 'dropbox'
+        ? tr('Not connected to <b>{name}</b> (offline, or signed out of Dropbox).', { name: esc(P.backend.name) })
+        : tr('The browser needs your OK to use the folder <b>{name}</b> again.', { name: esc(P.backend.name) })}</p>
         <button class="sb-wide primary" data-p="reconnect">${tr('Reconnect "{name}"', { name: esc(P.backend.name) })}</button>
-        <button class="sb-wide" data-p="choose">${tr('Other folder…')}</button>`;
+        <button class="sb-wide" data-p="${cloud ? 'cloudMenu' : 'choose'}">${tr('Other folder…')}</button>`;
     } else {
       h += `<div class="sb-folder" title="${esc(tr('Project folder'))}"><span class="sb-folder-name">${esc(P.backend.name)}</span>
-          <button data-p="choose" title="${esc(tr('Open another folder'))}">…</button></div>
+          <button data-p="${cloud ? 'cloudMenu' : 'choose'}" title="${esc(tr(cloud ? 'Other folder (Dropbox or local), disconnect…' : 'Open another folder'))}">…</button></div>
         <button class="sb-wide primary" data-p="new">${tr('+ New map')}</button>
         ${back ? `<button class="sb-wide sb-back" data-p="back" title="${esc(back)}">${tr('← Back to {name}', { name: esc(displayName(back.split('/').pop())) })}</button>` : ''}
         <div class="sb-tree">${tree(P.entries, 0) || `<p class="hint">${tr('No maps yet.')}</p>`}</div>
@@ -1425,7 +1546,11 @@
       const a = btn.dataset.p;
       if (a === 'choose') P.choose();
       else if (a === 'reconnect') P.reconnect();
-      else if (a === 'scan') P.scan();
+      else if (a === 'dropbox') P.connectDropbox();
+      else if (a === 'cloudMenu') {
+        const r = btn.getBoundingClientRect();
+        cloudMenu(r.left, r.bottom);
+      } else if (a === 'scan') P.scan();
       else if (a === 'new') P.showNewDialog();
       else if (a === 'back') P.back();
       else if (a === 'overview') MM.overview.open();

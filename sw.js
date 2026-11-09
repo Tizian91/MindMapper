@@ -9,10 +9,12 @@
  *
  * New file in index.html? Add it to FILES, so it is there offline from the start.
  */
-const CACHE = 'mindmapper-v2';
+const CACHE = 'mindmapper-v3';
 const FILES = [
   './',
   'index.html',
+  'cloud.html', // the version with Dropbox (generated from index.html)
+  'manifest-cloud.webmanifest',
   'css/app.css',
   'HANDBUCH.md',
   'HANDBUCH.html',
@@ -46,6 +48,7 @@ const FILES = [
   'js/filterbar.js',
   'js/emoji.js',
   'js/fsys.js',
+  'js/cloud-dropbox.js', // cloud.html only
   'js/storage.js',
   'js/templates.js',
   'js/project.js',

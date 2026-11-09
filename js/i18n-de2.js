@@ -495,6 +495,37 @@
     'Ask for the actual time when a task is checked off': 'Beim Abhaken nach der Ist-Zeit fragen',
     'Only tasks with an estimate. To learn how well you estimate; the actual time can always be set in the panel. Stored {where}.':
       'Nur bei Aufgaben mit Schätzung. Zeigt mit der Zeit, wie gut du schätzt; die Ist-Zeit lässt sich immer im Panel setzen. Gespeichert {where}.',
+    // ---- Dropbox (cloud.html: cloud-dropbox.js, project.js) ----
+    'The Dropbox sign-in did not work: {err}': 'Die Anmeldung bei Dropbox hat nicht geklappt: {err}',
+    'Could not open the Dropbox folder: {err}': 'Der Dropbox-Ordner ließ sich nicht öffnen: {err}',
+    'Disconnect Dropbox?\n\nThis browser forgets the sign-in and the folder. Your maps stay in your Dropbox.':
+      'Dropbox trennen?\n\nDieser Browser vergisst die Anmeldung und den Ordner. Deine Maps bleiben in deiner Dropbox.',
+    'Choose a Dropbox folder…': 'Dropbox-Ordner wählen…',
+    'Connect Dropbox…': 'Mit Dropbox verbinden…',
+    'Open a local folder…': 'Lokalen Ordner öffnen…',
+    'Disconnect Dropbox…': 'Dropbox trennen…',
+    'Without any cloud connection: <a href="index.html">the local version</a>.': 'Ganz ohne Cloud-Anbindung: <a href="index.html">die lokale Version</a>.',
+    'Working on several devices? <a href="cloud.html">The version with Dropbox</a> keeps your maps in your own Dropbox.':
+      'Mehrere Geräte? <a href="cloud.html">Die Version mit Dropbox</a> legt deine Maps in deiner eigenen Dropbox ab.',
+    'Your maps live in your own Dropbox - on all your devices': 'Deine Maps liegen in deiner eigenen Dropbox – auf all deinen Geräten',
+    'Choose a folder on this device…': 'Ordner auf diesem Gerät wählen…',
+    'MindMapper keeps your maps as files - in your Dropbox or in a folder on this device. Without one a map stays in this browser only.':
+      'MindMapper legt deine Maps als Dateien ab – in deiner Dropbox oder in einem Ordner auf diesem Gerät. Ohne beides bleibt eine Map nur in diesem Browser.',
+    'Signs in to Dropbox again if needed': 'Meldet dich bei Bedarf neu bei Dropbox an',
+    'Keep your maps in your own Dropbox – on the PC and on the phone.': 'Leg deine Maps in deiner eigenen Dropbox ab – auf dem PC und auf dem Handy.',
+    'Not connected to <b>{name}</b> (offline, or signed out of Dropbox).': 'Nicht verbunden mit <b>{name}</b> (offline oder bei Dropbox abgemeldet).',
+    'Other folder (Dropbox or local), disconnect…': 'Anderer Ordner (Dropbox oder lokal), trennen…',
+    'the answer does not belong to this sign-in': 'die Antwort gehört nicht zu dieser Anmeldung',
+    'Dropbox cannot be reached (offline?)': 'Dropbox ist nicht erreichbar (offline?)',
+    'Dropbox: signed out - please connect again': 'Dropbox: abgemeldet – bitte neu verbinden',
+    'Choose the Dropbox folder for your maps': 'Dropbox-Ordner für deine Maps wählen',
+    'MindMapper only sees its own folder in your Dropbox (in "Apps"). Pick a folder in it or create one - all maps, diaries, assets and the settings of this project live there.':
+      'MindMapper sieht in deiner Dropbox nur seinen eigenen Ordner (unter „Apps“). Wähle darin einen Ordner oder leg einen an – alle Maps, Tagebücher, Anhänge und die Einstellungen dieses Projekts liegen dort.',
+    'App folder': 'App-Ordner',
+    'Reading…': 'Lese…',
+    'No sub folders.': 'Keine Unterordner.',
+    'Use this folder': 'Diesen Ordner nehmen',
+    'Name of the new folder:': 'Name des neuen Ordners:',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

@@ -168,6 +168,8 @@
   // file for changed on two devices and keep a "[conflicted]" copy. Leaving the app or
   // the map writes at once (initLifecycle, confirmLeave).
   ST.SYNC_DELAY = 15000;
+  /** Write with the long pause: a local folder marked "synced" (Dropbox has no sync program in between). */
+  ST.syncedNow = () => !!(S.settings.syncedFolder && MM.project && MM.project.backend && MM.project.backend.kind === 'local');
   ST.scheduleAutosave = function () {
     if (S.dirty) edits++;
     clearTimeout(autosaveTimer);
@@ -175,7 +177,7 @@
     // maps of a project folder are written straight back into their file
     if (inProject() && S.settings.autoSaveFile) {
       clearTimeout(fileTimer);
-      fileTimer = setTimeout(() => ST.writeFile(), S.settings.syncedFolder ? ST.SYNC_DELAY : 1200);
+      fileTimer = setTimeout(() => ST.writeFile(), ST.syncedNow() ? ST.SYNC_DELAY : 1200);
     }
   };
 

@@ -23,7 +23,7 @@ const root = process.argv[2], out = [];
       createElement: () => { const d = el(); dialogs.push(d); return d; },
     };
     const w = { MM: {}, showDirectoryPicker() {} };
-    const ctx = vm.createContext({ window: w, console, document, navigator: { language: 'en' }, localStorage: null, setTimeout, clearTimeout, Intl, alert: (m) => out.push('  alert: ' + m) });
+    const ctx = vm.createContext({ window: w, console, document, navigator: { language: 'en' }, location: { protocol: 'https:' }, localStorage: null, setTimeout, clearTimeout, Intl, alert: (m) => out.push('  alert: ' + m) });
     for (const f of ['state.js', 'fsys.js', 'project.js']) vm.runInContext(fs.readFileSync(path.join(root, 'js', f), 'utf8'), ctx, { filename: f });
     const MM = w.MM, S = MM.state, P = MM.project;
     MM.tr = (s, v) => s.replace(/\{(\w+)\}/g, (m, k) => (v && v[k] !== undefined ? v[k] : m));

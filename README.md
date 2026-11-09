@@ -9,6 +9,14 @@ and open it in Chrome or Edge. The project folder feature needs https (or localh
 **"Install app"**: own window, start menu entry, works offline (`manifest.webmanifest`, `sw.js`).
 Your maps stay in your local project folder – nothing is sent to the server.
 
+**Two versions, the user chooses:** `index.html` is local only – its Content-Security-Policy blocks every
+connection to other servers. `cloud.html` (generated from `index.html` by `tools/make_cloud_html.py`) may
+talk to Dropbox only: each user signs in with their own Dropbox (OAuth 2 with PKCE, no app secret, no server)
+and the app sees only its app folder `Apps/<app name>/`. Dropbox checks the revision on every write, so there is
+no sync program in between and no conflict copies. The Dropbox app is registered in the Dropbox App Console
+(app key in `js/cloud-dropbox.js`; redirect URIs: the `cloud.html` addresses, e.g. GitHub Pages and
+`http://localhost:8000/cloud.html`; local test server: `python -m http.server 8000`, opened via `localhost`).
+
 **Handbook (German):** [`HANDBUCH.md`](HANDBUCH.md) – also reachable from the toolbar button **?**, which can
 load the example map again (it is shown on the very first start and contains a short version of the handbook).
 
@@ -41,8 +49,10 @@ load the example map again (it is shown on the very first start and contains a s
 | `js/links.js` | Links of notes: other maps of the project, web addresses, or folders / files on the PC (file list in a new tab + path copied for Explorer) |
 | `js/overview.js` | Overview of the tasks of all maps in the project folder (type filter, progress, derived maps) |
 | `tools/outlook-sync.ps1` | Windows / classic Outlook: writes deadlines and appointments of the maps to the Outlook calendar (one way). The app puts it into the project folder (Overview → Appointments); `js/outlook-sync-ps1.js` carries its text and is built by `tools/make_outlook_js.ps1` after every change |
+| `js/fsys.js` | Storage backends of the project folder: the local folder (File System Access API); same interface for Dropbox |
+| `js/cloud-dropbox.js` | `cloud.html` only: Dropbox backend (sign-in, files by revision, copies of texts read in IndexedDB) and the folder chooser |
 | `js/main.js` | Startup, toolbar, status bar, demo map |
-| `sw.js`, `manifest.webmanifest`, `icons/` | Installable web app and offline copy (only when served over https / localhost) |
+| `sw.js`, `manifest.webmanifest`, `manifest-cloud.webmanifest`, `icons/` | Installable web app and offline copy (only when served over https / localhost) |
 
 Rule of thumb: change the model in `MM.state.doc`, then call `MM.commit()`. That records an undo step, autosaves, and redraws.
 
