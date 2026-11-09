@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!--
+    Test page for the Dropbox connection (not part of the app). index.html stays the
+    version without any connection to the outside - only this page may talk to Dropbox.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://api.dropboxapi.com https://content.dropboxapi.com; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Dropbox-Test</title>
+  <style>
+    :root { --bg: #f6f7f9; --fg: #1d2330; --muted: #5b6475; --card: #fff; --line: #d9dee7; --ok: #1d7a3a; --bad: #b42318; --accent: #2b6cde; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #15181e; --fg: #e6e9ef; --muted: #9aa3b2; --card: #1e232b; --line: #323946; --ok: #4cc27a; --bad: #ff7b6e; --accent: #6b9cff; }
+    }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 720px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 1.4em; margin: .4em 0; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
+    .muted { color: var(--muted); font-size: .92em; }
+    button { font: inherit; padding: 8px 14px; margin: 4px 6px 4px 0; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:disabled { opacity: .45; cursor: default; }
+    #log { list-style: none; padding: 0; margin: 0; font: 13px/1.45 ui-monospace, Consolas, monospace; }
+    #log li { padding: 3px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+    #log li.ok::before { content: '✓ '; color: var(--ok); }
+    #log li.bad { color: var(--bad); }
+    #log li.bad::before { content: '✗ '; }
+    #log li.info { color: var(--muted); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Dropbox-Test</h1>
+  <p class="muted">Prüft, ob der MindMapper direkt mit Dropbox arbeiten kann: anmelden, im App-Ordner schreiben und lesen, und ob Dropbox das Überschreiben eines inzwischen geänderten Stands ablehnt. Die Seite sieht nur den App-Ordner und räumt ihre Testdateien am Ende wieder weg.</p>
+
+  <div class="card">
+    <div id="status">…</div>
+    <div>
+      <button id="connect" class="primary">Mit Dropbox verbinden</button>
+      <button id="run" class="primary" disabled>Test ausführen</button>
+      <button id="disconnect" disabled>Trennen</button>
+    </div>
+    <p class="muted">Die Anmeldung bleibt nur in diesem Browser gespeichert. „Trennen“ meldet ab und löscht sie.</p>
+  </div>
+
+  <div class="card">
+    <ul id="log"></ul>
+  </div>
+</main>
+<script src="js/dropbox-test.js"></script>
+</body>
+</html>
