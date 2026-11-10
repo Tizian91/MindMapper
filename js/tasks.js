@@ -161,7 +161,7 @@
         if (s === 'done' || s === now || (s === 'dropped' && !m.along)) return;
         m.status = now;
         m.along = true;
-        if (now === 'deferred') Object.assign(m, { deadline: '', scheduled: '', scheduledTime: '' });
+        if (now === 'deferred') Object.assign(m, { deadline: '', scheduled: '', scheduledTime: '', allDay: false, scheduledUntil: '' });
         count++;
       } else if (ASIDE.includes(was) && now !== 'done' && s === was && m.along) {
         m.status = 'open';

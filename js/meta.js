@@ -124,6 +124,32 @@
     return value;
   };
 
+  /**
+   * Days of an appointment ('YYYY-MM-DD'): its day, or every day from the first to the
+   * last one of an all-day appointment over several days (at most a year).
+   */
+  META.apptDays = function (m) {
+    if (!m || !m.scheduled) return [];
+    const p = (s) => s.split('-').map(Number);
+    const [y, mo, d] = p(m.scheduled);
+    const out = [];
+    for (let i = 0; i < 366; i++) {
+      const x = new Date(y, mo - 1, d + i);
+      const k = `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+      if (i && (!m.allDay || !m.scheduledUntil || k > m.scheduledUntil)) break;
+      out.push(k);
+    }
+    return out;
+  };
+
+  /** "12 Nov 10:00", "12 Nov · all day", "12 Nov 08:00 – 13 Nov · all day" (the time: when it begins) */
+  META.apptLabel = function (m) {
+    if (!m || !m.scheduled) return '';
+    const start = META.formatDate(m.scheduled) + (m.scheduledTime ? ' ' + m.scheduledTime : '');
+    if (!m.allDay) return start;
+    return start + (m.scheduledUntil ? ' – ' + META.formatDate(m.scheduledUntil) : '') + ' · ' + tr('all day');
+  };
+
   /** Stable color hue for a tag. */
   META.tagHue = function (tag) {
     let h = 0;
@@ -190,9 +216,10 @@
       h += `<span class="chip chip-empty" data-meta="deadline">${ICONS.deadline}${tr('Deadline')}</span>`;
     }
     if (m.scheduled && dated) {
-      const st = status === 'done' || status === 'dropped' ? 'finished' : META.deadlineStatus(m.scheduled);
-      const label = META.formatDate(m.scheduled) + (m.scheduledTime ? ' ' + m.scheduledTime : '');
-      h += `<span class="chip chip-date chip-scheduled ${st}" data-meta="scheduled" title="${esc(tr('Scheduled {d}', { d: m.scheduled + (m.scheduledTime ? ' ' + m.scheduledTime : '') }))}">${ICONS.scheduled}${esc(label)}</span>`;
+      // an appointment over several days is over after its last day
+      const st = status === 'done' || status === 'dropped' ? 'finished' : META.deadlineStatus(m.scheduledUntil || m.scheduled);
+      const label = META.apptLabel(m);
+      h += `<span class="chip chip-date chip-scheduled ${st}" data-meta="scheduled" title="${esc(tr('Scheduled {d}', { d: label }))}">${ICONS.scheduled}${esc(label)}</span>`;
     } else if (placeholders && dated && !m.deadline) {
       h += `<span class="chip chip-empty" data-meta="scheduled">${ICONS.scheduled}${tr('Scheduled')}</span>`;
     }
@@ -273,14 +300,31 @@
       n.meta[key] = value;
       // deadline and appointment exclude each other
       if (key === 'scheduled') {
-        if (value) n.meta.deadline = '';
-        else n.meta.scheduledTime = '';
+        if (value) {
+          n.meta.deadline = '';
+          if (n.meta.scheduledUntil && n.meta.scheduledUntil <= value) n.meta.scheduledUntil = ''; // last day before the first
+        } else {
+          Object.assign(n.meta, { scheduledTime: '', allDay: false, scheduledUntil: '' });
+        }
       } else if (key === 'scheduledTime') {
         if (value && !n.meta.scheduled) n.meta.scheduled = META.todayStr();
-        if (value) n.meta.deadline = '';
+        if (value) n.meta.deadline = ''; // all day stays all day: the time only tells when it begins
+      } else if (key === 'allDay') {
+        // the whole day (or several, see scheduledUntil); a time stays, only to be shown
+        n.meta.allDay = !!value;
+        if (value) {
+          if (!n.meta.scheduled) n.meta.scheduled = META.todayStr();
+          n.meta.deadline = '';
+        } else {
+          n.meta.scheduledUntil = '';
+        }
+      } else if (key === 'scheduledUntil') {
+        // last day of an all-day appointment; the first day itself (or earlier) = one day
+        if (value && !n.meta.scheduled) n.meta.scheduled = META.todayStr();
+        if (!value || value <= n.meta.scheduled) n.meta.scheduledUntil = '';
+        else Object.assign(n.meta, { allDay: true, deadline: '' });
       } else if (key === 'deadline' && value) {
-        n.meta.scheduled = '';
-        n.meta.scheduledTime = '';
+        Object.assign(n.meta, { scheduled: '', scheduledTime: '', allDay: false, scheduledUntil: '' });
       } else if (key === 'progress') {
         if (value === 100) n.meta.status = 'done';
         else if (value !== null && value > 0 && (!n.meta.status || n.meta.status === 'none' || n.meta.status === 'open')) {
@@ -294,10 +338,10 @@
         else if (value === 'dropped') { /* dropped: everything stays as it was */ }
         else if (n.meta.progress === 100) n.meta.progress = 90;
         // deferred: comes some day, no date yet (its sub-tasks follow, see tasks.js)
-        if (value === 'deferred') Object.assign(n.meta, { deadline: '', scheduled: '', scheduledTime: '' });
+        if (value === 'deferred') Object.assign(n.meta, { deadline: '', scheduled: '', scheduledTime: '', allDay: false, scheduledUntil: '' });
       }
       // a deferred task that gets a date is planned again
-      if (['deadline', 'scheduled', 'scheduledTime'].includes(key) && value && n.meta.status === 'deferred') n.meta.status = 'open';
+      if (['deadline', 'scheduled', 'scheduledTime', 'allDay', 'scheduledUntil'].includes(key) && value && n.meta.status === 'deferred') n.meta.status = 'open';
     }
   };
 

@@ -226,8 +226,11 @@ window.MM = window.MM || {};
    * Empty metadata block of a note. estimate is in minutes, progress in percent.
    * scheduled ('YYYY-MM-DD') + scheduledTime ('HH:MM') = appointment: the note takes
    * place on that day. A note has either a deadline or a scheduled date, never both.
+   * allDay: the appointment takes the whole day, scheduledUntil its last day when it
+   * lasts several days ('' = one day) - those days count as fully taken. A time is kept
+   * then only to be shown (when it begins), it is not planned with.
    */
-  MM.emptyMeta = () => ({ deadline: '', scheduled: '', scheduledTime: '', estimate: null, priority: 'none', quadrant: 'none', status: 'none', progress: null,
+  MM.emptyMeta = () => ({ deadline: '', scheduled: '', scheduledTime: '', allDay: false, scheduledUntil: '', estimate: null, priority: 'none', quadrant: 'none', status: 'none', progress: null,
     actual: null, estimateFirst: null, timerStart: null }); // actual time, estimate when work began, stopwatch (see actual.js)
 
   /** Create a node of the given type centered on (cx, cy). */
@@ -499,6 +502,9 @@ window.MM = window.MM || {};
       m.deadline = /^\d{4}-\d{2}-\d{2}$/.test(m.deadline) ? m.deadline : '';
       m.scheduled = /^\d{4}-\d{2}-\d{2}$/.test(m.scheduled) ? m.scheduled : '';
       m.scheduledTime = m.scheduled && /^\d{2}:\d{2}$/.test(m.scheduledTime) ? m.scheduledTime : '';
+      // a whole day (or several): the last day after the first one (a time is only shown)
+      m.allDay = !!m.allDay && !!m.scheduled;
+      m.scheduledUntil = m.allDay && /^\d{4}-\d{2}-\d{2}$/.test(m.scheduledUntil) && m.scheduledUntil > m.scheduled ? m.scheduledUntil : '';
       if (m.scheduled) m.deadline = ''; // either / or – the appointment wins
       m.estimate = num(m.estimate, null);
       for (const k of ['actual', 'estimateFirst']) {
@@ -572,6 +578,9 @@ window.MM = window.MM || {};
       // images and symbol notes can be turned: degrees clockwise around their middle
       if (MM.canRotate(node) && n.rotate) node.rotate = ((Math.round(num(n.rotate, 0)) % 360) + 360) % 360;
       else delete node.rotate;
+      // a list of the row above the heading of a plan grows upwards (render.js autoGrow, templates.js plan)
+      if (n.growUp) node.growUp = true;
+      else delete node.growUp;
       // list of a week plan for the routines of one category ('' = without category), see routines.js
       if (node.routineList !== undefined) node.routineList = str(node.routineList).slice(0, 40);
       for (const it of node.items) if (it.routine !== undefined) it.routine = str(it.routine); // entry created from a routine

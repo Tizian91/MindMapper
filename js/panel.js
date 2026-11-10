@@ -261,7 +261,13 @@
     : `<div class="row"><label>${t('dateOn')}</label><input type="date" data-meta="scheduled" value="${esc(m.scheduled || '')}"
           title="${esc(t('scheduledTitle'))}">
         <button class="icon-btn" data-clear-meta="scheduled" title="${t('clearScheduled')}">×</button></div>
-      <div class="row"><label>${t('atTime')}</label><input type="time" data-meta="scheduledTime" value="${esc(m.scheduledTime || '')}" title="${esc(t('scheduledTimeTitle'))}"></div>`}`;
+      <div class="row"><label>${t('atTime')}</label><input type="time" data-meta="scheduledTime" value="${esc(m.scheduledTime || '')}"
+          title="${esc(m.allDay ? MM.tr('When it begins (optional) - only shown, the whole day is taken') : t('scheduledTimeTitle'))}">
+        <label class="check" title="${esc(MM.tr('The whole day is taken (or several days, see "until"): no project work, routines with a fixed day are dropped, weekly budgets move to the other days'))}"><input type="checkbox" data-meta="allDay"${m.allDay ? ' checked' : ''}> ${esc(MM.tr('all day'))}</label></div>
+      ${m.allDay ? `<div class="row"><label>${esc(MM.tr('until'))}</label><input type="date" data-meta="scheduledUntil" value="${esc(m.scheduledUntil || '')}"
+          min="${esc(m.scheduled || '')}" title="${esc(MM.tr('Last day (optional) - for an appointment over several days'))}">
+        <button class="icon-btn" data-clear-meta="scheduledUntil" title="${esc(MM.tr('One day only'))}">×</button></div>
+      <p class="hint">${esc(MM.tr('All day: these days count as fully taken - no project work, routines with a fixed day are dropped, weekly budgets move to the other days. The estimate does not count.'))}</p>` : ''}`}`;
     return `<section><h3>${t('details')}</h3>${dateRows}
       <div class="row"><label>${t('estimate')}</label><input type="text" data-meta="estimate"
         placeholder="${calc && calc.split ? esc(MM.tr('∑ {d} (sub-tasks)', { d: MM.meta.formatDuration(calc.split) })) : t('estimatePlaceholder')}"
@@ -687,8 +693,7 @@
         n.repeat = raw === 'none' ? null : MM.normalizeRepeat(Object.assign(MM.routines.defaults(raw), n.repeat || {}, fromAppt, { kind: raw }));
         if (n.meta.scheduled && n.repeat) {
           // a routine has no appointment of its own: its day and time went into the rule
-          n.meta.scheduled = '';
-          n.meta.scheduledTime = '';
+          Object.assign(n.meta, { scheduled: '', scheduledTime: '', allDay: false, scheduledUntil: '' });
         }
         return true;
       }
@@ -750,6 +755,8 @@
           return false;
         }
         el.classList.remove('invalid');
+      } else if (ds.meta === 'allDay') {
+        v = el.checked;
       } else if (ds.meta === 'progress') {
         v = MM.meta.progressValue(raw);
         if (v === null && raw !== '' && raw !== null) {
@@ -848,7 +855,7 @@
   function onInput(e) {
     const el = e.target;
     if (el.type === 'checkbox' || el.tagName === 'SELECT') return;
-    if (['estimate', 'actual', 'deadline', 'scheduled', 'scheduledTime'].includes(el.dataset.meta) ||
+    if (['estimate', 'actual', 'deadline', 'scheduled', 'scheduledTime', 'scheduledUntil'].includes(el.dataset.meta) ||
       el.dataset.tagInput !== undefined || el.dataset.linkInput !== undefined ||
       el.dataset.diaryField !== undefined || el.dataset.catName !== undefined) return; // applied on change (deadline / appointment exclude each other)
     if (apply(el, el.value)) {

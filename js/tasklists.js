@@ -110,16 +110,31 @@
     const minX = others.length ? Math.min(...others.map((n) => n.x)) : 0;
     const minY = others.length ? Math.min(...others.map((n) => n.y)) : 0;
     const w = 260;
+    // newer plans: in the row above the heading, left of "Goals", growing upwards (templates.js plan)
+    const goals = others.find((n) => n.type === 'todo' && n.text === 'Goals' && n.growUp);
+    if (goals && !have.overdue && !have.open) {
+      // Goals and Notes still where the plan put them (centred): the row of four is centred
+      const T = MM.templates, R = T.ROW;
+      const head = others.find((n) => n.type === 'heading');
+      const notes = others.find((n) => n.type === 'outline' && n.text === 'Notes' && n.growUp);
+      if (head && notes && Math.abs(goals.x - T.rowLeft(head, [goals.w, notes.w])) < 1 && Math.abs(notes.x - (goals.x + goals.w + R.gap)) < 1) {
+        goals.x = T.rowLeft(head, [w, w, goals.w, notes.w]) + 2 * (w + R.gap);
+        notes.x = goals.x + goals.w + R.gap;
+      }
+    }
     const make = (kind, x, text, style) => {
       const n = MM.createNode('todo', x + w / 2, minY + 60, { text, w });
+      if (goals) Object.assign(n, { x, y: goals.y + goals.h - n.h, growUp: true });
       n.taskList = kind;
       n.items = [];
       Object.assign(n.style, style);
       doc.nodes[n.id] = n;
       return n;
     };
-    if (!have.overdue) have.overdue = make('overdue', minX - 2 * (w + 40), 'Overdue', { fill: '#fff5f5', stroke: '#e53e3e' });
-    if (!have.open) have.open = make('open', minX - (w + 40), 'Open tasks', { fill: '#ffffff', stroke: '#3182ce' });
+    const gap = goals ? MM.templates.ROW.gap : 40;
+    const x0 = goals ? goals.x : minX;
+    if (!have.overdue) have.overdue = make('overdue', x0 - 2 * (w + gap), 'Overdue', { fill: '#fff5f5', stroke: '#e53e3e' });
+    if (!have.open) have.open = make('open', x0 - (w + gap), 'Open tasks', { fill: '#ffffff', stroke: '#3182ce' });
     return have;
   }
 

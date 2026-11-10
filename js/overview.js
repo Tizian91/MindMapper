@@ -639,6 +639,7 @@
    */
   function routineDates() {
     const R = MM.routines, docs = MM.load.docs(), list = R.collect(docs);
+    const appts = R.appointments(docs, true); // all-day ones take the day: routines are dropped then
     const out = [];
     const t = new Date();
     for (const r of list) {
@@ -646,7 +647,8 @@
       const n = docs.get(r.path).nodes[r.id];
       for (let i = 0; i <= 7; i++) {
         const d = new Date(t.getFullYear(), t.getMonth(), t.getDate() + i);
-        if (!R.occursOn(r.rule, d) || R.isOff(list, d)) continue; // a day off: it takes place without you
+        // a day off or an all-day appointment: it takes place without you
+        if (!R.occursOn(r.rule, d) || R.isOff(list, d) || R.allDayOn(appts, R.iso(d)).length) continue;
         out.push({
           path: r.path, id: r.id, title: '🔁 ' + r.title, type: n.type, status: 'none', tags: n.tags || [],
           meta: Object.assign(MM.emptyMeta(), n.meta || {}, { scheduled: R.iso(d), scheduledTime: r.rule.time, deadline: '' }),
@@ -662,11 +664,14 @@
   function renderAppointments(all, matches) {
     let h = '';
     const shown = all.filter(isAppointment).concat(routineDates().filter(matches));
+    // an appointment over several days that has begun and is not over yet stands under "Today"
+    const today = MM.meta.todayStr();
+    const when = (it) => (it.meta.allDay && it.meta.scheduledUntil && it.meta.scheduled < today && it.meta.scheduledUntil >= today ? today : dateOf(it));
     for (const [key, label] of APPT_BUCKETS) {
-      const list = shown.filter((it) => bucket(dateOf(it)) === key).sort(byDeadline);
+      const list = shown.filter((it) => bucket(when(it)) === key).sort(byDeadline);
       if (!list.length) continue;
-      // a nice-to-have routine blocks no time (see MM.routines.isLeisure)
-      const est = list.reduce((s, it) => s + (it.leisure ? 0 : Number(it.meta.estimate) || 0), 0);
+      // a nice-to-have routine blocks no time (see MM.routines.isLeisure); all day: whole days, no estimate
+      const est = list.reduce((s, it) => s + (it.leisure || it.meta.allDay ? 0 : Number(it.meta.estimate) || 0), 0);
       const count = list.length === 1 ? tr('1 appointment') : tr('{n} appointments', { n: list.length });
       const text = est ? tr('{count} · {est} blocked', { count, est: MM.meta.formatDuration(est) }) : count;
       h += `<div class="ov-group ov-${key === 'overdue' ? 'past' : key}"><div class="ov-group-head">${tr(label)}` +

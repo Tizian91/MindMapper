@@ -130,6 +130,7 @@ function Read-Tasks {
         Key = "$rel#$($n.id)"; Path = $rel; Id = [string]$n.id; Type = [string]$n.type; Status = $status
         Title = Get-Title ([string]$n.text); Deadline = $deadline; Scheduled = $scheduled
         Time = [string]$m.scheduledTime; Estimate = $m.estimate; Derived = [string]$n.derivedMap; Parent = $null
+        AllDay = [bool]$m.allDay -and [bool]$scheduled; Until = [string]$m.scheduledUntil
       }
     }
     # Pfeil von Aufgabe A zu Aufgabe B: B ist Unteraufgabe von A
@@ -186,7 +187,7 @@ function Get-Wanted {
     if ($parent) { $title += " (zu: $($parent.Title))" }
     $mapName = $t.Path -replace '\.mindmap\.json$', ''
     $deadline = $t.Deadline; $scheduled = $t.Scheduled
-    $m = [pscustomobject]@{ scheduledTime = $t.Time; estimate = $t.Estimate }
+    $m = [pscustomobject]@{ scheduledTime = $t.Time; estimate = $t.Estimate; allDay = $t.AllDay; until = $t.Until }
     $w = [ordered]@{ Key = $t.Key; Map = $mapName; Kind = ''; Subject = ''; AllDay = $true; Start = $null; Minutes = 0; Busy = 0 }
     if ($deadline) {
         $w.Kind = 'Frist'
@@ -197,7 +198,18 @@ function Get-Wanted {
         $w.Kind = 'Termin'
         $w.Subject = $title
         $time = [string]$m.scheduledTime
-        if ($time -match '^\d\d:\d\d$') {
+        if ($m.allDay) {
+          # ganztägig, auch über mehrere Tage (bis einschließlich "until"): als gebucht
+          $w.Start = [datetime]::ParseExact($scheduled, 'yyyy-MM-dd', $null)
+          $days = 1
+          if ($m.until -match '^\d{4}-\d\d-\d\d$') {
+            $end = [datetime]::ParseExact($m.until, 'yyyy-MM-dd', $null)
+            if ($end -gt $w.Start) { $days = [int](($end - $w.Start).TotalDays) + 1 }
+          }
+          $w.Minutes = 1440 * [math]::Min($days, 366)
+          $w.Busy = 2
+          if ($time -match '^\d\d:\d\d$') { $w.Subject = "$title (ab $time)" }   # Beginn nur als Hinweis
+        } elseif ($time -match '^\d\d:\d\d$') {
           $w.AllDay = $false
           $w.Start = [datetime]::ParseExact("$scheduled $time", 'yyyy-MM-dd HH:mm', $null)
           $est = 0

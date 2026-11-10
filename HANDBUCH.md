@@ -153,6 +153,12 @@ Den Typ änderst du per Rechtsklick → **Change type** oder im Panel. Wird eine
 - **Deadline oder Termin – nie beides:**
   - **Deadline** = bis wann es fertig sein muss. Die Zeit wird auf die Tage bis dahin verteilt (Projektarbeit).
   - **Scheduled / Termin** = an welchem Tag (optional mit Uhrzeit) es stattfindet, z. B. ein einmaliger Workshop. Die geschätzte Zeit wird wie bei einer Routine von der **Kapazität dieses Tages** abgezogen (📌-Chip).
+  - **Ganztägig, auch über mehrere Tage:** Beim Termin das Häkchen **ganztägig** setzen (Panel, oder im Menü des 📌-Chips *All day*), für mehrere Tage zusätzlich **bis** = letzter Tag, z. B. Konferenz 18.–19.11. Eine **Uhrzeit** kannst du trotzdem eintragen: Sie zeigt nur, wann es morgens losgeht (Chip `18. Nov. 08:00 – 19. Nov. · ganztägig`, Plan-Eintrag, Outlook-Titel „(ab 08:00)“), gerechnet wird mit dem ganzen Tag, und im Tagesplan steht der Eintrag unter *Morning*. Diese Tage gelten als **voll belegt**, so wie Urlaub – sie bleiben aber ein **Termin** und stehen weiter in *Appointments*, in den Plänen und in Outlook:
+    - keine Projektarbeit an diesen Tagen: die Arbeit für deine Deadlines verteilt sich auf die übrigen Tage, der Puffer sinkt;
+    - **Routinen mit festem Tag** (Group meeting am Mittwoch) **entfallen** – sie finden ohne dich statt; **Wochenbudgets** (Studentenbetreuung) wandern auf die übrigen Arbeitstage der Woche;
+    - auf der Workload-Seite steht der Tag als belegt: `−8 h 📌`, in der Tageszeile `📌 Konferenz` – genommen werden alle Stunden, die der Tag sonst gehabt hätte, auch Stunden am Wochenende (*Hours / weekend day*); ein Wochenende mit 0 h bekommt nur den 📌-Eintrag;
+    - liegt an so einem Tag noch ein anderer Termin, meldet MindMapper einen **Konflikt** (⚠, Statusleiste `📌 conflict`);
+    - die **Schätzung** zählt bei ganztägigen Terminen nicht, sie fehlt auch nicht als „without estimate“.
   - Wer eins setzt, löscht das andere.
   - Im Panel gibt es dafür **ein Datumsfeld** mit dem Umschalter **Frist | Termin**. Bei *Termin* kommt die Uhrzeit (*um*) dazu. Steht schon ein Datum drin, wird es beim Umschalten mitgenommen (aus einer Frist wird ein Termin am selben Tag und umgekehrt; die Uhrzeit fällt bei einer Frist weg).
   - **Routinen** haben kein eigenes Datum: Ist eine Wiederholung (*Repeat*) eingestellt, verschwindet das Datumsfeld, und Frist- / Termin-Chips werden nicht angezeigt. Wann es stattfindet, steht in der Regel. Machst du aus einem Termin eine Routine, werden Wochentag, Uhrzeit und Startdatum (*von*) aus dem Termin übernommen, danach ist der Termin weg.
@@ -266,6 +272,7 @@ Es gilt die **erste** Zeile, die passt:
 | *Repeat* in einer **Nice-to-have-Kategorie** | 🔁 **Nice-to-have-Routine** (orangefarbenes 🔁) | **keine** – wird nicht angerechnet, nur zum Abhaken und Dranbleiben | wie oben; Workload-Seite ausgegraut |
 | *Repeat* *Day(s) off / vacation* | 🏖 **Urlaub / frei** | Tag ohne Kapazität (oder weniger, wenn *Estimate* gesetzt) | 🏖-Eintrag im Plan |
 | *Scheduled* (Termin, optional Uhrzeit) | 📌 **Termin** | blockt die *Estimate* an genau diesem Tag – auch abgehakt | Tages- und Wochenplan, Overview, Workload (`−2 h 📌`), Konfliktmeldung |
+| *Scheduled* + **ganztägig** (optional *bis*) | 📌 **ganztägiger Termin** | blockt den ganzen Tag bzw. alle Tage bis *bis*, wie Urlaub; Routinen mit festem Tag entfallen | Tages- und Wochenplan (an jedem Tag), Overview, Workload (`−8 h 📌`), Konfliktmeldung |
 | *Deadline* + *Estimate* | **Projektaufgabe** | der Restaufwand wird auf die Tage bis zur Deadline verteilt | Overview, Matrix, Workload, Puffer, Statusleiste (Kapitel 11) |
 | nur *Estimate* | Aufwand **ohne Frist** | wird nicht verteilt, nur gemeldet („… h ohne Deadline“) | Overview, Hinweis auf der Workload-Seite |
 | nur *Deadline* | Frist **ohne Aufwand** | zählt nicht – Hinweis „without estimate“ | Overview |
@@ -323,16 +330,16 @@ Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Sta
 
 ## 8. Tages-, Wochen- und Monatspläne
 
-- Vorlagen im Dialog **New map**: **Day plan** (Morning / Afternoon / Evening), **Week plan** (eine Spalte pro Tag), **Month plan** (eine Spalte pro Woche). Jede mit „Goals“ links und „Notes“ rechts.
+- Vorlagen im Dialog **New map**: **Day plan** (Morning / Afternoon / Evening), **Week plan** (eine Spalte pro Tag), **Month plan** (eine Spalte pro Woche). Über dem Titel steht eine Reihe mit **Overdue**, **Open tasks**, **Goals** und **Notes** – das Wesentliche auf einen Blick, ohne dass die Map nach links ausufert. Diese vier Listen **wachsen nach oben**: Kommt ein Eintrag dazu, bleibt ihre Unterkante stehen, sodass sie nie in den Titel laufen. Die Listen der Routinen (Wochenplan) stehen links neben Montag, oben bündig mit den Tagesspalten – die, die zählen, direkt daneben, *Nice-to-have*-Listen weiter außen. Solange ein Plan noch nicht läuft (z. B. die nächste Woche), stehen nur Goals und Notes mittig über dem Titel; sobald Overdue und Open tasks dazukommen, rückt die Reihe zusammen und bleibt mittig – außer du hast Goals oder Notes schon selbst verschoben. Pläne, die vor dieser Änderung angelegt wurden, behalten ihre alte Anordnung (Goals links, Notes rechts).
 - Die Pläne sind verknüpft: Monat → Wochen → Tage (↗ an Spalten bzw. Überschrift).
 - Namen: `Days/2026-10-21`, `Weeks/2026-W43`, `Months/2026-10`. Wer das Namensschema verlässt, verliert die automatische Verknüpfung.
-- **Termine (📌):** Neue Tages- und Wochenpläne bekommen alle offenen Notes mit Termin aus allen Maps als Eintrag – im Wochenplan in der Spalte des Tages, im Tagesplan nach Uhrzeit (ab 12 Uhr *Afternoon*, ab 17 Uhr *Evening*, sonst *Morning*). Wie Routinen werden sie nicht übertragen.
+- **Termine (📌):** Neue Tages- und Wochenpläne bekommen alle offenen Notes mit Termin aus allen Maps als Eintrag – im Wochenplan in der Spalte des Tages, im Tagesplan nach Uhrzeit (ab 12 Uhr *Afternoon*, ab 17 Uhr *Evening*, sonst *Morning*). Ein ganztägiger Termin über mehrere Tage steht an **jedem** seiner Tage (`📌 Konferenz · all day`), und an diesen Tagen kommen keine 🔁-Routinen mit festem Tag dazu. Wie Routinen werden sie nicht übertragen.
 - **Nachtragen:** Kommt ein Termin oder eine Routine erst dazu, wenn der Plan schon existiert, wird der Eintrag beim nächsten **Öffnen** des Plans nachgetragen (Hinweis in der Statusleiste). Das gilt nur für heute und spätere Tage; vergangene Tage bleiben, wie sie sind. Ein Eintrag, den du gelöscht hast, kommt nicht wieder. Hast du eine Routine oder einen Termin umbenannt (oder Uhrzeit / Dauer geändert), bekommen die **offenen** Einträge beim Öffnen den neuen Text; abgehakte behalten ihren alten.
 - **Zur Notiz springen:** Hinter jedem 🔁-, 📌- und 🏖-Eintrag erscheint beim Darüberfahren ein kleines **↗**. Ein Klick öffnet die Map mit der Original-Note (Termin, Routine, Urlaub) und zeigt die Note – praktisch, wenn dort weitere Notizen zum Termin stehen.
 - **Aufräumen:** Ebenfalls beim Öffnen verschwinden **offene** Einträge (ab heute), deren Termin oder Routine gelöscht wurde, deren Termin jetzt an einem anderen Tag ist oder deren Routine an dem Tag nicht mehr stattfindet. **Abgehakte** Einträge und vergangene Tage bleiben stehen. Kann eine Map nicht gelesen werden, wird zur Sicherheit nicht aufgeräumt.
 - **Abhaken im Tages- oder Wochenplan:** Ein 🔁- oder 📌-Eintrag steht im Tagesplan und im Wochenplan. Wird er in einem davon abgehakt (oder wieder geöffnet), passiert das im anderen Plan desselben Datums automatisch mit. Bei einem 📌-Termin gilt das auch für die Original-Note, in beide Richtungen: Wird die Note auf *Done* gesetzt, sind ihre Einträge in Tages- und Wochenplan abgehakt. **Strg+Z** nimmt das Abhaken überall zurück. Die Regel-Note einer Routine bleibt offen, und ein auf einen anderen Tag verschobener Termin wird vom Eintrag des alten Tages nicht berührt. Voraussetzung: Der Projektordner ist verbunden.
 - **Plan später angelegt oder geöffnet:** Hast du etwas im Wochenplan abgehakt, bevor es den Tagesplan gab (oder umgekehrt), kommt der Eintrag im neuen Plan gleich abgehakt hinein. Ein bereits erledigter Termin steht ebenfalls abgehakt im neuen Plan. Beim Öffnen eines bestehenden Plans werden Einträge abgehakt, die inzwischen anderswo abgehakt wurden (z. B. auf dem Handy).
-- **Overdue und Open tasks:** Jeder laufende Tages-, Wochen- und Monatsplan hat links zwei Listen mit den **offenen Haupttasks des ganzen Projekts** – aus allen Maps:
+- **Overdue und Open tasks:** Jeder laufende Tages-, Wochen- und Monatsplan hat zwei Listen (in neueren Plänen in der Reihe über dem Titel, sonst links) mit den **offenen Haupttasks des ganzen Projekts** – aus allen Maps:
   - **Overdue** (rot): Deadline überschritten, die älteste oben.
   - **Open tasks** (blau): Deadline ab heute bis **4 Wochen** voraus, die knappste oben; danach die offenen Aufgaben **ohne Deadline**. Was später fällig ist, zählt der Titel mit („Open tasks (+3 later)“) – zu sehen in der Overview.
   - Ein Eintrag sagt, worum es geht: `Budget Plan · 📅 30.10. · ☑ 2/4 · 45 %` – Deadline, erledigte / alle Untertasks, Fortschritt. Untertasks stehen nicht einzeln in der Liste; sie hängen an ihrer Haupttask.
@@ -352,7 +359,7 @@ Alles, was MindMapper in Tages- und Wochenpläne von selbst einträgt oder ände
 | Wann | Was | Wohin |
 |---|---|---|
 | Plan wird angelegt | 🔁 Routinen, 📌 Termine, 🏖 Urlaub dieses Tages / dieser Woche | Tagesspalten (Woche) bzw. *Morning / Afternoon / Evening* (Tag) |
-| Wochenplan wird angelegt | Routinen ohne feste Tage (Wochenbudgets, „x-mal pro Woche“) | eine Liste je Routine-Kategorie (ohne Kategorie: **Routines this week**) links neben *Goals*, siehe Kapitel 14 |
+| Wochenplan wird angelegt | Routinen ohne feste Tage (Wochenbudgets, „x-mal pro Woche“) | eine Liste je Routine-Kategorie (ohne Kategorie: **Routines this week**) links neben Montag, oben bündig mit den Tagesspalten, siehe Kapitel 14 |
 | Plan wird angelegt, sein Zeitraum hat schon begonnen (sonst: beim ersten Öffnen danach, mit Nachfrage) | lose Einträge aus den Aufgabenlisten des vorigen Tages / der vorigen Woche / des vorigen Monats | Liste **Carried over**; im alten Plan als übertragen markiert (→) |
 | Ein laufender Tages-, Wochen- oder Monatsplan wird geöffnet | offene Haupttasks aller Maps | Listen **Overdue** und **Open tasks** – angelegt oder nachgeführt |
 | Plan wird geöffnet | neue 🔁 / 📌 / 🏖 ab heute dazu; offene Einträge gelöschter oder verschobener Termine / Routinen weg | wie beim Anlegen |
@@ -434,6 +441,7 @@ Nach dem Doppelklick öffnet sich ein schwarzes Fenster mit Planungsordner, Stan
 | Frist (*Deadline*) | ganztägig, „⏰ Titel“, als *frei* (blockt den Kalender nicht). Erinnerung **eine Woche vorher um 9:00**, danach **am Vortag um 9:00** |
 | Termin mit Uhrzeit | ab der Uhrzeit, so lang wie die Schätzung (ohne Schätzung 30 min), als *gebucht*, Erinnerung 15 min vorher |
 | Termin ohne Uhrzeit | ganztägig, als *frei*, Erinnerung am Vortag um 9:00 |
+| Termin **ganztägig** (optional *bis*) | ganztägig über alle seine Tage, als *gebucht*, Erinnerung am Vortag um 9:00 |
 
 - **Untertasks:** Hat eine Untertask dieselbe Frist wie ihre Haupttask, steht nur die Haupttask in Outlook. Sonst steht die Haupttask im Titel dabei: „⏰ Schreiben (zu: Budget Plan)“.
 - **Vergangenes** (auch überfällige, offene Fristen) wird übertragen, aber **ohne Erinnerung**.
@@ -580,7 +588,7 @@ MindMapper berechnet aus **Schätzung**, **Fortschritt** und **Deadline**, wie v
 - **Puffer:** Für jede Deadline wird geprüft, ob die **gesamte** bis dahin fällige Arbeit in die verfügbare Zeit von heute bis zur Deadline passt („Until Fri 23 Oct: 26 h / 32 h → +6 h“). Ein negativer Puffer heißt: Die Planung geht so nicht auf – auch wenn die einzelnen Tage gleichmäßig verteilt noch passen.
 - **Statusleiste** unten: `Today 6 h / 8 h · Week 26 h / 40 h · Buffer +6 h` – wie sie zu lesen ist, steht in Kapitel 11.
 - Im Panel einer Note zeigt **Workload**, was diese Note zur Woche beiträgt und wie viel Puffer bis zu ihrer Deadline bleibt.
-- **Termine** (Scheduled) sind keine Projektarbeit: Wie Routinen ziehen sie ihre Schätzung von der **Kapazität ihres Tages** ab (Workload-Seite: `−2 h 📌`). Damit sinkt auch der Puffer aller späteren Deadlines. Abhaken ändert daran nichts, vergangene Termine zählen nicht mehr.
+- **Termine** (Scheduled) sind keine Projektarbeit: Wie Routinen ziehen sie ihre Schätzung von der **Kapazität ihres Tages** ab (Workload-Seite: `−2 h 📌`). Damit sinkt auch der Puffer aller späteren Deadlines. Abhaken ändert daran nichts, vergangene Termine zählen nicht mehr. Ein **ganztägiger** Termin nimmt seine Tage ganz heraus – wie Urlaub, aber als Termin angezeigt (Kapitel 4).
 - **Terminkonflikt:** Passt ein Termin nicht in die freie Zeit seines Tages (Urlaubstag, Tag mit 0 h, Tag schon voll mit Routinen/Terminen), wird das rot gemeldet: in der Statusleiste (`📌 conflict …`), oben auf der Workload-Seite und im Panel der Note.
 - Notes mit Deadline oder Termin, aber ohne Schätzung zählen nicht – sie werden als „without estimate“ gemeldet.
 - **Kapazität:** Panel bei leerer Auswahl → **Planning capacity**: *Hours / work day*, *Hours / weekend day* und die Arbeitstage (nicht angehakte Tage = Wochenendtage; 0 h = dort wird nichts eingeplant). Standard: 8 h Mo–Fr, 0 h am Wochenende.

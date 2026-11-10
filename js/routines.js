@@ -250,14 +250,27 @@
       for (const n of Object.values(doc.nodes || {})) {
         const m = n.meta || {};
         if (!m.scheduled || n.movedTo || n.repeat || (m.status === 'done' && !withDone) || m.status === 'dropped' || n.type === 'diary') continue;
+        // all day: no duration of its own - the whole day (or days, until) is taken; its time
+        // (begin) is only shown, the entry stays in the morning of a day plan
+        const allDay = !!m.allDay;
         out.push({
           path, id: n.id, title: (n.text || '').split('\n')[0] || MM.tr('Appointment'), date: m.scheduled,
-          rule: { time: m.scheduledTime || '' }, minutes: Number(m.estimate) || 0,
+          rule: { time: allDay ? '' : m.scheduledTime || '' }, minutes: allDay ? 0 : Number(m.estimate) || 0,
+          allDay, until: allDay ? m.scheduledUntil || m.scheduled : m.scheduled, begins: allDay ? m.scheduledTime || '' : '',
         });
       }
     }
     return out.sort((a, b) => (a.date + (a.rule.time || '99')).localeCompare(b.date + (b.rule.time || '99')) || a.title.localeCompare(b.title));
   };
+
+  /** Does appointment a (from R.appointments) take place on day k ('YYYY-MM-DD')? */
+  R.apptCovers = (a, k) => a.date <= k && k <= (a.until || a.date);
+
+  /**
+   * All-day appointments on day k: the day is taken (like a day off, but it is shown as
+   * an appointment). Routines with a fixed day are dropped then.
+   */
+  R.allDayOn = (appts, k) => appts.filter((a) => a.allDay && R.apptCovers(a, k));
 
   // ---- New day / week plans ------------------------------------------------------
 
@@ -275,7 +288,8 @@
     return out;
   }
 
-  const entryText = (r, icon) => `${icon || '🔁'} ${r.title}${r.rule.time ? ' ' + r.rule.time : ''}${r.minutes ? ' (' + MM.meta.formatDuration(r.minutes) + ')' : ''}`;
+  const entryText = (r, icon) => `${icon || '🔁'} ${r.title}${r.rule.time ? ' ' + r.rule.time : ''}${r.minutes ? ' (' + MM.meta.formatDuration(r.minutes) + ')' : ''}` +
+    (r.allDay ? (r.begins ? ' ' + r.begins : '') + ' · ' + MM.tr('all day') : '');
 
   function addEntry(col, r, icon) {
     // the template starts every column with one empty entry - use that first
@@ -420,24 +434,31 @@
         for (const col of cols) {
           const d = parse(col.meta.deadline);
           if (!d || markOff(col, d)) continue;
+          // an all-day appointment takes the day: routines with a fixed day are dropped
+          const away = R.allDayOn(appts, iso(d)).length > 0;
           for (const r of list) {
-            if (R.occursOn(r.rule, d)) add(col, r, '🔁', iso(d));
+            if (!away && R.occursOn(r.rule, d)) add(col, r, '🔁', iso(d));
           }
           for (const a of appts) {
-            if (a.date === iso(d)) add(col, a, '📌', iso(d));
+            if (R.apptCovers(a, iso(d))) add(col, a, '📌', iso(d));
           }
         }
         // routines of the week without fixed days (budget, n times per week): one list per
         // category left of the goals ("Routines this week" for those without category)
         const goals = Object.values(doc.nodes).find((n) => n.type === 'todo' && n.text === 'Goals');
         const made = [];
-        for (const r of list.filter((x) => R.budgetActive(x.rule, info.date))) {
+        // lists that count (work) next to the first day, nice-to-have ones further out
+        for (const r of list.filter((x) => R.budgetActive(x.rule, info.date)).sort((a, b) => a.leisure - b.leisure)) {
           const cat = R.category(r.rule.category);
           let box = routineLists(doc).find((n) => n.routineList === (cat ? cat.id : ''));
           if (!box && dry) continue; // a new list has nothing to clean up
           if (!box) {
             const k = routineLists(doc).length;
-            const x = (goals ? goals.x - 160 : -840) - k * 260, y = goals ? goals.y + goals.h / 2 : 0;
+            // newer plans (goals in the row above the heading): left of the first day, top in
+            // line with the days - like more columns; older plans: left of the goals
+            const fresh = goals && goals.growUp && cols.length;
+            const x = (fresh ? Math.min(...cols.map((c) => c.x)) - 160 : goals ? goals.x - 160 : -840) - k * 260;
+            const y = fresh ? Math.min(...cols.map((c) => c.y)) + 60 : goals ? goals.y + goals.h / 2 : 0;
             box = MM.createNode('todo', x, y, { text: R.categoryTitle(cat), w: 240 });
             box.items = [];
             box.routineList = cat ? cat.id : '';
@@ -458,11 +479,12 @@
         // appointments are listed even on a day off - they were set for that very day
         const day = iso(info.date);
         for (const a of appts) {
-          if (a.date !== day) continue;
-          const col = colByTime(a.rule.time, byName);
+          if (!R.apptCovers(a, day)) continue;
+          const col = colByTime(a.rule.time, byName); // all day: no time - morning
           if (col) add(col, a, '📌', day);
         }
-        if (!markOff(byName('Morning') || cols[0], info.date)) {
+        // an all-day appointment takes the day: routines with a fixed day are dropped
+        if (!markOff(byName('Morning') || cols[0], info.date) && !R.allDayOn(appts, day).length) {
           for (const r of list) {
             if (!R.occursOn(r.rule, info.date)) continue;
             const col = colByTime(r.rule.time, byName);

@@ -93,17 +93,29 @@
   }
 
   /**
-   * Heading in the middle, goals on the left, notes on the right, columns below.
+   * Heading in the middle, columns below. Above the heading one row, centred: Goals and
+   * Notes - and, once the plan runs, Overdue and Open tasks left of them (tasklists.js
+   * centres the four again). They grow upwards (node.growUp), so a long list never runs
+   * into the heading. The lists of the routines of a week go left of the first day
+   * (routines.js).
    * columns: [{ title, type, style?, extra? }]
    */
+  T.ROW = { w: 260, gap: 40, above: 70 }; // the row above the heading: width of a list, gap, space to the heading
+  /** Left edge of a row of boxes (widths) centred above the heading. */
+  T.rowLeft = (head, widths) => head.x + head.w / 2 - (widths.reduce((s, w) => s + w, 0) + (widths.length - 1) * T.ROW.gap) / 2;
   function plan(title, columns, headExtra) {
     const b = builder();
     const head = b.add('heading', 0, 0, Object.assign({ text: title, w: 380 }, headExtra || {}));
-    const goals = b.add('todo', -560, 0, { text: 'Goals', w: 240 });
+    head.x = -head.w / 2; // centred (createNode centres on the preset width)
+    // row: [Goals] [Notes], centred above the heading
+    const R = T.ROW, gw = 240, bottom = head.y - R.above;
+    const goals = b.add('todo', 0, 0, { text: 'Goals', w: gw });
     goals.items = [MM.createTodoItem('')];
-    const notes = b.add('outline', 560, 0, { text: 'Notes', w: 260 });
-    b.link(head, goals, { route: 'straight', endArrow: 'none', lineStyle: 'dashed' });
-    b.link(head, notes, { route: 'straight', endArrow: 'none', lineStyle: 'dashed' });
+    const notes = b.add('outline', 0, 0, { text: 'Notes', w: R.w });
+    Object.assign(goals, { x: T.rowLeft(head, [gw, R.w]), y: bottom - goals.h, growUp: true });
+    Object.assign(notes, { x: goals.x + gw + R.gap, y: bottom - notes.h, growUp: true });
+    b.link(head, goals, { route: 'straight', endArrow: 'none', lineStyle: 'dashed' }, ['n', 's']);
+    b.link(head, notes, { route: 'straight', endArrow: 'none', lineStyle: 'dashed' }, ['n', 's']);
     const w = 210, gap = 26;
     const x0 = -((columns.length * w + (columns.length - 1) * gap) / 2) + w / 2;
     columns.forEach((col, i) => {

@@ -227,6 +227,8 @@
             },
           }, { label: 'No time', disabled: !m.scheduledTime, action: () => setMeta(n, 'scheduledTime', '') }]),
         },
+        // the whole day is taken (last day for several: in the panel)
+        { label: 'All day', checked: !!m.allDay, action: () => setMeta(n, 'allDay', !m.allDay) },
         { label: 'Clear', disabled: !m.scheduled, action: set('') },
       ];
     } else if (key === 'estimate') {

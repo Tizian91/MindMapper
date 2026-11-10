@@ -96,6 +96,14 @@
           // appointment: a fixed block of time on its day - it stays reserved when ticked off
           const est = Number(m.estimate) || 0;
           if (m.status === 'dropped') continue; // will not take place
+          if (m.allDay) {
+            // all day (or several days): those days are taken as a whole, no estimate needed
+            out.push({
+              path, id: n.id, title: (n.text || '').split('\n')[0] || tr('Appointment'),
+              deadline: '', scheduled: m.scheduled, until: m.scheduledUntil || m.scheduled, allDay: true, time: '', minutes: 0, missing: false,
+            });
+            continue;
+          }
           if (!est && (n.type === 'todo' || m.status === 'done' || (n.type !== 'task' && (!m.status || m.status === 'none')))) continue;
           out.push({
             path, id: n.id, title: (n.text || '').split('\n')[0] || tr('Appointment'),
@@ -150,7 +158,29 @@
     // a whole day off (vacation) is no work day; partial days off reduce the capacity
     const offOn = (d) => (list.length ? MM.routines.offOn(list, d) : null);
     const baseOf = (d) => L.baseHours(d, cap);
-    const isWork = (d) => baseOf(d) > 0 && !(offOn(d) || {}).full;
+    // all-day appointments (today and later): those days are taken - no work day, like a
+    // day off, but they are listed as appointments and show as taken time
+    const awayMap = new Map(); // iso -> titles
+    for (const it of items) {
+      if (!it.allDay) continue;
+      const end = parse(it.until) || parse(it.scheduled);
+      let d = parse(it.scheduled);
+      for (let i = 0; d && d <= end && i < 366; i++, d = addDays(d, 1)) {
+        if (d < t0) continue;
+        const k = iso(d);
+        if (!awayMap.has(k)) awayMap.set(k, []);
+        awayMap.get(k).push(it.title);
+      }
+    }
+    const awayOn = (d) => awayMap.get(iso(d)) || null;
+    const isWork = (d) => baseOf(d) > 0 && !(offOn(d) || {}).full && !awayOn(d);
+    // the hours an all-day appointment takes: all the day would have had (nothing on a day off)
+    const awayMinutes = (d) => {
+      if (!awayOn(d)) return 0;
+      const off = offOn(d);
+      if (off && off.full) return 0;
+      return Math.max(0, baseOf(d) * 60 - (off ? off.minutes : 0));
+    };
     // capacity of a day = hours per work day minus time off minus the routines on that day
     // (routine by routine as well, for the tooltips of the workload page)
     const routineMemo = new Map();
@@ -172,7 +202,7 @@
     const missingList = [], unscheduledList = [];
     const ref = (it, extra) => Object.assign({ path: it.path, id: it.id, title: it.title }, extra);
     for (const it of items) {
-      if (!it.scheduled) continue;
+      if (!it.scheduled || it.allDay) continue; // all day: see awayMap
       if (it.missing) {
         missing++;
         missingList.push(ref(it, { date: it.scheduled, appt: true }));
@@ -187,8 +217,13 @@
       a.parts.push({ title: it.title, time: it.time || '', minutes: it.minutes });
       appts.set(k, a);
     }
-    const apptOn = (d) => (appts.get(iso(d)) || { minutes: 0 }).minutes;
-    const apptPartsOn = (d) => (appts.get(iso(d)) || { parts: [] }).parts;
+    // timed appointments plus what an all-day one takes
+    const apptOn = (d) => (appts.get(iso(d)) || { minutes: 0 }).minutes + awayMinutes(d);
+    const apptPartsOn = (d) => {
+      const parts = (appts.get(iso(d)) || { parts: [] }).parts;
+      const away = awayOn(d);
+      return away ? [{ title: away.join(', '), time: '', minutes: awayMinutes(d), allDay: true }].concat(parts) : parts;
+    };
     // free time of a day before appointments: hours minus time off minus routines
     const freeOf = (d) => {
       if (!isWork(d)) return 0;
@@ -202,7 +237,9 @@
       const d = parse(k), free = freeOf(d);
       if (a.minutes <= free + 0.5) continue;
       const off = offOn(d);
-      const reason = off && off.full ? tr('day off') : !baseOf(d) ? tr('no planning hours on this day') : tr('routines and appointments exceed the day');
+      const reason = off && off.full ? tr('day off')
+        : awayOn(d) ? tr('all-day appointment: {t}', { t: awayOn(d).join(', ') })
+          : !baseOf(d) ? tr('no planning hours on this day') : tr('routines and appointments exceed the day');
       conflicts.push({ date: k, minutes: a.minutes, free, titles: a.titles, reason });
     }
     conflicts.sort((a, b) => a.date.localeCompare(b.date));
@@ -257,7 +294,7 @@
       const d = addDays(t0, i);
       days.push({
         date: iso(d), load: byDay.get(iso(d)) || 0, cap: capOf(d), routine: routineOn(d), appt: apptOn(d),
-        off: offOn(d), conflict: conflictOn(d), routineParts: routinePartsOn(d), apptParts: apptPartsOn(d),
+        off: offOn(d), away: awayOn(d), conflict: conflictOn(d), routineParts: routinePartsOn(d), apptParts: apptPartsOn(d),
       });
     }
     const weeks = [];
@@ -287,7 +324,7 @@
       });
     }
     return {
-      capDay, capOf, freeOf, apptOn, byDay, days, weeks, buffers, critical, missing, unscheduled, conflicts, isWork, routines: list,
+      capDay, capOf, freeOf, apptOn, awayOn, awayMinutes, byDay, days, weeks, buffers, critical, missing, unscheduled, conflicts, isWork, routines: list,
       missingList: missingList.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title)),
       unscheduledList: unscheduledList.sort((a, b) => b.minutes - a.minutes || a.title.localeCompare(b.title)),
     };
@@ -393,7 +430,8 @@
     el.classList.toggle('over', !!over);
     const signedH = (m) => (m < 0 ? '−' : '') + L.hours(Math.abs(m));
     const todayText = td.off && td.off.full && !td.load ? tr('Today off 🏖')
-      : tr('Today {a} / {b}', { a: L.hours(td.load), b: L.hours(td.cap) });
+      : td.away && !td.load ? tr('Today 📌 {t}', { t: td.away.join(', ') })
+        : tr('Today {a} / {b}', { a: L.hours(td.load), b: L.hours(td.cap) });
     // a click on "3 without estimate" opens the workload page with that list folded out
     const e = MM.render.esc;
     el.innerHTML = e(todayText + ' · ' + tr('Week {a} / {b}', { a: L.hours(wk.load), b: L.hours(wk.cap) }) +
@@ -482,6 +520,7 @@
   L.appointmentHTML = function (n) {
     const m = n.meta || {};
     const esc = MM.render.esc;
+    if (m.allDay) return allDayHTML(m);
     const d = parse(m.scheduled);
     const k = m.scheduled;
     if (!m.estimate) return `<p class="hint">${tr('Set an estimate: the appointment then takes that time off the capacity of its day.')}</p>`;
@@ -500,6 +539,24 @@
     }
     return h + '</div>';
   };
+
+  /** Panel box of an all-day appointment: what it takes on each of its days, conflicts. */
+  function allDayHTML(m) {
+    const esc = MM.render.esc;
+    const t0 = today();
+    const days = MM.meta.apptDays(m).map(parse).filter((d) => d && d >= t0);
+    if (!days.length) return `<p class="hint">${tr('This appointment is over and no longer takes time off your capacity.')}</p>`;
+    const sum = L.summary();
+    let h = '<div class="load-box">';
+    for (const d of days.slice(0, 31)) {
+      const k = iso(d), taken = sum.awayMinutes(d);
+      const conflict = sum.conflicts.find((c) => c.date === k);
+      h += `<div${conflict ? ' class="over"' : ''}><b>📌 ${esc(fmtDate(k))}:</b> ` +
+        esc(taken ? tr('all day, −{a} capacity', { a: L.hours(taken) }) : tr('all day (no planning hours on this day)')) + '</div>';
+      if (conflict) h += `<div class="over">${esc(tr('Conflict: {t} on this day as well.', { t: conflict.titles.join(', ') }))}</div>`;
+    }
+    return h + '</div>';
+  }
 
   /** Top main task of every task (Overview model): key "path#id" -> { path, id, title }. */
   function mainTasks(docs) {
@@ -570,7 +627,8 @@
       if (ap.length) {
         lines.push({ head: true, text: tr('📌 Appointments: {h}', { h: L.hours(x.appt) }) });
         for (const p of ap) {
-          lines.push({ text: (week ? fmtDate(p.date) + ' ' : '') + (p.time ? p.time + ' ' : '') + p.title + ' – ' + dur(p.minutes) });
+          lines.push({ text: (week ? fmtDate(p.date) + ' ' : '') + (p.time ? p.time + ' ' : '') + p.title +
+            (p.allDay ? ' ' + tr('(all day)') : '') + ' – ' + dur(p.minutes) });
         }
       }
       return lines;
@@ -608,8 +666,9 @@
     }
     h += `</div><div class="ov-group"><div class="ov-group-head">${tr('Days')}</div>`;
     for (const d of sum.days) {
-      if (!d.cap && !d.load && !d.routine && !d.off && !d.appt) continue; // weekend without planned work
-      const off = d.off ? ` · 🏖 ${d.off.title}${d.off.full ? '' : ' (' + MM.meta.formatDuration(d.off.minutes) + ')'}` : '';
+      if (!d.cap && !d.load && !d.routine && !d.off && !d.appt && !d.away) continue; // weekend without planned work
+      const off = (d.off ? ` · 🏖 ${d.off.title}${d.off.full ? '' : ' (' + MM.meta.formatDuration(d.off.minutes) + ')'}` : '') +
+        (d.away ? ` · 📌 ${d.away.join(', ')}` : '');
       h += row(fmtDate(d.date) + (d === sum.days[0] ? tr(' (today)') : '') + off, d.load, d.cap, d, false);
     }
     h += `</div><div class="ov-group"><div class="ov-group-head">${tr('Buffer until each deadline')}</div>`;

@@ -461,7 +461,9 @@
       const over = inner.offsetHeight - c.clientHeight;
       if (over <= 1) break;
       const factor = n.shape === 'diamond' ? 2 : n.shape === 'ellipse' ? 1.45 : 1;
+      const before = n.h;
       n.h = Math.ceil(n.h + over * factor);
+      if (n.growUp) n.y -= n.h - before; // a list above the heading grows upwards: its bottom stays
       R.updateFrame(div, n);
       grew = true;
     }

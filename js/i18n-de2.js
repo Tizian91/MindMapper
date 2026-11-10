@@ -64,6 +64,23 @@
     'Time': 'Uhrzeit',
     'Time (HH:MM):': 'Uhrzeit (HH:MM):',
     'No time': 'Ohne Uhrzeit',
+    // ---- all-day appointments ----
+    'All day': 'Ganztägig',
+    'all day': 'ganztägig',
+    '(all day)': '(ganztägig)',
+    'until': 'bis',
+    'One day only': 'Nur ein Tag',
+    'When it begins (optional) - only shown, the whole day is taken': 'Beginn (optional) – nur zur Anzeige, belegt ist der ganze Tag',
+    'Last day (optional) - for an appointment over several days': 'Letzter Tag (optional) – für einen Termin über mehrere Tage',
+    'The whole day is taken (or several days, see "until"): no project work, routines with a fixed day are dropped, weekly budgets move to the other days':
+      'Der ganze Tag ist belegt (oder mehrere, siehe „bis“): keine Projektarbeit, Routinen mit festem Tag entfallen, Wochenbudgets wandern auf die anderen Tage',
+    'All day: these days count as fully taken - no project work, routines with a fixed day are dropped, weekly budgets move to the other days. The estimate does not count.':
+      'Ganztägig: Diese Tage gelten als voll belegt – keine Projektarbeit, Routinen mit festem Tag entfallen, Wochenbudgets wandern auf die anderen Tage. Die Schätzung zählt nicht.',
+    'all-day appointment: {t}': 'ganztägiger Termin: {t}',
+    'Today 📌 {t}': 'Heute 📌 {t}',
+    'all day, −{a} capacity': 'ganztägig, −{a} Kapazität',
+    'all day (no planning hours on this day)': 'ganztägig (an diesem Tag keine Planungsstunden)',
+    'Conflict: {t} on this day as well.': 'Konflikt: an diesem Tag außerdem {t}.',
     'Appointment': 'Termin',
     'Set an estimate and a deadline or a scheduled date to see the effect on your plan.':
       'Setze eine Schätzung und eine Frist oder einen Termin, um die Wirkung auf deinen Plan zu sehen.',
