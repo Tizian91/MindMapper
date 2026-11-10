@@ -1547,7 +1547,10 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
   .dlg-buttons { flex-wrap: wrap; }
   #views-dialog, #overview-dialog, #diary-dialog { box-sizing: border-box; width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; }
   /* overview: two-line rows - the map name and the "↗ map" button below the title */
-  .ov-row { grid-template-columns: 20px minmax(0, 1fr) auto; grid-template-areas: "s t c" "s n m" "s p p"; row-gap: 2px; }
+  /* the chips take at most half the width (they wrap), so the title always has room */
+  .ov-row { grid-template-columns: 20px minmax(0, 1fr) fit-content(50%); grid-template-areas: "s t c" "s n m" "s p p"; row-gap: 2px; }
+  .ov-row > .ov-chips { min-width: 0; }
+  .ov-row > .ov-chips .chip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 18px; }
   .ov-row > .status-ico { grid-area: s; }
   .ov-row > .ov-title { grid-area: t; }
   .ov-row > .ov-chips { grid-area: c; }
