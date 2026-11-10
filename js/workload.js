@@ -152,35 +152,43 @@
     const baseOf = (d) => L.baseHours(d, cap);
     const isWork = (d) => baseOf(d) > 0 && !(offOn(d) || {}).full;
     // capacity of a day = hours per work day minus time off minus the routines on that day
+    // (routine by routine as well, for the tooltips of the workload page)
     const routineMemo = new Map();
-    const routineOn = (d) => {
+    const routinePartsOn = (d) => {
       const k = iso(d);
       if (!routineMemo.has(k)) {
         let wd = 0;
         const mon = MM.templates.mondayOf(d);
         for (let i = 0; i < 7; i++) if (isWork(addDays(mon, i))) wd++;
-        routineMemo.set(k, isWork(d) && list.length ? MM.routines.minutesOn(list, d, wd) : 0);
+        routineMemo.set(k, isWork(d) && list.length ? MM.routines.partsOn(list, d, wd) : []);
       }
       return routineMemo.get(k);
     };
+    const routineOn = (d) => routinePartsOn(d).reduce((s, p) => s + p.minutes, 0);
     // appointments (today and later): minutes and titles per day
     const appts = new Map();
     let missing = 0, unscheduled = 0;
+    // which notes: no estimate (with a deadline or an appointment) / estimated work without a deadline
+    const missingList = [], unscheduledList = [];
+    const ref = (it, extra) => Object.assign({ path: it.path, id: it.id, title: it.title }, extra);
     for (const it of items) {
       if (!it.scheduled) continue;
       if (it.missing) {
         missing++;
+        missingList.push(ref(it, { date: it.scheduled, appt: true }));
         continue;
       }
       const ap = parse(it.scheduled);
       if (!ap || ap < t0 || !(it.minutes > 0)) continue; // a past appointment takes no time any more
       const k = iso(ap);
-      const a = appts.get(k) || { minutes: 0, titles: [] };
+      const a = appts.get(k) || { minutes: 0, titles: [], parts: [] };
       a.minutes += it.minutes;
       a.titles.push(it.title + (it.time ? ' ' + it.time : ''));
+      a.parts.push({ title: it.title, time: it.time || '', minutes: it.minutes });
       appts.set(k, a);
     }
     const apptOn = (d) => (appts.get(iso(d)) || { minutes: 0 }).minutes;
+    const apptPartsOn = (d) => (appts.get(iso(d)) || { parts: [] }).parts;
     // free time of a day before appointments: hours minus time off minus routines
     const freeOf = (d) => {
       if (!isWork(d)) return 0;
@@ -209,13 +217,17 @@
     for (const it of items) {
       if (it.scheduled) continue; // appointments: see above
       if (it.missing) {
-        if (it.deadline) missing++;
+        if (it.deadline) {
+          missing++;
+          missingList.push(ref(it, { date: it.deadline, appt: false }));
+        }
         continue;
       }
       if (it.minutes <= 0) continue;
       const dl = parse(it.deadline);
       if (!dl) {
         unscheduled += it.minutes;
+        unscheduledList.push(ref(it, { minutes: it.minutes }));
         continue;
       }
       let days = dl < t0 ? [iso(t0)] : workdays(t0, dl);
@@ -245,7 +257,7 @@
       const d = addDays(t0, i);
       days.push({
         date: iso(d), load: byDay.get(iso(d)) || 0, cap: capOf(d), routine: routineOn(d), appt: apptOn(d),
-        off: offOn(d), conflict: conflictOn(d),
+        off: offOn(d), conflict: conflictOn(d), routineParts: routinePartsOn(d), apptParts: apptPartsOn(d),
       });
     }
     const weeks = [];
@@ -253,17 +265,31 @@
     for (let w = 0; w < 4; w++) {
       const start = addDays(mon, w * 7), end = addDays(start, 6);
       let load = 0, capW = 0, routine = 0, appt = 0, conflict = false;
+      // the week adds up its routines (by routine: how often, how long) and lists its appointments
+      const rParts = new Map(), aParts = [];
       for (let d = start < t0 ? t0 : start; d <= end; d = addDays(d, 1)) {
         load += byDay.get(iso(d)) || 0;
         capW += capOf(d);
         routine += routineOn(d);
         appt += apptOn(d);
         conflict = conflict || conflictOn(d);
+        for (const p of routinePartsOn(d)) {
+          const r = rParts.get(p.id) || { title: p.title, time: '', minutes: 0, count: 0, budget: p.budget };
+          r.minutes += p.minutes;
+          r.count++;
+          rParts.set(p.id, r);
+        }
+        for (const p of apptPartsOn(d)) aParts.push(Object.assign({ date: iso(d) }, p));
       }
-      weeks.push({ start: iso(start), label: tr('Week {n}', { n: MM.templates.isoWeek(start).week }), load, cap: capW, routine, appt, conflict });
+      weeks.push({
+        start: iso(start), label: tr('Week {n}', { n: MM.templates.isoWeek(start).week }), load, cap: capW, routine, appt, conflict,
+        routineParts: Array.from(rParts.values()).sort((a, b) => b.minutes - a.minutes), apptParts: aParts,
+      });
     }
     return {
       capDay, capOf, freeOf, apptOn, byDay, days, weeks, buffers, critical, missing, unscheduled, conflicts, isWork, routines: list,
+      missingList: missingList.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title)),
+      unscheduledList: unscheduledList.sort((a, b) => b.minutes - a.minutes || a.title.localeCompare(b.title)),
     };
   };
 
@@ -283,6 +309,8 @@
   L.docs = allDocs;
   /** The map just left is one of the others now - as it was in memory, until they are read again. */
   L.keep = (path, doc) => others.set(path, doc);
+  /** Counts up whenever the other maps were read again (for caches built from them). */
+  L.version = () => othersVersion;
   /** Have the other maps been read at least once? */
   L.loaded = () => othersVersion > 0;
 
@@ -366,16 +394,18 @@
     const signedH = (m) => (m < 0 ? '−' : '') + L.hours(Math.abs(m));
     const todayText = td.off && td.off.full && !td.load ? tr('Today off 🏖')
       : tr('Today {a} / {b}', { a: L.hours(td.load), b: L.hours(td.cap) });
-    el.textContent = todayText + ' · ' + tr('Week {a} / {b}', { a: L.hours(wk.load), b: L.hours(wk.cap) }) +
+    // a click on "3 without estimate" opens the workload page with that list folded out
+    const e = MM.render.esc;
+    el.innerHTML = e(todayText + ' · ' + tr('Week {a} / {b}', { a: L.hours(wk.load), b: L.hours(wk.cap) }) +
       (cr ? ' · ' + tr('Buffer {b}', { b: signedH(cr.buffer) }) : '') +
-      (cf.length ? ' · ' + tr('📌 conflict {d}', { d: fmtDate(cf[0].date) }) + (cf.length > 1 ? ' +' + (cf.length - 1) : '') : '') +
-      (sum.missing ? ' · ' + tr('{n} without estimate', { n: sum.missing }) : '');
+      (cf.length ? ' · ' + tr('📌 conflict {d}', { d: fmtDate(cf[0].date) }) + (cf.length > 1 ? ' +' + (cf.length - 1) : '') : '')) +
+      (sum.missing ? ' · <span class="status-part" data-status-part="missing">' + e(tr('{n} without estimate', { n: sum.missing })) + '</span>' : '');
     el.title = cf.map((c) => tr('Appointment conflict {d}: {a} scheduled, {f} free ({r}) – {t}',
       { d: fmtDate(c.date), a: L.hours(c.minutes), f: L.hours(c.free), r: c.reason, t: c.titles.join(', ') }) + '\n').join('') +
       (cr ? tr('Tightest deadline: {d} – {w} of work, {c} available', { d: fmtDate(cr.date), w: L.hours(cr.work), c: L.hours(cr.cap) }) + '\n' : '') +
       (sum.unscheduled ? tr('{h} planned without a deadline', { h: L.hours(sum.unscheduled) }) + '\n' : '') +
       (sum.missing ? tr('{n} open note(s) with a deadline have no time estimate', { n: sum.missing }) + '\n' : '') +
-      tr('Click: workload in the overview');
+      tr('Click: workload in the overview') + (sum.missing ? '\n' + tr('Click on "without estimate": which notes') : '');
 
     // a change of the open map: show what it did to the plan
     if (last && last.doc === S.doc && last.version === othersVersion && last.rev !== S.rev) {
@@ -497,6 +527,22 @@
     return [...by.values()].sort((a, b) => b.minutes - a.minutes);
   }
 
+  // rows of the workload page whose list of routines / appointments is folded out (while the app runs)
+  const openTaken = new Set();
+  /** Fold the list below a row of the workload page out / in (el: its numbers, [data-load-toggle]). */
+  L.toggleTaken = function (el) {
+    const key = el.dataset.loadToggle, box = el.closest('.load-row, .load-note').nextElementSibling;
+    if (!box || !box.classList.contains('load-taken')) return;
+    const open = !openTaken.has(key);
+    if (open) openTaken.add(key);
+    else openTaken.delete(key);
+    box.hidden = !open;
+    el.classList.toggle('open', open);
+  };
+
+  /** Fold out a list of the workload page before it is shown (from the status bar). */
+  L.unfold = (key) => openTaken.add(key);
+
   /** Workload page of the overview: bars for days and weeks, buffers, warnings. */
   L.overviewHTML = function () {
     const sum = L.summary();
@@ -507,10 +553,44 @@
     };
     const taken = (routine, appt) => [routine >= 1 ? '−' + L.hours(routine) + ' 🔁' : '', appt >= 1 ? '−' + L.hours(appt) + ' 📌' : '']
       .filter(Boolean).join(' ');
-    const row = (label, load, cap, routine, appt, conflict) => `<div class="load-row${load > cap || conflict ? ' over' : ''}">` +
-      `<span class="load-label">${esc(label)}${conflict ? ' ⚠' : ''}</span>${bar(load, cap)}` +
-      `<span class="load-val">${L.hours(load)} / ${L.hours(cap)}</span>` +
-      `<span class="load-buf" title="${esc(tr('Taken by routines (🔁) and appointments (📌)'))}">${taken(routine, appt)}</span></div>`;
+    // what exactly takes the time - routine by routine, appointment by appointment:
+    // as tooltip and, on a click on the numbers, folded out below the row (also on a tablet)
+    const dur = (m) => MM.meta.formatDuration(Math.round(m));
+    const takenLines = (x, week) => {
+      const lines = [];
+      const rp = (x.routineParts || []).filter((p) => p.minutes >= 1);
+      const ap = (x.apptParts || []).filter((p) => p.minutes >= 1);
+      if (rp.length) {
+        lines.push({ head: true, text: tr('🔁 Routines: {h}', { h: L.hours(x.routine) }) });
+        for (const p of rp) {
+          const how = p.budget ? ' ' + tr('(weekly budget)') : week && p.count > 1 ? ' ×' + p.count : '';
+          lines.push({ text: (p.time && !week ? p.time + ' ' : '') + p.title + how + ' – ' + dur(p.minutes) });
+        }
+      }
+      if (ap.length) {
+        lines.push({ head: true, text: tr('📌 Appointments: {h}', { h: L.hours(x.appt) }) });
+        for (const p of ap) {
+          lines.push({ text: (week ? fmtDate(p.date) + ' ' : '') + (p.time ? p.time + ' ' : '') + p.title + ' – ' + dur(p.minutes) });
+        }
+      }
+      return lines;
+    };
+    const row = (label, load, cap, x, week) => {
+      const lines = takenLines(x, week);
+      const key = week ? 'w:' + x.start : 'd:' + x.date;
+      const open = lines.length > 0 && openTaken.has(key);
+      const tip = lines.length
+        ? lines.map((l) => (l.head ? '' : '    ') + l.text).join('\n') + '\n\n' + tr('Click: show / hide the list')
+        : tr('Taken by routines (🔁) and appointments (📌)');
+      return `<div class="load-row${load > cap || x.conflict ? ' over' : ''}">` +
+        `<span class="load-label">${esc(label)}${x.conflict ? ' ⚠' : ''}</span>${bar(load, cap)}` +
+        `<span class="load-val">${L.hours(load)} / ${L.hours(cap)}</span>` +
+        `<span class="load-buf${lines.length ? ' load-buf-toggle' + (open ? ' open' : '') : ''}"` +
+        `${lines.length ? ` data-load-toggle="${esc(key)}" role="button" tabindex="0"` : ''} title="${esc(tip)}">` +
+        `${taken(x.routine, x.appt)}${lines.length ? '<span class="load-caret">▾</span>' : ''}</span></div>` +
+        (lines.length ? `<div class="load-taken"${open ? '' : ' hidden'}>` +
+          lines.map((l) => `<div class="${l.head ? 'lt-head' : 'lt-item'}">${esc(l.text)}</div>`).join('') + '</div>' : '');
+    };
     let h = '';
     if (sum.conflicts.length) {
       h += `<div class="ov-group"><div class="ov-group-head">${tr('Appointment conflicts')}</div>`;
@@ -524,13 +604,13 @@
     h += `<div class="ov-group"><div class="ov-group-head">${tr('Weeks')}<span class="muted">${tr('planned / free after routines and appointments')}</span></div>`;
     for (const w of sum.weeks) {
       const d = parse(w.start);
-      h += row(`${w.label} · ${fmtDate(w.start)} – ${fmtDate(iso(addDays(d, 6)))}`, w.load, w.cap, w.routine, w.appt, w.conflict);
+      h += row(`${w.label} · ${fmtDate(w.start)} – ${fmtDate(iso(addDays(d, 6)))}`, w.load, w.cap, w, true);
     }
     h += `</div><div class="ov-group"><div class="ov-group-head">${tr('Days')}</div>`;
     for (const d of sum.days) {
       if (!d.cap && !d.load && !d.routine && !d.off && !d.appt) continue; // weekend without planned work
       const off = d.off ? ` · 🏖 ${d.off.title}${d.off.full ? '' : ' (' + MM.meta.formatDuration(d.off.minutes) + ')'}` : '';
-      h += row(fmtDate(d.date) + (d === sum.days[0] ? tr(' (today)') : '') + off, d.load, d.cap, d.routine, d.appt, d.conflict);
+      h += row(fmtDate(d.date) + (d === sum.days[0] ? tr(' (today)') : '') + off, d.load, d.cap, d, false);
     }
     h += `</div><div class="ov-group"><div class="ov-group-head">${tr('Buffer until each deadline')}</div>`;
     if (!sum.buffers.length) h += `<p class="hint">${tr('No open work with an estimate and a deadline.')}</p>`;
@@ -580,9 +660,25 @@
         '<span class="load-val"></span><span class="load-buf"></span></div>';
     }
     h += '</div>';
+    // the two warnings fold out the notes behind them; a click on one opens it
+    const foldNote = (key, text, list, line) => {
+      const open = openTaken.has(key);
+      return `<p class="hint load-note"><span class="load-buf-toggle${open ? ' open' : ''}" data-load-toggle="${key}" role="button" tabindex="0" ` +
+        `title="${esc(tr('Click: show / hide the list'))}">${esc(text)}<span class="load-caret">▾</span></span></p>` +
+        `<div class="load-taken load-jump"${open ? '' : ' hidden'}>` +
+        list.map((it) => `<div class="lt-item load-task" data-path="${esc(it.path)}" data-id="${esc(it.id)}" title="${esc(it.path)}">${esc(line(it))}</div>`).join('') +
+        '</div>';
+    };
+    let warn = '';
+    if (sum.missing) {
+      warn += foldNote('missing', tr('{n} open note(s) with a deadline have no time estimate and are not counted.', { n: sum.missing }), sum.missingList,
+        (it) => (it.appt ? '📌 ' : '⏰ ') + fmtDate(it.date) + ' · ' + it.title + ' · ' + MM.links.label(it.path));
+    }
+    if (sum.unscheduled) {
+      warn += foldNote('nodl', tr('{h} of estimated work has no deadline.', { h: L.hours(sum.unscheduled) }), sum.unscheduledList,
+        (it) => L.hours(it.minutes) + ' · ' + it.title + ' · ' + MM.links.label(it.path));
+    }
     const notes = [];
-    if (sum.missing) notes.push(tr('{n} open note(s) with a deadline have no time estimate and are not counted.', { n: sum.missing }));
-    if (sum.unscheduled) notes.push(tr('{h} of estimated work has no deadline.', { h: L.hours(sum.unscheduled) }));
     const cap = L.capacity();
     const names = MM.weekdayNames();
     const work = names.filter((x, i) => cap.days.includes(i)).join(', ') || tr('none');
@@ -591,6 +687,6 @@
       (rest ? tr(', {h} h per weekend day ({days})', { h: cap.weekendHours, days: rest }) : '') +
       tr(' – stored {where}. Change it in the panel (click the empty canvas). ', { where: MM.storage.capacityLocation() }) +
       tr('Work is spread over the planning days until its deadline.'));
-    return h + notes.map((t) => `<p class="hint">${esc(t)}</p>`).join('');
+    return h + warn + notes.map((t) => `<p class="hint">${esc(t)}</p>`).join('');
   };
 })(window.MM);

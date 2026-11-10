@@ -29,7 +29,7 @@
   const tr = (s, v) => MM.tr(s, v);
   let dialog, items = [], links = [], byKey = new Map();
   // period: of the view "Estimates" (stats.js); kept while the app runs, never saved
-  const view = { text: '', hideDone: true, status: 'any', priority: 'any', type: 'any', mode: 'deadline', period: 'all' };
+  const view = { text: '', hideDone: true, status: 'any', priority: 'any', type: 'any', tag: 'any', mode: 'deadline', period: 'all' };
   const collapsed = new Set(); // keys of collapsed tasks in the tree view
 
   const BUCKETS = [
@@ -67,7 +67,9 @@
       if (n.taskList) continue; // "Overdue" / "Open tasks" of a plan: references, not tasks (tasklists.js)
       if (n.type === 'todo') {
         if (!MM.meta.isTaskTodo(n)) continue; // a plain check list, not a task
-        const filled = (n.items || []).filter((i) => i.text.trim() && !i.moved);
+        // entries of routines (🔁) and appointments (📌) are fixed dates, not tasks:
+        // a day column of a plan holding only those is no task (not in the matrix)
+        const filled = (n.items || []).filter((i) => i.text.trim() && !i.moved && !i.routine);
         if (!filled.length) continue; // empty list (e.g. an unused day of a week plan)
         const open = filled.filter((i) => !i.done);
         detail = open.slice(0, 3).map((i) => i.text).join(' · ') + (open.length > 3 ? ` · +${open.length - 3}` : '');
@@ -183,9 +185,13 @@
     }
   };
 
-  /** Open the overview; mode: 'deadline' | 'tree' | 'load' (default: the last one). */
-  O.open = async function (mode) {
+  /**
+   * Open the overview; mode: 'deadline' | 'tree' | 'load' (default: the last one).
+   * unfold: a list of the workload page to fold out and scroll to ('missing', 'nodl').
+   */
+  O.open = async function (mode, unfold) {
     if (typeof mode === 'string') view.mode = mode;
+    if (unfold) MM.load.unfold(unfold);
     if (MM.project.status !== 'ready') {
       alert(tr('The overview collects tasks from all maps of a project folder.\nOpen a folder in the "Project" sidebar first.'));
       return;
@@ -207,6 +213,8 @@
     buildTree();
     await MM.load.refresh(); // workload page uses the same, fresh state of all maps
     render();
+    const target = unfold && dialog.querySelector(`[data-load-toggle="${unfold}"]`);
+    if (target) target.scrollIntoView({ block: 'center' });
   };
 
   /** Language change: the dialog is built again (in the new language) the next time it opens. */
@@ -345,6 +353,7 @@
           </span>
           <input type="search" class="ov-search" placeholder="${esc(tr('Search tasks…'))}">
           <select class="ov-type"></select>
+          <select class="ov-tag"></select>
           <select class="ov-status"></select>
           <select class="ov-prio"></select>
           <label class="check"><input type="checkbox" class="ov-hide"${view.hideDone ? ' checked' : ''}> ${tr('Hide done')}</label>
@@ -357,6 +366,8 @@
     const st = dialog.querySelector('.ov-status'), pr = dialog.querySelector('.ov-prio');
     const ty = dialog.querySelector('.ov-type');
     ty.innerHTML = `<option value="any">${tr('Any type')}</option>`;
+    const tg = dialog.querySelector('.ov-tag');
+    tg.innerHTML = `<option value="any">${tr('Any tag')}</option>`;
     st.innerHTML = `<option value="any">${tr('Any status')}</option>` +
       Object.entries(MM.STATUSES).filter(([k]) => k !== 'none').map(([k, v]) => `<option value="${k}">${esc(tr(v.label))}</option>`).join('');
     pr.innerHTML = `<option value="any">${tr('Any priority')}</option>` +
@@ -382,6 +393,7 @@
     dialog.querySelector('.ov-search').addEventListener('input', (e) => { view.text = e.target.value; render(); });
     dialog.querySelector('.ov-hide').addEventListener('change', (e) => { view.hideDone = e.target.checked; render(); });
     ty.addEventListener('change', () => { view.type = ty.value; render(); });
+    tg.addEventListener('change', () => { view.tag = tg.value; render(); });
     st.addEventListener('change', () => { view.status = st.value; render(); });
     pr.addEventListener('change', () => { view.priority = pr.value; render(); });
     initMatrixDrag();
@@ -390,7 +402,17 @@
       view.period = e.target.value;
       render();
     });
+    // workload page: the numbers of a row (−2 h 🔁 −4 h 📌) fold out what they are made of
+    dialog.querySelector('.ov-list').addEventListener('keydown', (e) => {
+      const t = (e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-load-toggle]');
+      if (t) { e.preventDefault(); MM.load.toggleTaken(t); }
+    });
     dialog.querySelector('.ov-list').addEventListener('click', async (e) => {
+      const fold = e.target.closest('[data-load-toggle]');
+      if (fold) {
+        MM.load.toggleTaken(fold);
+        return;
+      }
       if (e.target.closest('[data-ov-outlook]')) {
         setupOutlook();
         return;
@@ -514,19 +536,32 @@
         types.map((t) => `<option value="${esc(t)}">${esc(tr(MM.NODE_TYPES[t] || t))}</option>`).join('');
     }
     typeSel.value = current;
+    // tag filter as well: the tags of all tasks (and of the routines with a time)
+    const tagSel = dialog.querySelector('.ov-tag');
+    const tags = Array.from(new Set(items.concat(view.mode === 'appts' ? routineDates() : []).flatMap((it) => it.tags)))
+      .sort((a, b) => a.localeCompare(b));
+    const tag = tags.includes(view.tag) ? view.tag : 'any';
+    if (tagSel.dataset.tags !== tags.join('\n')) {
+      tagSel.dataset.tags = tags.join('\n');
+      tagSel.innerHTML = `<option value="any">${tr('Any tag')}</option>` +
+        tags.map((t) => `<option value="${esc(t)}">#${esc(t)}</option>`).join('');
+    }
+    tagSel.value = tag;
 
     const text = view.text.trim().toLowerCase();
     // "Hide done" hides dropped tasks as well - except in their own view
     const matches = (it) =>
       !(view.hideDone && view.mode !== 'aside' && (it.status === 'done' || it.status === 'dropped')) &&
       (current === 'any' || it.type === current) &&
+      (tag === 'any' || it.tags.includes(tag)) &&
       (view.status === 'any' || it.status === view.status) &&
       (view.priority === 'any' || view.mode === 'matrix' || MM.prioOf(it.meta) === view.priority) &&
       (!text || (it.title + ' ' + it.detail + ' ' + it.tags.join(' ') + ' ' + it.path).toLowerCase().includes(text));
 
     // the filters of the head do not apply to the workload page
-    dialog.querySelectorAll('.ov-search, .ov-type, .ov-status, .ov-prio, .ov-hide').forEach((el) => {
+    dialog.querySelectorAll('.ov-search, .ov-type, .ov-tag, .ov-status, .ov-prio, .ov-hide').forEach((el) => {
       (el.closest('label') || el).hidden = view.mode === 'load' || view.mode === 'stats' || (view.mode === 'matrix' && el.classList.contains('ov-prio')) ||
+        (el === tagSel && !tags.length) || // no tags in the project: no filter for them
         (view.mode === 'aside' && (el.classList.contains('ov-hide') || el.classList.contains('ov-status')));
     });
     if (view.mode === 'load') {

@@ -149,6 +149,7 @@ Den Typ änderst du per Rechtsklick → **Change type** oder im Panel. Wird eine
 ## 4. Details: Status, Priorität, Deadline, Termin, Schätzung, Tags
 
 - Im Panel unter **Details**: **Datum** (Frist oder Termin), **Estimate** (z. B. `1h 30m`, `90m`, `2h`, `1d` = ein Arbeitstag, also so viele Stunden wie unter *Hours / work day* eingestellt; gespeichert wird beim Eintippen der Stundenwert), **Progress** (nur Tasks), **Status**, **Priority**, **Tags**, **Link**.
+- **Tags vorschlagen:** Beim Eintippen eines Tags schlägt MindMapper die Tags vor, die es **in allen Maps des Projektordners** schon gibt, mit der Zahl, wie oft jeder vorkommt (`Paper  12×`). So bleibst du bei einem Wort statt bei Synonymen. Die Liste ist nach dem Getippten gefiltert und scrollt, wenn sie lang ist. Ohne Projektordner kommen die Vorschläge nur aus der offenen Map.
 - **Deadline oder Termin – nie beides:**
   - **Deadline** = bis wann es fertig sein muss. Die Zeit wird auf die Tage bis dahin verteilt (Projektarbeit).
   - **Scheduled / Termin** = an welchem Tag (optional mit Uhrzeit) es stattfindet, z. B. ein einmaliger Workshop. Die geschätzte Zeit wird wie bei einer Routine von der **Kapazität dieses Tages** abgezogen (📌-Chip).
@@ -396,7 +397,7 @@ Toolbar **Overview** (*Übersicht*) sammelt die Aufgaben **aller Maps** des Proj
 - **Alle Termine** (Notes mit *Scheduled*) aller Maps, nach Tag gruppiert: *Past* (vergangen), *Today*, *Tomorrow*, *Next 7 days*, *Later* – innerhalb des Tages nach Uhrzeit.
 - **Routinen mit Uhrzeit** (🔁, wöchentlich oder monatlich, z. B. „jeden Dienstag 10:00“) stehen hier ebenfalls – mit ihren Terminen heute und in den nächsten 7 Tagen, nicht an einem freien Tag (🏖). Ein Klick öffnet die Routine. *Nice-to-have*-Routinen sind blasser und blocken keine Zeit. Routinen ohne Uhrzeit, Zeitbudgets und „mehrmals pro Woche“ haben keinen festen Zeitpunkt und fehlen hier; in den Listen der Pläne und unter *By deadline* stehen Routinen weiterhin nicht.
 - **Kopf jeder Gruppe:** Anzahl der Termine · die Zeit, die ihre Schätzungen an ihren Tagen **blocken**.
-- **By deadline**, **By task** und die **Matrix** zeigen Termine nicht, dort stehen nur Aufgaben. Ein vergangener Termin ist nicht „überfällig“, er ist vorbei – und über einen festen Termin muss man nicht nach wichtig / dringend entscheiden. Hat ein Termin Untertasks, steht er in *By task* blass als Rahmen über ihnen. Vergessen wird trotzdem nichts: Jeder Tages- und Wochenplan bekommt seine Termine als 📌-Eintrag (Kapitel 8).
+- **By deadline**, **By task** und die **Matrix** zeigen Termine nicht, dort stehen nur Aufgaben. Ein vergangener Termin ist nicht „überfällig“, er ist vorbei – und über einen festen Termin muss man nicht nach wichtig / dringend entscheiden. Hat ein Termin Untertasks, steht er in *By task* blass als Rahmen über ihnen. Dasselbe gilt für die 🔁- und 📌-Einträge der Pläne: Eine Tagesspalte (Wochenplan) oder *Morning / Afternoon / Evening* (Tagesplan), in der nur solche Einträge stehen, ist keine Aufgabe. Schreibst du eigene Einträge dazu, steht die Spalte wieder als Aufgabe da – gezählt werden dann nur diese. Vergessen wird trotzdem nichts: Jeder Tages- und Wochenplan bekommt seine Termine als 📌-Eintrag (Kapitel 8).
 - *Hide done* blendet abgehakte Termine aus – so bleiben unter *Past* nur die, die du noch nicht abgehakt hast.
 
 ### Termine und Fristen in Outlook übertragen (Windows)
@@ -490,10 +491,11 @@ Ohne stündlichen Abgleich passiert nur etwas, wenn du `Outlook-Abgleich.cmd` st
 Die Seite rechnet aus Schätzung, Fortschritt, Deadline und Kapazität, wie voll deine Tage und Wochen sind. Wie genau gerechnet wird, steht in Kapitel 13.
 
 - **Abschnitte:** *Appointment conflicts* (nur wenn es welche gibt) · *Weeks* · *Days* · *Buffer until each deadline* · *Routines* · *Days off*.
-- **Jede Zeile:** Bezeichnung · **Balken** · **verplant / verfügbar** (z. B. `26 h / 32 h`) · rechts, was Routinen (🔁) und Termine (📌) schon von der Kapazität genommen haben.
+- **Jede Zeile:** Bezeichnung · **Balken** · **verplant / verfügbar** (z. B. `26 h / 32 h`) · rechts, was Routinen (🔁) und Termine (📌) schon von der Kapazität genommen haben. **Klick (oder Antippen) auf diese Zahlen** klappt unter der Zeile auf, woraus sie bestehen – ein zweiter Klick klappt es wieder zu, mit der Maus steht es auch im Tooltip: jede Routine mit Uhrzeit und Dauer (bei Zeitbudgets der Tagesanteil, *weekly budget*) und jeder Termin. In der Wochenzeile sind die Routinen zusammengefasst (`Group meeting ×4 – 6h`), die Termine mit ihrem Tag aufgeführt. Die laufende Woche zählt ab heute.
 - **Farbe des Balkens:** **grün** = passt, **gelb** = über 85 % verplant, **rot** = mehr Arbeit als Zeit.
 - **Puffer:** Für jede Deadline: Passt die **gesamte** bis dahin fällige Arbeit in die Zeit von heute bis dahin? `+6 h` = Luft, `−3 h` = geht so nicht auf, auch wenn die einzelnen Tage noch grün sind. Unter dem Datum stehen die **Haupttasks, die an diesem Tag fällig sind**, mit ihren Stunden – Untertasks (auch aus einer abgeleiteten Map) unter ihrer Haupttask zusammengefasst, Überfälliges bei heute. Ein Klick auf den Namen öffnet die Task; fährst du mit der Maus darüber, siehst du die einzelnen Schritte.
 - **Routinen:** jede mit ihrer Regel, der nächsten Fälligkeit und den Stunden pro Woche. *Nice to have*-Routinen sind ausgegraut, sie zählen nicht.
+- **Hinweise unten:** „… have no time estimate“ (Aufgaben mit Deadline oder Termin, aber ohne Schätzung) und „… has no deadline“ (geschätzte Arbeit ohne Deadline) lassen sich per Klick aufklappen: Darunter stehen die Notes mit Datum bzw. Stunden und Map, ein Klick auf eine davon öffnet ihre Map und markiert sie.
 
 ![Workload, unten: Puffer bis zu jeder Deadline (+ = Luft, − = geht nicht auf), Routinen mit Stunden pro Woche, Urlaub](docs/handbuch/overview-workload-2.png)
 
@@ -545,13 +547,13 @@ Unten am Rand steht immer, z. B.: `Today 6 h / 8 h · Week 26 h / 40 h · Buffer
 - **Today / Week:** verplant / verfügbar für heute und diese Woche. *Today off 🏖* an einem freien Tag.
 - **Buffer:** der Puffer der **knappsten** Deadline – fährst du mit der Maus darüber, steht dort, welche es ist.
 - **📌 conflict:** Ein Termin passt nicht in die freie Zeit seines Tages.
-- **without estimate:** so viele Aufgaben mit Deadline oder Termin haben keine Schätzung und zählen deshalb nicht.
+- **without estimate:** so viele Aufgaben mit Deadline oder Termin haben keine Schätzung und zählen deshalb nicht. **Klick genau auf diesen Teil** öffnet die Workload-Seite mit der Liste dieser Notes (aufgeklappt) – ein Klick auf einen Eintrag springt zur Note. Ein Klick auf den Rest der Statusleiste öffnet die Workload-Seite wie gewohnt.
 - **Rot** wird die Leiste bei Überlast, negativem Puffer oder einem Konflikt. **Klick** öffnet die Workload-Seite.
 - Nach jeder Änderung meldet sie kurz die Auswirkung, z. B. `Plan: Week 44: 34 h → 38 h of 40 h`.
 
 ### Bedienung des Fensters
 
-- Suche, Typ-, Status- und Prioritätsfilter, **Hide done**. Klick auf eine Zeile öffnet die Map und markiert die Note; **↗ map** öffnet eine abgeleitete Map.
+- Suche, Typ-, **Tag-**, Status- und Prioritätsfilter, **Hide done**. Der Tag-Filter (*Any tag*) bietet die Tags an, die in den Aufgaben tatsächlich vorkommen, und wirkt in *By deadline*, *By task*, *Appointments*, *Set aside* und der Matrix. Klick auf eine Zeile öffnet die Map und markiert die Note; **↗ map** öffnet eine abgeleitete Map.
 - **Fenster verschieben und skalieren** (am PC): an der Kopfzeile ziehen = verschieben; an den Rändern oder der Ecke unten rechts ziehen = Größe ändern. Doppelklick auf die Kopfzeile stellt Standardposition und -größe wieder her. Am Handy füllt die Overview den Bildschirm.
 
 ## 12. Haupt- und Untertasks

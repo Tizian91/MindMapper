@@ -217,18 +217,26 @@
    * Nothing on a whole day off - the meeting takes place without you.
    * Leisure routines take no time (they are spare time).
    */
-  R.minutesOn = function (list, d, workdaysOfWeek) {
-    if (R.isOff(list, d)) return 0;
-    let m = 0;
+  R.minutesOn = (list, d, workdaysOfWeek) => R.partsOn(list, d, workdaysOfWeek).reduce((s, p) => s + p.minutes, 0);
+
+  /**
+   * The same, routine by routine: [{ id, title, time, minutes, budget }] - budget = share
+   * of a weekly time budget. For the tooltips of the workload page.
+   */
+  R.partsOn = function (list, d, workdaysOfWeek) {
+    if (R.isOff(list, d)) return [];
+    const out = [];
     for (const r of list) {
       if (r.leisure) continue;
       if (R.isWeekly(r.rule)) {
-        if (workdaysOfWeek > 0 && R.budgetActive(r.rule, MM.templates.mondayOf(d))) m += R.perWeek(r.rule, r.minutes) / workdaysOfWeek;
+        if (workdaysOfWeek > 0 && R.budgetActive(r.rule, MM.templates.mondayOf(d))) {
+          out.push({ id: r.id, title: r.title, time: '', minutes: R.perWeek(r.rule, r.minutes) / workdaysOfWeek, budget: true });
+        }
       } else if (R.occursOn(r.rule, d)) {
-        m += r.minutes;
+        out.push({ id: r.id, title: r.title, time: r.rule.time || '', minutes: r.minutes, budget: false });
       }
     }
-    return m;
+    return out;
   };
 
   /**

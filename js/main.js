@@ -321,7 +321,11 @@
       toolbar.scrollLeft += e.deltaY;
     }, { passive: false });
     document.getElementById('status-hint').textContent = UI.defaultHint;
-    document.getElementById('status-load').addEventListener('click', () => MM.overview.open('load'));
+    // "3 without estimate" opens the workload page with those notes listed
+    document.getElementById('status-load').addEventListener('click', (e) => {
+      const part = e.target.closest('[data-status-part]');
+      MM.overview.open('load', part ? part.dataset.statusPart : null);
+    });
 
     if (!(await MM.storage.restoreAutosave())) {
       MM.storage.load(demoDoc());

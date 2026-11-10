@@ -119,7 +119,8 @@ function Read-Tasks {
       if ($n.type -eq 'todo') {
         # eine reine Checkliste ist keine Aufgabe (MM.meta.isTaskTodo)
         if (-not ($m.estimate -or $deadline -or $scheduled -or $prio -or @($n.tags) -contains 'carried-over')) { continue }
-        $filled = @($n.items | Where-Object { $_ -and ([string]$_.text).Trim() -and -not $_.moved })
+        # Einträge von Routinen (🔁) und Terminen (📌) sind Termine, keine Aufgaben (wie js/overview.js)
+        $filled = @($n.items | Where-Object { $_ -and ([string]$_.text).Trim() -and -not $_.moved -and -not $_.routine })
         if (-not $filled.Count) { continue }   # leere Liste
         if ($status -eq 'none') { $status = if (@($filled | Where-Object { -not $_.done }).Count) { 'open' } else { 'done' } }
       } elseif (-not ($n.type -eq 'task' -or $status -ne 'none' -or $prio -or $deadline -or $scheduled)) {

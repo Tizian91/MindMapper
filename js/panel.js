@@ -234,7 +234,8 @@
       `${iconFn(v)}${esc(label)}</button>`).join('') + '</div>';
     // tags shared by all selected notes
     const tags = (nodes[0].tags || []).filter((t) => nodes.every((n) => (n.tags || []).includes(t)));
-    const known = MM.meta.allTags().map((x) => x.tag).filter((t) => !tags.includes(t));
+    // suggestions: the tags of all maps of the project, how often each is used next to it
+    const known = MM.meta.projectTags().filter((x) => !tags.includes(x.tag));
     const chips = tags.map((tg) => MM.meta.tagChip(tg, '').replace('</span>',
       `<button class="chip-x" data-remove-tag="${esc(tg)}" title="${t('removeTag')}">×</button></span>`)).join('');
     const tasks = nodes.every((n) => n.type === 'task');
@@ -283,7 +284,7 @@
       <div class="row col"><label>${t(pKey === 'quadrant' ? 'eisenhower' : 'priority')}</label>${pick(pKey, MM.prioOf(m), prioLabels, prioIcon, MM.prioCatalog())}</div>
       <div class="row col"><label>${t('tags')}</label>
         <div class="tag-editor">${chips}<input type="text" data-tag-input list="tag-suggestions" placeholder="${t('addTagPlaceholder')}"></div>
-        <datalist id="tag-suggestions">${known.map((tg) => `<option value="${esc(tg)}">`).join('')}</datalist>
+        <datalist id="tag-suggestions">${known.map((x) => `<option value="${esc(x.tag)}" label="${esc(x.count + '×')}">`).join('')}</datalist>
       </div>
       <div class="row col"><label>${t('link')}</label>
         <div class="link-row"><input type="text" data-link-input list="link-suggestions" value="${esc(nodes[0].link || '')}"
@@ -579,7 +580,7 @@
       nodes.length ? MM.load.previewHTML(nodes) : null,
       edges.map((e) => [e.id, e.style, e.label]),
       nodes.length || edges.length ? null : [S.settings, S.edgeStyle],
-      nodes.length ? MM.meta.allTags() : null,
+      nodes.length ? MM.meta.projectTags() : null,
     ]);
     if (!force && key === lastKey) return;
     if (!force && root.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' &&

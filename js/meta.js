@@ -102,6 +102,28 @@
     return [...counts].map(([tag, count]) => ({ tag, count })).sort((a, b) => a.tag.localeCompare(b.tag));
   };
 
+  /**
+   * Tags of all maps of the project folder (the open one live, the others as read in the
+   * background by workload.js) - the suggestions when a tag is typed, so the same words
+   * are used everywhere. Without a project folder: the tags of the open map.
+   */
+  let projectTagsCache = { key: null, value: [] };
+  META.projectTags = function () {
+    const ready = MM.project && MM.project.status === 'ready' && MM.load && MM.load.loaded();
+    if (!ready) return META.allTags();
+    const key = MM.load.version() + '|' + S.rev;
+    if (projectTagsCache.key === key && projectTagsCache.doc === S.doc) return projectTagsCache.value;
+    const counts = new Map();
+    for (const doc of MM.load.docs().values()) {
+      for (const n of Object.values((doc && doc.nodes) || {})) {
+        for (const t of n.tags || []) counts.set(t, (counts.get(t) || 0) + 1);
+      }
+    }
+    const value = [...counts].map(([tag, count]) => ({ tag, count })).sort((a, b) => a.tag.localeCompare(b.tag));
+    projectTagsCache = { key, doc: S.doc, value };
+    return value;
+  };
+
   /** Stable color hue for a tag. */
   META.tagHue = function (tag) {
     let h = 0;

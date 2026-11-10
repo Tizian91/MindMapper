@@ -81,6 +81,12 @@
     'Conflict: {a} scheduled, but only {f} free ({r}).': 'Konflikt: {a} geplant, aber nur {f} frei ({r}).',
     'Project work left that day: {a} of {b}': 'Projektarbeit an dem Tag: {a} von {b}',
     'Taken by routines (🔁) and appointments (📌)': 'Belegt durch Routinen (🔁) und Termine (📌)',
+    '🔁 Routines: {h}': '🔁 Routinen: {h}',
+    '📌 Appointments: {h}': '📌 Termine: {h}',
+    '(weekly budget)': '(Wochenbudget)',
+    'Click: show / hide the list': 'Klick: Liste auf- / zuklappen',
+    'Click on "without estimate": which notes': 'Klick auf „ohne Schätzung“: welche Notes',
+    'Any tag': 'Alle Tags',
     'Appointment conflicts': 'Terminkonflikte',
     'planned / free after routines and appointments': 'geplant / frei nach Routinen und Terminen',
     // ---- overview window ----

@@ -1266,16 +1266,18 @@ dl.keys dd { margin: 0; color: var(--label); }
 }
 .ov-derived:hover { background: var(--accent-soft); border-color: var(--accent); }
 .ov-derived.disabled { color: var(--muted); opacity: 0.45; cursor: default; }
-.ov-head .ov-type, .ov-head .ov-status, .ov-head .ov-prio { max-width: 130px; }
+.ov-head .ov-type, .ov-head .ov-tag, .ov-head .ov-status, .ov-head .ov-prio { max-width: 130px; }
 
 /* ---- Workload (status bar, panel preview, overview page) ----------------- */
 
 #status-load { cursor: pointer; padding: 0 6px; border-radius: 4px; white-space: nowrap; }
 #status-load:hover { background: var(--accent-soft); }
 #status-load.over { color: var(--danger); font-weight: 600; }
+#status-load .status-part { text-decoration: underline dotted; text-underline-offset: 2px; }
+#status-load .status-part:hover { color: var(--accent); }
 .load-box { display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
 .load-box .over, .load-row.over .load-val, .load-row.over .load-buf { color: var(--danger); font-weight: 600; }
-.load-row { display: grid; grid-template-columns: minmax(0, 220px) 1fr 110px 130px; gap: 10px; align-items: center; padding: 4px 8px; font-size: 13px; }
+.load-row { display: grid; grid-template-columns: minmax(0, 220px) 1fr 110px 150px; gap: 10px; align-items: center; padding: 4px 8px; font-size: 13px; }
 .load-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* buffer rows: the main tasks due that day, a click opens the task */
 .load-tasks { display: inline-block; white-space: normal; font-size: 12px; line-height: 1.35; margin-top: 2px; }
@@ -1283,6 +1285,19 @@ dl.keys dd { margin: 0; color: var(--label); }
 .load-task:hover { text-decoration: underline; }
 .load-val, .load-buf { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
 .load-buf { overflow: hidden; text-overflow: ellipsis; }
+/* workload page: the numbers fold out the routines / appointments behind them */
+.load-buf-toggle { cursor: pointer; border-radius: 4px; }
+.load-buf-toggle:hover, .load-buf-toggle:focus-visible { color: var(--accent); background: var(--accent-soft); outline: none; }
+.load-caret { display: inline-block; margin-left: 4px; font-size: 10px; transition: transform .15s; transform: rotate(-90deg); }
+.load-buf-toggle.open .load-caret { transform: none; }
+.load-taken { margin: 0 8px 6px auto; padding: 6px 10px; max-width: 420px; font-size: 12px; line-height: 1.45; color: var(--label); background: var(--accent-soft); border-radius: 6px; }
+.load-taken .lt-head { font-weight: 600; color: var(--text); }
+.load-taken .lt-head + .lt-item { margin-top: 1px; }
+.load-taken .lt-item { padding-left: 16px; }
+.load-taken .lt-item + .lt-head { margin-top: 4px; }
+.load-note { margin-bottom: 4px; }
+.load-taken.load-jump { margin: 0 0 8px; max-width: none; }
+.load-taken .load-task { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .load-bar { display: block; height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
 .load-bar > span { display: block; height: 100%; background: #38a169; border-radius: 5px; }
 .load-bar.tight > span { background: #d69e2e; }
@@ -1562,7 +1577,7 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
   .ov-head { cursor: auto; padding: 8px 10px; gap: 6px; }
   .ov-head h3 { font-size: 14px; }
   .ov-search { width: 120px; flex: 1 1 120px; }
-  .ov-head .ov-type, .ov-head .ov-status, .ov-head .ov-prio { max-width: 110px; flex: 1 1 90px; }
+  .ov-head .ov-type, .ov-head .ov-tag, .ov-head .ov-status, .ov-head .ov-prio { max-width: 110px; flex: 1 1 90px; }
   .ov-list { padding: 4px 8px 12px; }
 }
 @media (max-height: 500px) {
