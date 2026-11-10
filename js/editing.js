@@ -78,7 +78,7 @@
     const markdown = field === 'text' && MM.isMarkdown(node);
     if (markdown) target.textContent = node.text;
 
-    MM.editing = { nodeId, field, itemId, el: target };
+    MM.editing = { nodeId, field, itemId, el: target, dropIfEmpty: !!(opts && opts.dropIfEmpty) };
     target.contentEditable = 'plaintext-only';
     if (target.contentEditable !== 'plaintext-only') target.contentEditable = 'true';
     target.classList.add('editing');
@@ -136,6 +136,11 @@
 
     const n = MM.node(ed.nodeId);
     if (n && !opts.noWrite) writeText(ed, n, text, true);
+    // a text just placed (draw.js placeText) and left empty: it goes again
+    if (n && ed.dropIfEmpty && !String(n.text || '').trim()) {
+      delete MM.state.doc.nodes[n.id];
+      MM.state.selection.delete(n.id);
+    }
 
     const div = MM.render.nodeEls.get(ed.nodeId);
     if (div) {

@@ -19,6 +19,13 @@
  *
  * Automatic: the eraser end of a stylus (Windows) and the side button of the pen (S Pen,
  * Windows pens) erase while they are used.
+ *
+ * Sketches: "📏 Line" draws straight lines (drawings of kind 'line', draw.js), one after
+ * the other without leaving the pen mode. Their ends snap to the ends of other lines
+ * (a small circle shows it, with mouse and stylus already while hovering), with "▦ Grid"
+ * (the grid of the map, settings.grid) to the grid as well; Shift: steps of 45°; Ctrl (Mac:
+ * Cmd) held: that point does not snap at all.
+ * "T Text" puts a text without a frame where you tap (draw.js placeText).
  */
 (function (MM) {
   const S = MM.state;
@@ -31,11 +38,15 @@
 
   K.PEN_COLORS = ['#1f2937', '#2563eb', '#dc2626', '#16a34a', '#9333ea'];
   K.MARKER_COLORS = ['#facc15', '#4ade80', '#f472b6', '#60a5fa'];
-  K.WIDTHS = { pen: [1.5, 3, 6], marker: [12, 20, 32], eraser: [8, 18, 36] };
+  K.WIDTHS = { pen: [1.5, 3, 6], marker: [12, 20, 32], line: [1.5, 3, 6], text: [14, 18, 28], eraser: [8, 18, 36] };
+  K.TOOLS = ['pen', 'marker', 'line', 'text', 'eraser'];
+  const SNAP = 12;         // screen px: an end this close to the end of another line snaps to it
   const DEFAULTS = {
     tool: 'pen',
     pen: { color: K.PEN_COLORS[0], width: 3 },
     marker: { color: K.MARKER_COLORS[0], width: 20 },
+    line: { color: K.PEN_COLORS[0], width: 3 },
+    text: { color: K.PEN_COLORS[0], width: 18 }, // width = font size
     eraser: { width: 18 }, // radius on screen
   };
 
@@ -43,9 +54,11 @@
   K.cfg = function () {
     const c = S.settings.pen && typeof S.settings.pen === 'object' ? S.settings.pen : {};
     const out = {
-      tool: ['pen', 'marker', 'eraser'].includes(c.tool) ? c.tool : DEFAULTS.tool,
+      tool: K.TOOLS.includes(c.tool) ? c.tool : DEFAULTS.tool,
       pen: Object.assign({}, DEFAULTS.pen, c.pen),
       marker: Object.assign({}, DEFAULTS.marker, c.marker),
+      line: Object.assign({}, DEFAULTS.line, c.line),
+      text: Object.assign({}, DEFAULTS.text, c.text),
       eraser: Object.assign({}, DEFAULTS.eraser, c.eraser),
       finger: !!c.finger, // one finger writes (phones / tablets without a stylus)
     };
@@ -249,9 +262,20 @@
   K.eraseAt = function (p, r) {
     let any = false;
     for (const n of Object.values(S.doc.nodes)) {
-      if (n.type !== 'draw' || n.draw !== 'ink' || (MM.meta && MM.meta.isHidden && MM.meta.isHidden(n))) continue;
+      if (n.type !== 'draw' || (MM.meta && MM.meta.isHidden && MM.meta.isHidden(n))) continue;
       const half = (Number(n.style.strokeWidth) || 0) / 2;
       if (p.x < n.x - r || p.x > n.x + n.w + r || p.y < n.y - r || p.y > n.y + n.h + r) continue;
+      if (n.draw === 'line' || n.draw === 'arrow') {
+        // a straight line (sketch): it goes as a whole when the eraser touches it
+        const [a, b] = K.ends(n);
+        if (K.segDist(p, a, b) <= r + half) {
+          delete S.doc.nodes[n.id];
+          S.selection.delete(n.id);
+          any = true;
+        }
+        continue;
+      }
+      if (n.draw !== 'ink') continue;
       const strokes = K.strokes(n);
       const left = strokes.filter((s) => !K.hits(s, p, r + half));
       if (left.length === strokes.length) continue;
@@ -265,6 +289,57 @@
     }
     return any;
   };
+
+  // ---- Straight lines (sketches) --------------------------------------------------------
+
+  /** The two ends of a line drawing in world coordinates. */
+  K.ends = function (n) {
+    const l = n.line || { x1: 0, y1: 0, x2: 1, y2: 1 };
+    return [{ x: n.x + l.x1 * n.w, y: n.y + l.y1 * n.h }, { x: n.x + l.x2 * n.w, y: n.y + l.y2 * n.h }];
+  };
+
+  /** Distance of point p from the segment a-b. */
+  K.segDist = function (p, a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y, len = dx * dx + dy * dy;
+    const t = len ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len)) : 0;
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  };
+
+  /**
+   * Where an end of a line goes: onto the end of another line (r: world distance), else
+   * onto the grid (if on), else where it is. Returns { x, y, kind: 'end' | 'grid' | null }.
+   */
+  K.snapPoint = function (p, r) {
+    let best = null, bd = r;
+    for (const n of Object.values(S.doc.nodes)) {
+      if (n.type !== 'draw' || (n.draw !== 'line' && n.draw !== 'arrow') || (MM.meta && MM.meta.isHidden && MM.meta.isHidden(n))) continue;
+      for (const e of K.ends(n)) {
+        const d = Math.hypot(e.x - p.x, e.y - p.y);
+        if (d <= bd) {
+          bd = d;
+          best = e;
+        }
+      }
+    }
+    if (best) return { x: r2(best.x), y: r2(best.y), kind: 'end' };
+    if (S.settings.grid) {
+      const g = Number(S.settings.gridSize) || 20;
+      return { x: Math.round(p.x / g) * g, y: Math.round(p.y / g) * g, kind: 'grid' };
+    }
+    return { x: r2(p.x), y: r2(p.y), kind: null };
+  };
+
+  /** End point b of a line from a: Shift - in steps of 45°; free (Ctrl) - where it is; else snapped. */
+  K.lineEnd = function (a, p, shift, r, free) {
+    if (shift) {
+      const len = Math.hypot(p.x - a.x, p.y - a.y), ang = Math.round(Math.atan2(p.y - a.y, p.x - a.x) / (Math.PI / 4)) * (Math.PI / 4);
+      return { x: r2(a.x + len * Math.cos(ang)), y: r2(a.y + len * Math.sin(ang)), kind: null };
+    }
+    return free ? { x: r2(p.x), y: r2(p.y), kind: null } : K.snapPoint(p, r);
+  };
+
+  /** Ctrl (Mac: Cmd) held: the point is put freely, it does not snap. */
+  const freeKey = (e) => !!(e.ctrlKey || e.metaKey);
 
   // ---- Pen mode --------------------------------------------------------------------------
 
@@ -286,6 +361,7 @@
       K.last = null; // a new pen session starts new drawings
     }
     vp.classList.toggle('inking', K.on());
+    if (live && !K.on()) live.style.display = 'none';
     renderPalette();
     MM.ui.update();
   };
@@ -353,6 +429,7 @@
     const autoErase = erasing(e);
     e.preventDefault();
     e.stopImmediatePropagation();
+    const wasEditing = !!MM.editing;
     if (MM.editing) MM.edit.finish();
     if (MM.menu && MM.menu.isOpen()) MM.menu.close();
     if (MM.touch && MM.touch.reset) MM.touch.reset(); // a hand that touched first does not pan on
@@ -361,7 +438,7 @@
     const tool = autoErase ? 'eraser' : cfg.tool;
     active = {
       id: e.pointerId, type: e.pointerType, tool, pts: [], erased: false, t0: Date.now(), cx: e.clientX, cy: e.clientY,
-      color: tool === 'pen' || tool === 'marker' ? cfg[tool].color : null,
+      color: tool !== 'eraser' ? cfg[tool].color : null,
       width: cfg[tool].width,
       under: null,
     };
@@ -370,12 +447,27 @@
       // anchored to the note / image it starts on (Alt: free), as a drawing
       active.under = e.altKey ? null : MM.interaction.nodeAt(p);
     }
+    if (tool === 'text') {
+      // a text without a frame where you tap; a tap while writing one only ends it
+      active = null;
+      quietUntil = Date.now() + 400;
+      if (!wasEditing) MM.draw.placeText(MM.interaction.toWorld(e.clientX, e.clientY), { color: cfg.text.color, size: cfg.text.width, free: freeKey(e) });
+      return;
+    }
+    if (tool === 'line') {
+      const r = SNAP / (S.doc.view.zoom || 1), w = MM.interaction.toWorld(e.clientX, e.clientY);
+      active.a = freeKey(e) ? { x: r2(w.x), y: r2(w.y), kind: null } : K.snapPoint(w, r);
+      active.b = active.a;
+      drawLive();
+      return;
+    }
     vp.classList.toggle('erasing', tool === 'eraser');
     addEvents([e]);
   }
 
   function move(e) {
     if (e.pointerType === 'pen') penSeen = Date.now();
+    if (!active && K.on() && e.pointerType !== 'touch' && S.settings.pen && S.settings.pen.tool === 'line') hover(e);
     if (!active || e.pointerId !== active.id) return;
     e.preventDefault();
     e.stopImmediatePropagation();
@@ -401,6 +493,12 @@
   /** Points of the pointer events: world coordinates, a little steadied, pressure. */
   function addEvents(list) {
     const zoom = S.doc.view.zoom || 1;
+    if (active.tool === 'line') {
+      const ev = list[list.length - 1];
+      active.b = K.lineEnd(active.a, MM.interaction.toWorld(ev.clientX, ev.clientY), ev.shiftKey, SNAP / zoom, freeKey(ev));
+      drawLive();
+      return;
+    }
     for (const ev of list) {
       const p = MM.interaction.toWorld(ev.clientX, ev.clientY);
       if (active.tool === 'eraser') {
@@ -449,19 +547,65 @@
     liveFrame = requestAnimationFrame(() => {
       liveFrame = 0;
       if (!active || active.tool === 'eraser') return;
-      if (!live) {
-        live = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        live.setAttribute('class', 'ink-live');
-        live.setAttribute('width', 1);
-        live.setAttribute('height', 1);
-        live.append(document.createElementNS('http://www.w3.org/2000/svg', 'path'));
-        document.getElementById('ui-layer').append(live);
-      }
+      ensureLive();
       live.style.display = '';
       live.style.opacity = active.tool === 'marker' ? 0.4 : 1;
       const path = live.firstElementChild;
+      if (active.tool === 'line') {
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', active.color);
+        path.setAttribute('stroke-width', active.width);
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('d', `M${active.a.x},${active.a.y}L${active.b.x},${active.b.y}`);
+        markers([active.a, active.b]);
+        return;
+      }
+      path.setAttribute('stroke', 'none');
       path.setAttribute('fill', active.color);
       path.setAttribute('d', K.outline(active.pts, active.width, active.tool === 'marker'));
+      markers([]);
+    });
+  }
+
+  /** The layer of what is being drawn (world coordinates, in the ui layer). */
+  function ensureLive() {
+    if (live) return;
+    live = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    live.setAttribute('class', 'ink-live');
+    live.setAttribute('width', 1);
+    live.setAttribute('height', 1);
+    live.append(document.createElementNS('http://www.w3.org/2000/svg', 'path'));
+    document.getElementById('ui-layer').append(live);
+  }
+
+  /** Small circles where an end of a line snaps (to another line's end, or the grid). */
+  function markers(points) {
+    if (!live) return;
+    let m = live.querySelector('.ink-snap');
+    if (!m) {
+      m = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      m.setAttribute('class', 'ink-snap');
+      live.append(m);
+    }
+    const r = 5 / (S.doc.view.zoom || 1);
+    m.setAttribute('stroke-width', 1.5 / (S.doc.view.zoom || 1));
+    m.setAttribute('d', points.filter((p) => p && p.kind).map((p) =>
+      `M${p.x - r},${p.y}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0`).join(''));
+  }
+
+  // line tool, mouse / stylus over the map: where the line would begin
+  let hoverFrame = 0, hoverAt = null;
+  function hover(e) {
+    hoverAt = { x: e.clientX, y: e.clientY, free: freeKey(e) };
+    if (hoverFrame) return;
+    hoverFrame = requestAnimationFrame(() => {
+      hoverFrame = 0;
+      if (active || !K.on() || !hoverAt || K.cfg().tool !== 'line') return;
+      ensureLive();
+      const p = K.snapPoint(MM.interaction.toWorld(hoverAt.x, hoverAt.y), SNAP / (S.doc.view.zoom || 1));
+      live.style.display = '';
+      live.firstElementChild.setAttribute('d', '');
+      markers(hoverAt.free ? [] : [p]); // Ctrl: it would not snap
     });
   }
 
@@ -479,6 +623,16 @@
       }
       return;
     }
+    if (a.tool === 'line') {
+      const zoom = S.doc.view.zoom || 1;
+      if (Math.hypot(a.b.x - a.a.x, a.b.y - a.a.y) * zoom < 3) return; // a tap, no line
+      const n = MM.draw.create('line', a.a, a.b, false);
+      Object.assign(n.style, { stroke: a.color, strokeWidth: a.width, opacity: 1, strokeStyle: 'solid' });
+      MM.draw.setAnchor(n, a.under);
+      K.last = null;
+      MM.commit();
+      return;
+    }
     if (!a.pts.length) return;
     const zoom = S.doc.view.zoom || 1;
     K.add(K.simplify(a.pts, 0.35 / zoom), { tool: a.tool, color: a.color, width: a.width, under: a.under });
@@ -487,7 +641,7 @@
 
   // ---- Palette ---------------------------------------------------------------------------
 
-  const TOOLS = [['pen', '✏️', 'Pen'], ['marker', '🖍️', 'Marker'], ['eraser', '🧽', 'Eraser']];
+  const TOOLS = [['pen', '✏️', 'Pen'], ['marker', '🖍️', 'Marker'], ['line', '📏', 'Line'], ['text', '<b class="ink-t">T</b>', 'Text'], ['eraser', '🧽', 'Eraser']];
 
   function renderPalette() {
     if (!K.on()) {
@@ -503,7 +657,7 @@
     }
     const esc = MM.render.esc, tr = MM.tr;
     const cfg = K.cfg(), tool = cfg.tool;
-    const colors = tool === 'pen' ? K.PEN_COLORS : tool === 'marker' ? K.MARKER_COLORS : [];
+    const colors = tool === 'marker' ? K.MARKER_COLORS : tool === 'eraser' ? [] : K.PEN_COLORS;
     const cur = tool === 'eraser' ? null : cfg[tool].color;
     const widths = K.WIDTHS[tool];
     palette.innerHTML =
@@ -519,7 +673,12 @@
       colors.map((c) => `<button type="button" class="ink-color${c === cur ? ' active' : ''}" data-ink-color="${c}" style="--c:${c}" title="${c}"></button>`).join('') +
       (tool === 'eraser' ? '' : `<label class="ink-color ink-own${colors.includes(cur) ? '' : ' active'}" title="${esc(tr('Own colour'))}" style="--c:${esc(cur)}"><input type="color" value="${esc(cur)}" data-ink-own></label>`) +
       '<span class="ink-sep"></span>' +
-      widths.map((w, i) => `<button type="button" class="ink-width${cfg[tool].width === w ? ' active' : ''}" data-ink-width="${w}" title="${esc(tr(['Thin', 'Medium', 'Thick'][i]))}"><i style="--w:${Math.min(22, tool === 'eraser' ? w / 1.6 : tool === 'marker' ? w / 1.5 : w * 1.6)}px"></i></button>`).join('') +
+      widths.map((w, i) => `<button type="button" class="ink-width${cfg[tool].width === w ? ' active' : ''}" data-ink-width="${w}" title="${esc(tr(tool === 'text' ? ['Small', 'Medium', 'Large'][i] : ['Thin', 'Medium', 'Thick'][i]))}">` +
+        (tool === 'text' ? `<b style="font-size:${11 + i * 4}px">A</b>` : `<i style="--w:${Math.min(22, tool === 'eraser' ? w / 1.6 : tool === 'marker' ? w / 1.5 : w * 1.6)}px"></i>`) + '</button>').join('') +
+      // lines and texts: snap to the grid of the map (the same as "Snap to grid")
+      (tool === 'line' || tool === 'text'
+        ? `<span class="ink-sep"></span><button type="button" data-ink-grid class="${S.settings.grid ? 'active' : ''}" title="${esc(tr('Snap to the grid (the grid of the map - notes snap to it as well)'))}">▦<span>${esc(tr('Grid'))}</span></button>`
+        : '') +
       '<span class="ink-sep"></span>' +
       `<button type="button" data-ink-close title="${esc(tr('End freehand (P / Esc)'))}">✕</button>`;
     const own = palette.querySelector('[data-ink-own]');
@@ -535,7 +694,12 @@
 
   function setCfg(change, redraw) {
     const cfg = K.cfg();
-    if (change.tool) cfg.tool = change.tool;
+    if (change.tool) {
+      cfg.tool = change.tool;
+      if (live) live.style.display = 'none'; // no snap circle of the line tool left over
+      if (change.tool === 'line') MM.ui.flash(MM.tr('📏 Drag to draw a line - its ends snap to the ends of other lines. Shift: steps of 45°, Ctrl: no snapping'));
+      if (change.tool === 'text') MM.ui.flash(MM.tr('T Tap where the text should go'));
+    }
     else Object.assign(cfg[cfg.tool], change);
     S.settings.pen = cfg;
     MM.saveSettings();
@@ -548,7 +712,11 @@
     if (b.dataset.inkTool) setCfg({ tool: b.dataset.inkTool });
     else if (b.dataset.inkColor) setCfg({ color: b.dataset.inkColor });
     else if (b.dataset.inkWidth) setCfg({ width: Number(b.dataset.inkWidth) });
-    else if (b.hasAttribute('data-ink-finger')) {
+    else if (b.hasAttribute('data-ink-grid')) {
+      MM.actions.toggleGrid();
+      renderPalette();
+      MM.ui.flash(MM.tr(S.settings.grid ? '▦ Lines and texts snap to the grid' : '▦ Grid off - lines still snap to the ends of other lines'));
+    } else if (b.hasAttribute('data-ink-finger')) {
       const cfg = K.cfg();
       cfg.finger = !cfg.finger;
       S.settings.pen = cfg;

@@ -70,6 +70,17 @@
     '(all day)': '(ganztägig)',
     'until': 'bis',
     'One day only': 'Nur ein Tag',
+    // ---- sketches: straight lines, texts without a frame ----
+    'Grid': 'Raster',
+    'Small': 'Klein',
+    'Large': 'Groß',
+    'Snap to the grid (the grid of the map - notes snap to it as well)': 'Am Raster einrasten (das Raster der Map – auch Notes rasten daran ein)',
+    '▦ Lines and texts snap to the grid': '▦ Linien und Texte rasten am Raster ein',
+    '▦ Grid off - lines still snap to the ends of other lines': '▦ Raster aus – Linien rasten weiter an den Enden anderer Linien ein',
+    '📏 Drag to draw a line - its ends snap to the ends of other lines. Shift: steps of 45°, Ctrl: no snapping': '📏 Ziehen zeichnet eine Linie – ihre Enden rasten an den Enden anderer Linien ein. Shift: 45°-Schritte, Strg: ohne Einrasten',
+    'T Tap where the text should go': 'T Dorthin tippen, wo der Text stehen soll',
+    'Text (no frame)': 'Text (ohne Rahmen)',
+    'Click where the text should go. Esc cancels.': 'Dorthin klicken, wo der Text stehen soll. Esc bricht ab.',
     // ---- freehand with a finger ----
     'Finger': 'Finger',
     'Draw with a finger: one finger draws, two fingers move and zoom the map': 'Mit dem Finger zeichnen: ein Finger zeichnet, zwei Finger verschieben und zoomen die Map',

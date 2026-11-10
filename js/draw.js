@@ -177,12 +177,38 @@
 
   D.KINDS = MM.DRAW_KINDS;
 
-  /** Choose a tool: the next drag on the canvas draws that shape (Esc cancels). */
+  /** Choose a tool: the next drag on the canvas draws that shape (Esc cancels); 'text': a click places a text. */
   D.setTool = function (kind) {
     S.tool = kind || null;
     if (S.tool && S.settings.penMode) MM.ink.toggle(false); // a shape now, not freehand
     document.getElementById('viewport').classList.toggle('drawing', !!S.tool);
-    if (S.tool) MM.ui.flash(MM.tr('Drag to draw – over a note or image it is anchored to it (Alt: not anchored). Esc cancels.'));
+    if (S.tool === 'text') MM.ui.flash(MM.tr('Click where the text should go. Esc cancels.'));
+    else if (S.tool) MM.ui.flash(MM.tr('Drag to draw – over a note or image it is anchored to it (Alt: not anchored). Esc cancels.'));
+  };
+
+  /**
+   * A text without a frame at world point p (it begins there): a note of type text with
+   * no border, left aligned, being written at once - left empty, it goes again.
+   * opts: { color, size } (the pen palette), else the usual text colour and size; free: not onto the grid (Ctrl).
+   */
+  D.placeText = function (p, opts) {
+    const o = opts || {};
+    const n = MM.createNode('text', 0, 0, { text: '', shape: 'none', w: 220, h: 32 });
+    let x = p.x - 6, y = p.y - 16;
+    if (S.settings.grid && !o.free) {
+      const g = Number(S.settings.gridSize) || 20;
+      x = Math.round(x / g) * g;
+      y = Math.round(y / g) * g;
+    }
+    Object.assign(n, { x: r2(x), y: r2(y) });
+    Object.assign(n.style, { align: 'left', strokeWidth: 0, bold: false });
+    if (o.color) n.style.textColor = o.color;
+    if (o.size) n.style.fontSize = o.size;
+    S.doc.nodes[n.id] = n;
+    MM.select([n.id]);
+    MM.commit();
+    MM.edit.start(n.id, 'text', null, { dropIfEmpty: true });
+    return n;
   };
 
   /** New drawing while the mouse is dragged (not committed yet). */
@@ -206,8 +232,9 @@
   A.drawMenu = function () {
     if (MM.menu.isOpen()) return MM.menu.close();
     const r = document.getElementById('draw-btn').getBoundingClientRect();
-    MM.menu.open(Object.entries(D.KINDS).map(([k, label]) => ({ label, checked: S.tool === k, action: () => D.setTool(k) })),
-      r.left, r.bottom + 2);
+    MM.menu.open(Object.entries(D.KINDS).map(([k, label]) => ({ label, checked: S.tool === k, action: () => D.setTool(k) }))
+      .concat(['-', { label: 'Text (no frame)', checked: S.tool === 'text', action: () => D.setTool('text') }]),
+    r.left, r.bottom + 2);
   };
 
   A.drawTool = (kind) => D.setTool(kind);

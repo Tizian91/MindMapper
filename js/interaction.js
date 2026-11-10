@@ -175,6 +175,13 @@
     }
     if (e.button !== 0) return;
 
+    // text tool (draw menu): a click places a text without a frame, then the tool ends
+    if (S.tool === 'text') {
+      e.preventDefault(); // the new text keeps the focus
+      MM.draw.setTool(null);
+      MM.draw.placeText(p);
+      return;
+    }
     // drawing tool chosen: the drag draws a shape, also across notes and images
     if (S.tool && !t.classList.contains('handle-resize')) {
       startDrag(e, { mode: 'draw', kind: S.tool, start: p, id: null, free: e.altKey });
