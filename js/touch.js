@@ -84,6 +84,13 @@
       e.preventDefault();
       return;
     }
+    // freehand with a finger (ink.js "☝️ Finger"): one finger writes; a second one makes
+    // the first part of a pinch (the stroke just begun is dropped)
+    if (MM.ink && MM.ink.fingerDraws()) {
+      const first = MM.ink.fingerTakeover();
+      if (first) touches.set(first.id, { x: first.x, y: first.y });
+      else if (!touches.size && MM.ink.fingerDown(e)) return;
+    }
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (touches.size === 2) {
       startPinch();

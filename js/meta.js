@@ -445,20 +445,42 @@
     const m = n.meta || {};
     if (f.priorities.length && !f.priorities.includes(MM.prioOf(m))) return false;
     if (f.statuses.length && !f.statuses.includes(m.status || 'none')) return false;
-    if (f.deadline !== 'any') {
-      // finished tasks don't count as due / overdue
-      // an appointment counts as the date of the note as well
-      const date = m.deadline || m.scheduled;
-      const days = MM.notPlanned(m.status) && ['overdue', 'today', 'week'].includes(f.deadline) ? null : META.daysUntil(date);
-      switch (f.deadline) {
-        case 'overdue': if (!(days !== null && days < 0)) return false; break;
-        case 'today': if (!(days !== null && days <= 0)) return false; break;
-        case 'week': if (!(days !== null && days <= 7)) return false; break;
-        case 'has': if (days === null) return false; break;
-        case 'none': if (days !== null) return false; break;
-      }
-    }
+    if (f.deadline !== 'any' && !META.matchesDate(n, f.deadline)) return false;
     return true;
+  };
+
+  /**
+   * The date filter (filterbar.js): deadlines and appointments apart - a past appointment
+   * is over, not overdue; an all-day appointment over several days counts on each of its
+   * days. Done, deferred and dropped tasks are not due.
+   */
+  META.matchesDate = function (n, key) {
+    const m = n.meta || {};
+    const finished = MM.notPlanned(m.status);
+    const dl = m.deadline && !m.scheduled ? META.daysUntil(m.deadline) : null;
+    const start = m.scheduled ? META.daysUntil(m.scheduled) : null;
+    const end = m.scheduled ? META.daysUntil((m.allDay && m.scheduledUntil) || m.scheduled) : null;
+    switch (key) {
+      case 'overdue': return dl !== null && dl < 0 && !finished;
+      case 'today': return dl !== null && dl <= 0 && !finished;
+      case 'week': return dl !== null && dl <= 7 && !finished;
+      case 'has': return dl !== null;
+      case 'appt_today': return start !== null && start <= 0 && end >= 0 && m.status !== 'dropped';
+      case 'appt_week': return start !== null && start <= 7 && end >= 0 && m.status !== 'dropped';
+      case 'appt_has': return start !== null;
+      case 'appt_past': return start !== null && end < 0;
+      case 'routine': return !!n.repeat;
+      case 'noest': {
+        // as the warning "without estimate": a task (or a note with a status) with a deadline
+        // or an appointment, but no time - all day needs none, sub-tasks with one carry it
+        if (!(m.deadline || m.scheduled) || m.allDay || Number(m.estimate) || finished || n.type === 'todo') return false;
+        if (n.type !== 'task' && (!m.status || m.status === 'none')) return false;
+        const info = n.type === 'task' && MM.tasks && MM.tasks.info(n);
+        return !(info && info.split);
+      }
+      case 'none': return !m.deadline && !m.scheduled && !n.repeat;
+      default: return true;
+    }
   };
 
   /** Filtered out (dimmed or hidden)? */

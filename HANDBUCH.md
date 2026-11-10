@@ -316,7 +316,11 @@ Oft bleibt für Projekte weniger Zeit als gedacht – weil viel Zeit in Kleinkra
 
 ## 6. Filter
 
-Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Status, Priorität, Deadline, Typ.
+Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Status, Priorität, Datum, Typ. Der Filter wirkt auf die **offene Map**.
+- **Datum** hält Fristen und Termine auseinander:
+  - **Fristen:** *Überfällig* · *Heute fällig (oder überfällig)* · *Fällig in 7 Tagen* · *Hat eine Frist*. Erledigte, zurückgestellte und verworfene Aufgaben sind nie „fällig“.
+  - **Termine:** *Heute* · *Heute und in den nächsten 7 Tagen* · *Hat einen Termin* · *Vorbei*. Ein vergangener Termin ist **vorbei, nicht überfällig**. Ein ganztägiger Termin über mehrere Tage zählt an jedem seiner Tage – eine laufende Konferenz steht also unter *Heute*.
+  - **Sonst:** *Routinen* (🔁, auch freie Tage 🏖) · *Ohne Schätzung* – Tasks mit Frist oder Termin, aber ohne Aufwand, also das, was die Statusleiste als „without estimate“ meldet (ganztägige Termine brauchen keine Schätzung, Haupttasks mit geschätzten Untertasks auch nicht) · *Ohne Datum* (weder Frist noch Termin noch Routine).
 - **Dim** blendet nicht passende Notes ab, **Hide** versteckt sie.
 - **Keep sub-notes** lässt Notes sichtbar, die per Pfeil unter einem Treffer hängen oder in einer passenden Gruppe liegen.
 
@@ -657,6 +661,7 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 
 - Toolbar **✍ Pen** (oder Taste `P`) schaltet Freihand ein – und es bleibt an, bis du es wieder ausschaltest (**✍ Pen**, `P`, `Esc` oder **✕** in der Palette). Unter der Toolbar erscheint eine kleine **Palette**: **✏️ Stift**, **🖍️ Textmarker**, **🧽 Radierer**, dazu Farben (der bunte Kreis: eigene Farbe) und drei Stärken. Die Einstellungen merkt sich der Browser.
 - **Stift schreibt, Finger navigieren:** Mit dem Stift (oder der Maus) schreibst und zeichnest du – auch über Notes und Bilder hinweg. Mit den Fingern verschiebst und zoomst du die Map wie immer. Solange der Stift den Bildschirm berührt oder knapp darüber ist, zählen Berührungen nicht – die Hand kann also aufliegen.
+- **Mit dem Finger zeichnen (Handy, Tablet ohne Stift):** In der Palette ganz vorne **☝️ Finger** antippen. Dann zeichnet **ein Finger**, mit **zwei Fingern** verschiebst und zoomst du die Map weiter. Setzt du den zweiten Finger kurz nach dem ersten auf, wird der gerade begonnene Strich verworfen – daraus wird ein normales Zoomen; ein schon längerer Strich bleibt. Noch einmal **☝️ Finger** antippen: Finger verschieben wieder die Map, nur Stift oder Maus zeichnen. Die Wahl merkt sich der Browser. Ist ein Stift in der Nähe, gilt weiter die Handballen-Erkennung: Berührungen zählen dann nicht. Der Knopf erscheint nur auf Geräten mit Touchscreen.
 - **Druck:** Mit einem drucksensitiven Stift wird der Strich bei leichtem Druck dünner, bei festem Druck voll breit. Der Textmarker ist immer gleich breit und durchscheinend; was du mit ihm übermalst, bleibt lesbar.
 - **Radieren:** In der Palette **🧽 Radierer** wählen und über die Striche fahren – es verschwinden ganze Striche. **Automatisch:** Das Radiererende eines Stifts (Windows) und die **Seitentaste** des Stifts (z. B. S Pen) radieren, solange du sie benutzt; danach schreibt der Stift wieder.
 - **Ein Wort, eine Skizze = eine Zeichnung:** Striche, die du dicht beim vorherigen und mit demselben Stift setzt, landen in derselben Freihand-Zeichnung. So verschiebst, kopierst oder löschst du ein Wort oder eine Skizze als Ganzes. Andere Farbe oder Stärke, weiter weg oder auf einer anderen Note: eine neue Zeichnung.

@@ -4,7 +4,9 @@
  * "✍ Pen" in the toolbar (or P) switches it on and it stays on until switched off (button,
  * P or Esc). A small palette shows pen / marker / eraser, colours and widths. Fingers keep
  * moving and zooming the map (touch.js); while the stylus is near the screen, touches are
- * ignored, so the hand can rest on it.
+ * ignored, so the hand can rest on it. "☝️ Finger" in the palette (touch screens, kept in
+ * the browser): one finger writes, two fingers move and zoom - a second finger that comes
+ * soon after the first turns the stroke just begun into a pinch.
  *
  * A freehand drawing is a drawing note (draw.js) with n.draw = 'ink':
  *   n.ink    = [[x, y, p, x, y, p, …], …]  one flat array per stroke: points as fractions of
@@ -45,10 +47,14 @@
       pen: Object.assign({}, DEFAULTS.pen, c.pen),
       marker: Object.assign({}, DEFAULTS.marker, c.marker),
       eraser: Object.assign({}, DEFAULTS.eraser, c.eraser),
+      finger: !!c.finger, // one finger writes (phones / tablets without a stylus)
     };
     S.settings.pen = out;
     return out;
   };
+
+  /** Does a finger write? (pen mode on and "☝️ Finger" chosen) */
+  K.fingerDraws = () => K.on() && !!(S.settings.pen && S.settings.pen.finger);
 
   // ---- Geometry (pure: also used by the tests) ------------------------------------------
 
@@ -307,10 +313,44 @@
 
   function down(e) {
     if (e.pointerType === 'pen') penSeen = Date.now();
-    if (!K.on() || e.pointerType === 'touch' || active) return;
+    if (!K.on() || e.pointerType === 'touch' || active) return; // a finger: touch.js asks K.fingerDown
     if (vp.classList.contains('space-pan')) return; // Space + drag pans the map
+    if (e.button !== 0 && !erasing(e)) return; // right / middle mouse button as usual
+    begin(e);
+  }
+
+  /**
+   * A finger came down (touch.js, only when no other finger is on the screen): it writes
+   * if "☝️ Finger" is on. Returns true if it took the touch.
+   */
+  K.fingerDown = function (e) {
+    if (!K.fingerDraws() || active) return false;
+    begin(e);
+    return true;
+  };
+
+  /**
+   * A second finger came: the first one was the start of a pinch, not a stroke. A stroke
+   * just begun is dropped, a longer one is kept. Returns the first finger { id, x, y }
+   * (for touch.js to go on with both) or null if no finger was writing.
+   */
+  K.fingerTakeover = function () {
+    if (!active || active.type !== 'touch') return null;
+    const a = active;
+    if (Date.now() - a.t0 < 300 || a.pts.length < 12) {
+      active = null;
+      erasePrev = null;
+      vp.classList.remove('erasing');
+      if (live) live.style.display = 'none';
+      if (a.tool === 'eraser' && a.erased) MM.commit(); // what was erased stays erased (one undo step)
+    } else {
+      finish();
+    }
+    return { id: a.id, x: a.cx, y: a.cy };
+  };
+
+  function begin(e) {
     const autoErase = erasing(e);
-    if (e.button !== 0 && !autoErase) return; // right / middle mouse button as usual
     e.preventDefault();
     e.stopImmediatePropagation();
     if (MM.editing) MM.edit.finish();
@@ -320,7 +360,7 @@
     const cfg = K.cfg();
     const tool = autoErase ? 'eraser' : cfg.tool;
     active = {
-      id: e.pointerId, type: e.pointerType, tool, pts: [], erased: false,
+      id: e.pointerId, type: e.pointerType, tool, pts: [], erased: false, t0: Date.now(), cx: e.clientX, cy: e.clientY,
       color: tool === 'pen' || tool === 'marker' ? cfg[tool].color : null,
       width: cfg[tool].width,
       under: null,
@@ -339,6 +379,8 @@
     if (!active || e.pointerId !== active.id) return;
     e.preventDefault();
     e.stopImmediatePropagation();
+    active.cx = e.clientX;
+    active.cy = e.clientY;
     addEvents(e.getCoalescedEvents ? e.getCoalescedEvents() : [e]);
   }
 
@@ -465,6 +507,13 @@
     const cur = tool === 'eraser' ? null : cfg[tool].color;
     const widths = K.WIDTHS[tool];
     palette.innerHTML =
+      // first: on a phone the palette scrolls sideways, this one must be in sight
+      // touch screens: draw with a finger (one finger writes, two move and zoom)
+      (navigator.maxTouchPoints > 0
+        ? `<button type="button" data-ink-finger class="${cfg.finger ? 'active' : ''}" title="${esc(tr(cfg.finger
+          ? 'One finger draws, two fingers move and zoom the map. Tap: fingers move the map again, only the stylus draws'
+          : 'Draw with a finger: one finger draws, two fingers move and zoom the map'))}">☝️<span>${esc(tr('Finger'))}</span></button><span class="ink-sep"></span>`
+        : '') +
       TOOLS.map(([k, icon, label]) => `<button type="button" data-ink-tool="${k}" class="${tool === k ? 'active' : ''}" title="${esc(tr(label))}">${icon}<span>${esc(tr(label))}</span></button>`).join('') +
       '<span class="ink-sep"></span>' +
       colors.map((c) => `<button type="button" class="ink-color${c === cur ? ' active' : ''}" data-ink-color="${c}" style="--c:${c}" title="${c}"></button>`).join('') +
@@ -499,7 +548,14 @@
     if (b.dataset.inkTool) setCfg({ tool: b.dataset.inkTool });
     else if (b.dataset.inkColor) setCfg({ color: b.dataset.inkColor });
     else if (b.dataset.inkWidth) setCfg({ width: Number(b.dataset.inkWidth) });
-    else if (b.hasAttribute('data-ink-close')) K.toggle(false);
+    else if (b.hasAttribute('data-ink-finger')) {
+      const cfg = K.cfg();
+      cfg.finger = !cfg.finger;
+      S.settings.pen = cfg;
+      MM.saveSettings();
+      renderPalette();
+      MM.ui.flash(MM.tr(cfg.finger ? '☝️ One finger draws - two fingers move and zoom' : '☝️ Fingers move the map again - the stylus draws'));
+    } else if (b.hasAttribute('data-ink-close')) K.toggle(false);
   }
 
   K.refreshPalette = () => renderPalette(); // e.g. after the language changed

@@ -70,6 +70,12 @@
     '(all day)': '(ganztägig)',
     'until': 'bis',
     'One day only': 'Nur ein Tag',
+    // ---- freehand with a finger ----
+    'Finger': 'Finger',
+    'Draw with a finger: one finger draws, two fingers move and zoom the map': 'Mit dem Finger zeichnen: ein Finger zeichnet, zwei Finger verschieben und zoomen die Map',
+    'One finger draws, two fingers move and zoom the map. Tap: fingers move the map again, only the stylus draws': 'Ein Finger zeichnet, zwei Finger verschieben und zoomen. Antippen: Finger verschieben wieder die Map, nur der Stift zeichnet',
+    '☝️ One finger draws - two fingers move and zoom': '☝️ Ein Finger zeichnet – zwei Finger verschieben und zoomen',
+    '☝️ Fingers move the map again - the stylus draws': '☝️ Finger verschieben wieder die Map – gezeichnet wird mit dem Stift',
     'When it begins (optional) - only shown, the whole day is taken': 'Beginn (optional) – nur zur Anzeige, belegt ist der ganze Tag',
     'Last day (optional) - for an appointment over several days': 'Letzter Tag (optional) – für einen Termin über mehrere Tage',
     'The whole day is taken (or several days, see "until"): no project work, routines with a fixed day are dropped, weekly budgets move to the other days':

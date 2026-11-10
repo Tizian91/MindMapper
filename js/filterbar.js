@@ -12,7 +12,13 @@
   let bar, dyn, search;
   let lastKey = '';
 
-  const DEADLINE_KEYS = ['any', 'overdue', 'today', 'week', 'has', 'none'];
+  // the date filter (S.filter.deadline), grouped: deadlines, appointments, the rest (meta.js matchesDate)
+  const DATE_GROUPS = [
+    ['', ['any']],
+    ['fb_grp_deadline', ['overdue', 'today', 'week', 'has']],
+    ['fb_grp_appt', ['appt_today', 'appt_week', 'appt_has', 'appt_past']],
+    ['fb_grp_other', ['routine', 'noest', 'none']],
+  ];
 
   /** Static part of the bar (search, clear, close); rebuilt on a language change. */
   function build() {
@@ -111,8 +117,10 @@
         `<span class="status-ico">${MM.meta.icon(k)}</span>${esc(t('status_' + k, v.label))}</button>`).join('');
       const opt = (map, cur) => Object.entries(map).map(([k, l]) =>
         `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(l)}</option>`).join('');
-      const deadlines = {};
-      DEADLINE_KEYS.forEach((k) => (deadlines[k] = t('fb_dl_' + k)));
+      const dates = DATE_GROUPS.map(([g, keys]) => {
+        const o = keys.map((k) => `<option value="${k}"${k === f.deadline ? ' selected' : ''}>${esc(t('fb_dl_' + k))}</option>`).join('');
+        return g ? `<optgroup label="${esc(t(g))}">${o}</optgroup>` : o;
+      }).join('');
       const types = { any: t('fb_allTypes') };
       for (const [k, v] of Object.entries(MM.NODE_TYPES)) types[k] = t('node_' + k, v);
       dyn.innerHTML = `
@@ -123,7 +131,7 @@
         </div>
         <div class="fb-group"><span class="fb-label">${t('status')}</span>${statusChips}</div>
         <div class="fb-group"><span class="fb-label">${t('priority')}</span>${prioChips}</div>
-        <div class="fb-group"><select data-f="deadline">${opt(deadlines, f.deadline)}</select>
+        <div class="fb-group"><select data-f="deadline" title="${esc(t('fb_dateTitle'))}">${dates}</select>
           <select data-f="type">${opt(types, f.type)}</select></div>
         <div class="fb-group"><span class="seg seg-mini">
           <button data-f-mode="dim" class="${f.mode === 'dim' ? 'active' : ''}" title="${esc(t('fb_dimTitle'))}">${t('fb_dim')}</button>
