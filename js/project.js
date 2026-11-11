@@ -430,6 +430,7 @@
     P.entries = await list('', 0);
     P.diaries = await listDiaries();
     MM.diary.loadIndex(); // 🔒 marks of diary notes on closed pages (background)
+    MM.notebook.retryImages(); // pictures of a block that could not be read before the folder was there
     P.render();
     MM.load.scheduleRefresh(); // workload of all maps (read in the background)
   };
@@ -1532,6 +1533,8 @@
   async function deleteMap(path) {
     if (!confirm(tr('Delete "{path}"?\n\nThe file is removed from the project folder.', { path }))) return;
     const label = P.mapName(path);
+    let pics = null; // a block: its picture files (notebook.js), offered for deletion afterwards
+    try { pics = await MM.notebook.picturesOf(path); } catch (e) { /* not readable: the pictures stay */ }
     try {
       if (path === S.file.path) {
         S.file = { handle: null, backend: null, name: 'Untitled.mindmap.json', path: null };
@@ -1541,6 +1544,7 @@
       await P.backend.remove(path);
       versions.delete(path);
       P.history = P.history.filter((p) => p !== path);
+      await MM.notebook.deletePictures(pics);
       await P.scan();
       MM.storage.autosave();
       MM.ui.flash(tr('Deleted {name}', { name: label }));

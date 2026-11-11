@@ -28,14 +28,18 @@
     });
   }
 
-  /** Read an image file -> { url, w, h }, downscaled if huge. */
-  IMG.prepare = async function (file) {
+  /**
+   * Read an image file -> { url, w, h }, downscaled if huge.
+   * opts.max: longest side (default 2000), opts.quality: of a JPEG (default 0.9).
+   */
+  IMG.prepare = async function (file, opts) {
+    const max = (opts && opts.max) || MAX_SIDE;
     const url = await readAsDataURL(file);
     const img = await loadImage(url);
     let w = img.naturalWidth || 300, h = img.naturalHeight || 200;
-    const keep = file.type === 'image/svg+xml' || file.type === 'image/gif' || Math.max(w, h) <= MAX_SIDE;
+    const keep = file.type === 'image/svg+xml' || file.type === 'image/gif' || Math.max(w, h) <= max;
     if (keep) return { url, w, h };
-    const s = MAX_SIDE / Math.max(w, h);
+    const s = max / Math.max(w, h);
     w = Math.round(w * s);
     h = Math.round(h * s);
     const canvas = document.createElement('canvas');
@@ -43,7 +47,7 @@
     canvas.height = h;
     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
     const type = file.type === 'image/png' || file.type === 'image/webp' ? 'image/png' : 'image/jpeg';
-    return { url: canvas.toDataURL(type, 0.9), w, h };
+    return { url: canvas.toDataURL(type, (opts && opts.quality) || 0.9), w, h };
   };
 
   /** Store image data as an asset, returns its id. */
@@ -56,22 +60,28 @@
   /**
    * Insert image files as notes centered around world point `at`.
    * opts.overlay: insert as overlay instead of a note.
+   * opts.width: width of the new notes (default: 320, smaller pictures keep their size).
+   * In a block (notebook.js) the pictures become files of the block, smaller than elsewhere.
+   * Resolves with the ids of the new notes.
    */
   IMG.insertFiles = async function (files, at, opts) {
     const list = [...files].filter((f) => f && f.type && f.type.startsWith('image/'));
-    if (!list.length) return;
+    if (!list.length) return [];
+    const block = MM.notebook && MM.notebook.storesFiles();
     const ids = [];
     let off = 0;
     for (const file of list) {
       try {
-        const { url, w, h } = await IMG.prepare(file);
+        const { url, w, h } = await IMG.prepare(file, block ? MM.notebook.IMAGE_SIZE : null);
         const n = MM.createNode('image', at.x + off, at.y + off);
-        n.imageId = IMG.addAsset(url);
+        const stored = block ? await MM.notebook.storeImage(url) : '';
+        if (stored) n.imageFile = stored;
+        else n.imageId = IMG.addAsset(url);
         n.overlay = !!(opts && opts.overlay);
-        n.w = Math.min(DEFAULT_W, w);
+        n.w = Math.min((opts && opts.width) || DEFAULT_W, w);
         n.h = Math.max(20, Math.round(n.w * (h / w)));
         n.x = Math.round(at.x + off - n.w / 2);
-        n.y = Math.round(at.y + off - n.h / 2);
+        n.y = Math.round(at.y + off - (opts && opts.top ? 0 : n.h / 2)); // opts.top: `at` is the top edge
         S.doc.nodes[n.id] = n;
         ids.push(n.id);
         off += 30;
@@ -83,23 +93,33 @@
       MM.select(ids);
       MM.commit();
     }
+    return ids;
   };
 
   /** Replace the picture of an existing image note. */
   IMG.replace = async function (node, file) {
-    const { url, w, h } = await IMG.prepare(file);
-    node.imageId = IMG.addAsset(url);
+    const block = MM.notebook && MM.notebook.storesFiles();
+    const { url, w, h } = await IMG.prepare(file, block ? MM.notebook.IMAGE_SIZE : null);
+    const stored = block ? await MM.notebook.storeImage(url) : '';
+    if (stored) {
+      node.imageFile = stored;
+      delete node.imageId;
+    } else {
+      node.imageId = IMG.addAsset(url);
+      delete node.imageFile;
+    }
     node.h = Math.max(20, Math.round(node.w * (h / w))); // keep width, adopt new aspect ratio
     MM.commit();
   };
 
   /** Open a file picker for images. Resolves with the chosen files (never on cancel). */
-  IMG.pick = function (multiple) {
+  IMG.pick = function (multiple, camera) {
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
       input.multiple = !!multiple;
+      if (camera) input.capture = 'environment'; // phones / tablets: straight to the (back) camera
       input.onchange = () => resolve([...input.files]);
       input.click();
     });

@@ -325,6 +325,8 @@
       '<span class="nb-sep"></span>' +
       b('pen', '✍️', 'Pen on / off (P)', pen && tool !== 'text' ? 'active' : '') +
       b('text', '<b class="nb-t">T</b>', 'Text: tap where it goes', pen && tool === 'text' ? 'active' : '') +
+      b('camera', '📷', 'Take a photo (straight onto this page)') +
+      b('gallery', '🖼️', 'Add pictures from the device') +
       b('todo', '☐', 'To-do list') +
       '<span class="nb-sep"></span>' +
       b('design', '🎨', 'Paper, ruling, page view');
@@ -360,6 +362,8 @@
         { label: 'Move page down', disabled: k >= page.count - 1, action: () => NB.move(k, 1) },
         '-',
         { label: 'Delete this page…', action: () => NB.remove(k) },
+        '-',
+        { label: 'Pictures of this block…', action: NB.showPictures },
       ]);
     } else if (a === 'pen') {
       const pen = MM.ink.on();
@@ -374,6 +378,8 @@
       MM.ink.toggle(true);
       MM.saveSettings();
       renderBar();
+    } else if (a === 'camera' || a === 'gallery') {
+      NB.addPhotos(a === 'camera');
     } else if (a === 'todo') {
       if (MM.ink.on()) MM.ink.toggle(false);
       const pb = NB.pageBox(k), c = MM.viewCenter();
@@ -400,6 +406,340 @@
     MM.saveSettings();
     NB.show(NB.cur);
   }
+
+  // ---- Images of a block: files in Blocks/_images/<block id>/ ---------------------------
+  // A block is made for photos: kept as data in the map (doc.assets) every autosave would
+  // upload them again. So a block keeps them as files (n.imageFile = "<block id>/<id>.jpg",
+  // MM.IMAGE_FILE). Files are never overwritten (a new id per picture) and never deleted
+  // on their own (undo) - the image list of the block (🖼) shows unused ones to clean up.
+  // Normal maps and diaries keep their pictures inside (copies are embedded, NB.fitImages).
+
+  NB.IMAGE_SIZE = { max: 1600, quality: 0.8 }; // plenty for an A4 page
+  const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+  const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+
+  NB.imagePath = (file) => `${NB.FOLDER}/${NB.IMAGE_FOLDER}/${file}`;
+
+  /** Does `doc` (default: the open map) keep its pictures as files? A block in the project folder. */
+  NB.storesFiles = function (doc = S.doc) {
+    return !!(doc && doc.page && MM.project && MM.project.status === 'ready' && (doc !== S.doc || S.file.path));
+  };
+
+  const cache = new Map(); // file -> { state: 'loading' | 'ok' | 'missing', url, blob }
+  const cloud = () => !!(MM.project.backend && MM.project.backend.kind === 'dropbox');
+  const idbKey = (file) => 'blockimg:' + file;
+
+  /** Load state of a picture file without loading it ('none' if not asked for yet). */
+  NB.imageState = (file) => (cache.get(file) || { state: 'none' }).state;
+
+  /** { state, url } of a picture file; starts loading it (the note is drawn again then). */
+  NB.imageUrl = function (file) {
+    let c = cache.get(file);
+    if (!c) {
+      c = { state: 'loading', url: '' };
+      cache.set(file, c);
+      loadImage(file, c);
+    }
+    return c;
+  };
+
+  async function loadImage(file, c) {
+    let blob = null;
+    // Dropbox: a copy in this browser (pictures never change) - also offline
+    if (cloud() || MM.project.status !== 'ready') {
+      try { blob = await MM.storage.idb.get(idbKey(file)); } catch (e) { /* no copy */ }
+    }
+    if (!blob && MM.project.status === 'ready') {
+      try {
+        blob = await MM.project.backend.readBlob(NB.imagePath(file));
+        if (blob && cloud()) MM.storage.idb.set(idbKey(file), blob).catch(() => {});
+      } catch (e) { /* missing or offline */ }
+    }
+    if (!blob && MM.project.status !== 'ready') {
+      cache.delete(file); // the folder is not connected yet: again after P.scan (NB.retryImages)
+      return;
+    }
+    c.state = blob ? 'ok' : 'missing';
+    c.url = blob ? URL.createObjectURL(blob) : '';
+    c.blob = blob;
+    MM.render.all();
+    if (picList) renderPictures(); // the list of pictures shows it as well
+  }
+
+  /** The project folder is (again) there: load the pictures that could not be loaded. */
+  NB.retryImages = function () {
+    let any = false;
+    for (const [file, c] of cache) {
+      if (c.state === 'missing') {
+        cache.delete(file);
+        any = true;
+      }
+    }
+    if (any || S.doc.page) MM.render.all();
+  };
+
+  function dataUrlToBlob(url) {
+    const m = /^data:([^;,]+)(;base64)?,(.*)$/s.exec(url);
+    if (!m) return null;
+    const bytes = m[2] ? atob(m[3]) : decodeURIComponent(m[3]);
+    const a = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) a[i] = bytes.charCodeAt(i);
+    return new Blob([a], { type: m[1] });
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(blob);
+    });
+  }
+
+  /**
+   * Write a picture (data URL or Blob) as a file of block `doc`. Returns its imageFile, or ''
+   * when it stays inside the map (no block in a folder, SVG, no write access, an error).
+   */
+  NB.storeImage = async function (data, doc = S.doc) {
+    if (!NB.storesFiles(doc)) return '';
+    const blob = typeof data === 'string' ? dataUrlToBlob(data) : data;
+    const ext = blob && EXT[blob.type];
+    if (!ext) return '';
+    const file = `${doc.page.id}/${MM.pageId()}.${ext}`;
+    try {
+      await MM.project.writeBlob(NB.imagePath(file), blob);
+    } catch (err) {
+      console.warn('MindMapper: picture kept in the map', err);
+      return '';
+    }
+    cache.set(file, { state: 'ok', url: URL.createObjectURL(blob), blob });
+    if (cloud()) MM.storage.idb.set(idbKey(file), blob).catch(() => {});
+    return file;
+  };
+
+  /** The data of a picture note (file or embedded) as a Blob, or null. */
+  NB.imageBlob = async function (n, doc = S.doc) {
+    if (n.imageFile) {
+      const c = cache.get(n.imageFile);
+      if (c && c.blob) return c.blob;
+      try {
+        const copy = await MM.storage.idb.get(idbKey(n.imageFile)); // Dropbox: the copy in this browser
+        if (copy) return copy;
+      } catch (e) { /* none */ }
+      try { return await MM.project.backend.readBlob(NB.imagePath(n.imageFile)); } catch (e) { return null; }
+    }
+    const url = doc.assets && doc.assets[n.imageId];
+    return url ? dataUrlToBlob(url) : null;
+  };
+
+
+  /**
+   * Pictures of copied / moved notes fit their new map: into a block as its own files, into
+   * a normal map embedded again (a map never points into the folder of a block).
+   * Returns the number of pictures changed (0: nothing to do or not possible now).
+   */
+  NB.fitImages = async function (doc, nodes) {
+    let changed = 0;
+    const toFiles = NB.storesFiles(doc);
+    for (const n of nodes) {
+      if (!n || n.type !== 'image') continue;
+      if (toFiles) {
+        // a file of another block or an embedded picture: a file of this block
+        if (n.imageFile && n.imageFile.startsWith(doc.page.id + '/')) continue;
+        const blob = await NB.imageBlob(n, doc);
+        const file = blob && (await NB.storeImage(blob, doc));
+        if (!file) continue;
+        n.imageFile = file;
+        delete n.imageId;
+        changed++;
+      } else if (n.imageFile) {
+        const blob = await NB.imageBlob(n, doc);
+        if (!blob) continue; // stays a reference until it can be read (shown while the file is there)
+        const id = MM.uid('a');
+        doc.assets = doc.assets || {};
+        doc.assets[id] = await blobToDataUrl(blob);
+        n.imageId = id;
+        delete n.imageFile;
+        changed++;
+      }
+    }
+    return changed;
+  };
+
+  /**
+   * After pasting into the open map: its pictures fit it (see fitImages) - no undo step
+   * of its own (undo takes back the paste).
+   */
+  NB.fitPasted = async function (ids) {
+    const doc = S.doc;
+    const nodes = ids.map((id) => doc.nodes[id]).filter((n) => n && n.type === 'image' && (n.imageFile || NB.storesFiles(doc)));
+    if (!nodes.length) return;
+    if (!(await NB.fitImages(doc, nodes)) || doc !== S.doc) return;
+    MM.history.rebase();
+    S.dirty = true;
+    S.rev++;
+    MM.storage.scheduleAutosave();
+    MM.refresh();
+  };
+
+  /** 📷 / 🖼 of the bar: photos onto the page shown, about as wide as the page; then the pen. */
+  NB.addPhotos = async function (camera) {
+    const page = S.doc.page;
+    if (!page) return;
+    const files = await MM.images.pick(!camera, camera);
+    if (!files.length || S.doc.page !== page) return;
+    const b = NB.pageBox(NB.cur), v = S.doc.view;
+    const width = b.w - 80;
+    // below the head, or at the top of what is visible of the page
+    const top = Math.max(b.y + NB.HEAD + 24, -v.y / v.zoom + 24);
+    const ids = await MM.images.insertFiles(files, { x: b.x + b.w / 2, y: Math.min(top, b.y + b.h - 200) }, { width, top: true });
+    if (!ids.length) return;
+    MM.select([]);
+    MM.refresh();
+    if (MM.ink && !MM.ink.on()) MM.ink.toggle(true); // to write on it
+  };
+
+  /** The picture files of the block at `path`: { id, folder, files: [name] }, or null (no block). */
+  NB.picturesOf = async function (path) {
+    const doc = path === S.file.path ? S.doc : await MM.project.readMap(path);
+    if (!doc || !doc.page) return null;
+    const folder = `${NB.FOLDER}/${NB.IMAGE_FOLDER}/${doc.page.id}`;
+    let files = [];
+    try {
+      files = (await MM.project.backend.list(folder)).filter((e) => e.kind === 'file' && !e.name.startsWith('.')).map((e) => e.name);
+    } catch (e) { /* no pictures yet */ }
+    return { id: doc.page.id, folder, files };
+  };
+
+  /** A block was deleted: offer to delete its pictures as well. */
+  NB.deletePictures = async function (pics) {
+    if (!pics || !pics.files.length) return;
+    if (!confirm(tr('Also delete the {n} picture(s) of this block?\n\nThey are not used anywhere else.', { n: pics.files.length }))) return;
+    try {
+      await MM.project.backend.removeDir(pics.folder);
+      for (const name of pics.files) cache.delete(`${pics.id}/${name}`);
+    } catch (err) {
+      alert(tr('Could not delete the pictures: {err}', { err: err.message }));
+    }
+  };
+
+  // ---- Pictures of the open block (dialog) ---------------------------------------------------
+
+  let picDialog = null, picList = null;
+
+  NB.showPictures = async function () {
+    const page = S.doc.page;
+    if (!page) return;
+    if (!NB.storesFiles()) {
+      alert(tr('The pictures of a block are kept as files in the project folder.\nThis block is not part of an open project folder.'));
+      return;
+    }
+    const esc = MM.render.esc;
+    if (!picDialog) {
+      picDialog = document.createElement('dialog');
+      picDialog.id = 'nb-pictures';
+      picDialog.addEventListener('keydown', (e) => e.stopPropagation());
+      picDialog.addEventListener('click', onPictures);
+      picDialog.addEventListener('close', () => { picList = null; });
+      document.body.appendChild(picDialog);
+    }
+    picDialog.innerHTML = `<div class="dlg"><h3>${esc(tr('Pictures of this block'))}</h3><p class="hint">${esc(tr('Loading…'))}</p></div>`;
+    if (!picDialog.open) picDialog.showModal();
+    const pics = await NB.picturesOf(S.file.path);
+    if (!pics || !picDialog.open) return;
+    // which page shows each file (several notes may show the same one)
+    const used = new Map();
+    for (const n of Object.values(S.doc.nodes)) {
+      if (n.type !== 'image' || !n.imageFile) continue;
+      if (!used.has(n.imageFile)) used.set(n.imageFile, []);
+      used.get(n.imageFile).push(n);
+    }
+    picList = pics.files.map((name) => ({ file: `${pics.id}/${name}`, notes: used.get(`${pics.id}/${name}`) || [] }));
+    // shown on the pages but no file (deleted outside the app)
+    for (const [file, notes] of used) if (!pics.files.some((name) => `${pics.id}/${name}` === file)) picList.push({ file, notes, gone: true });
+    picList.sort((a, b) => (a.notes.length ? NB.pageOf(a.notes[0].y) : 1e9) - (b.notes.length ? NB.pageOf(b.notes[0].y) : 1e9));
+    renderPictures();
+  };
+
+  function renderPictures() {
+    if (!picDialog || !picList) return;
+    const esc = MM.render.esc;
+    const unused = picList.filter((p) => !p.notes.length && !p.gone);
+    const size = (p) => {
+      const c = cache.get(p.file);
+      return c && c.blob ? MM.files.humanSize(c.blob.size) : '';
+    };
+    const cards = picList.map((p, i) => {
+      const c = p.gone ? null : NB.imageUrl(p.file);
+      const thumb = c && c.state === 'ok' ? `<img src="${esc(c.url)}" alt="">` : `<span>${esc(tr(p.gone ? 'File missing' : c && c.state === 'missing' ? 'Image missing' : 'Loading…'))}</span>`;
+      const where = p.notes.length
+        ? [...new Set(p.notes.map((n) => NB.pageOf(n.y)))].map((k) => `<button type="button" data-pic-go="${i}" data-page="${k}">${esc(tr('Page {n}', { n: k + 1 }))}</button>`).join('')
+        : p.gone ? '' : `<label class="nb-pic-unused"><input type="checkbox" data-pic-del="${i}" checked> ${esc(tr('unused'))}</label>`;
+      return `<div class="nb-pic${p.notes.length ? '' : ' unused'}"><div class="nb-pic-thumb">${thumb}</div>` +
+        `<div class="nb-pic-info"><span>${esc(size(p))}</span>${where}` +
+        (p.gone ? '' : `<button type="button" data-pic-save="${i}" title="${esc(tr('Save the original'))}">⤓</button>`) + '</div></div>';
+    }).join('');
+    picDialog.innerHTML = `<div class="dlg nb-pics-dlg">
+      <h3>${esc(tr('Pictures of this block'))}</h3>
+      <p class="hint">${esc(tr('{n} picture(s) in Blocks/_images/ - {u} of them not used on any page (e.g. deleted notes; undo may still need them).', { n: picList.filter((p) => !p.gone).length, u: unused.length }))}</p>
+      <div class="nb-pic-grid">${cards || `<p class="hint">${esc(tr('No pictures yet - 📷 and 🖼 in the bar add some.'))}</p>`}</div>
+      <div class="dlg-buttons">
+        ${unused.length ? `<button type="button" data-pic="delete" class="danger">${esc(tr('Delete the chosen unused pictures…'))}</button>` : ''}
+        <button type="button" data-pic="close" class="primary">${esc(tr('Close'))}</button>
+      </div></div>`;
+  }
+
+  async function onPictures(e) {
+    const t = e.target;
+    if (t === picDialog) return picDialog.close(); // click beside the box
+    const go = t.closest('[data-pic-go]'), save = t.closest('[data-pic-save]'), act = t.closest('[data-pic]');
+    if (go) {
+      const p = picList[+go.dataset.picGo], k = +go.dataset.page;
+      picDialog.close();
+      NB.show(k);
+      MM.select(p.notes.filter((n) => NB.pageOf(n.y) === k).map((n) => n.id));
+      MM.refresh();
+    } else if (save) {
+      const p = picList[+save.dataset.picSave];
+      NB.saveOriginal(p.notes[0] || { type: 'image', imageFile: p.file, text: '' });
+    } else if (act && act.dataset.pic === 'close') {
+      picDialog.close();
+    } else if (act && act.dataset.pic === 'delete') {
+      const chosen = [...picDialog.querySelectorAll('[data-pic-del]:checked')].map((x) => picList[+x.dataset.picDel]);
+      if (!chosen.length || !confirm(tr('Delete {n} unused picture(s)? This cannot be undone.', { n: chosen.length }))) return;
+      for (const p of chosen) {
+        try {
+          await MM.project.backend.remove(NB.imagePath(p.file));
+          cache.delete(p.file);
+          MM.storage.idb.set(idbKey(p.file), undefined).catch(() => {});
+        } catch (err) {
+          alert(tr('Could not delete the pictures: {err}', { err: err.message }));
+          break;
+        }
+      }
+      NB.showPictures();
+    }
+  }
+
+  /** Save the picture of note n as a file (Downloads). */
+  NB.saveOriginal = async function (n) {
+    const blob = n && (await NB.imageBlob(n));
+    if (!blob) {
+      alert(tr('The picture could not be read.'));
+      return;
+    }
+    const ext = EXT[blob.type] || (n.imageFile || '').split('.').pop() || 'png';
+    const base = (n.text || '').split('\n')[0].trim().replace(/[\\/:*?"<>|]/g, '-').slice(0, 60) ||
+      (S.doc.page ? blockName() : tr('image'));
+    const url = URL.createObjectURL(blob.type ? blob : new Blob([blob], { type: MIME[ext] }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${base}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  };
 
   // ---- "New block" dialog ---------------------------------------------------------------
 

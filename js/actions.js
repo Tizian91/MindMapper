@@ -123,6 +123,12 @@
     if (file) await MM.images.replace(n, file);
   };
 
+  /** Save the selected picture as a file (Downloads) - embedded or a file of a block. */
+  A.saveImage = function () {
+    const n = MM.selectedNodes().find((x) => x.type === 'image');
+    if (n) MM.notebook.saveOriginal(n);
+  };
+
   /** Switch selected images between note and overlay. */
   A.toggleOverlay = function () {
     const imgs = MM.selectedNodes().filter((n) => n.type === 'image');
@@ -547,6 +553,7 @@
     }
     MM.select(newIds);
     MM.commit();
+    if (MM.notebook) MM.notebook.fitPasted(newIds); // pictures: files of a block / embedded in a map
   }
 
   A.duplicate = function () {

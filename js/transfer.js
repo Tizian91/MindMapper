@@ -387,6 +387,8 @@
     // the copies remember the hint so "undo move" can take it away again
     for (const c of copies) c.copy.movedHintId = hint.id;
 
+    // pictures: files of the target block, or embedded in a map (out of a block)
+    await MM.notebook.fitImages(doc, copies.map((c) => c.copy));
     await MM.project.writeMap(targetPath, doc);
 
     // mark the originals as moved (greyed out, no longer listed anywhere);

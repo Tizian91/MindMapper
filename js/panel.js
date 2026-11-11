@@ -167,7 +167,7 @@
       <div class="row"><label>${t('fit')}</label>${seg('data-node-style="fit" data-value', st.fit || 'cover',
         { cover: t('fitCover'), contain: t('fitContain') })}</div>
       <div class="row"><label>${t('opacity')}</label><input type="range" data-node-style="opacity" min="0.1" max="1" step="0.05" value="${esc(op)}"></div>
-      <div class="btn-row"><button data-action="replaceImage">${t('replaceImage')}</button></div>
+      <div class="btn-row"><button data-action="replaceImage">${t('replaceImage')}</button><button data-action="saveImage">${t('saveImage')}</button></div>
       <p class="hint">${t('imageHint')}</p>`;
     }
     h += '</section>';

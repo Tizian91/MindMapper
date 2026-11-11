@@ -126,7 +126,7 @@
     const contentKey = JSON.stringify([n.type, n.text, n.items, n.blocks, st.textColor, st.fontSize, st.bold, st.align,
       n.type === 'link' ? n.link : 0,
       n.type === 'task' ? [n.meta, n.tags, new Date().toDateString(), MM.tasks.info(n), n.repeat, MM.getLang(), MM.prioKey()] : 0,
-      n.type === 'image' ? [n.imageId, !!S.doc.assets[n.imageId], st.fit] : 0,
+      n.type === 'image' ? [n.imageId, !!S.doc.assets[n.imageId], st.fit, n.imageFile, n.imageFile && MM.notebook.imageState(n.imageFile)] : 0,
       n.type === 'file' ? [n.file && n.file.path, n.file && n.file.size] : 0,
       n.type === 'diary' ? [n.diary, MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id]), MM.diary.badge(n)] : 0,
       n.type === 'markdown' ? [MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id])] : 0]);
@@ -433,8 +433,12 @@
       c.append(title);
     } else if (n.type === 'image') {
       const wrap = el('div', 'image-wrap');
-      const src = S.doc.assets[n.imageId];
-      if (src) {
+      // a block's picture is a file (notebook.js: loaded once, then drawn again)
+      const file = n.imageFile && MM.notebook.imageUrl(n.imageFile);
+      const src = file ? file.url : S.doc.assets[n.imageId];
+      if (file && file.state === 'loading') {
+        wrap.append(el('div', 'image-missing', MM.tr('Loading image…')));
+      } else if (src) {
         const img = el('img');
         img.src = src;
         img.draggable = false;
@@ -442,7 +446,7 @@
         img.style.objectFit = st.fit || 'cover';
         wrap.append(img);
       } else {
-        wrap.append(el('div', 'image-missing', 'Image missing'));
+        wrap.append(el('div', 'image-missing', MM.tr('Image missing')));
       }
       const cap = el('div', 'image-caption', n.text);
       cap.dataset.field = 'text';

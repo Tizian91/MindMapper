@@ -631,6 +631,29 @@
     'Blue': 'Blau',
     'Page view: fit the width': 'Seitenansicht: Breite einpassen',
     'Page view: whole page': 'Seitenansicht: ganze Seite',
+    'Take a photo (straight onto this page)': 'Foto aufnehmen (direkt auf diese Seite)',
+    'Add pictures from the device': 'Bilder vom Gerät einfügen',
+    'Pictures of this block…': 'Bilder dieses Blocks…',
+    'Pictures of this block': 'Bilder dieses Blocks',
+    'Loading image…': 'Bild wird geladen…',
+    'Loading…': 'Wird geladen…',
+    'Image missing': 'Bild fehlt',
+    'File missing': 'Datei fehlt',
+    'unused': 'unbenutzt',
+    'Close': 'Schließen',
+    'Save original…': 'Original speichern…',
+    'Save the original': 'Original speichern',
+    'The picture could not be read.': 'Das Bild ließ sich nicht lesen.',
+    'Also delete the {n} picture(s) of this block?\n\nThey are not used anywhere else.':
+      'Auch die {n} Bild(er) dieses Blocks löschen?\n\nSie werden nirgends sonst verwendet.',
+    'Could not delete the pictures: {err}': 'Die Bilder ließen sich nicht löschen: {err}',
+    'The pictures of a block are kept as files in the project folder.\nThis block is not part of an open project folder.':
+      'Die Bilder eines Blocks liegen als Dateien im Projektordner.\nDieser Block gehört zu keinem geöffneten Projektordner.',
+    '{n} picture(s) in Blocks/_images/ - {u} of them not used on any page (e.g. deleted notes; undo may still need them).':
+      '{n} Bild(er) in Blocks/_images/ – davon {u} auf keiner Seite verwendet (z. B. gelöschte Notizen; Rückgängig braucht sie evtl. noch).',
+    'No pictures yet - 📷 and 🖼 in the bar add some.': 'Noch keine Bilder – 📷 und 🖼 in der Leiste fügen welche ein.',
+    'Delete the chosen unused pictures…': 'Gewählte unbenutzte Bilder löschen…',
+    'Delete {n} unused picture(s)? This cannot be undone.': '{n} unbenutzte(s) Bild(er) löschen? Das lässt sich nicht rückgängig machen.',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

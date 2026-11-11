@@ -551,6 +551,17 @@ details.st-group.few summary { color: var(--muted); }
 #nb-bar button.dim { opacity: 0.4; }
 #nb-bar .nb-t { font: 700 18px/1 Georgia, "Times New Roman", serif; }
 #nb-bar .nb-sep { flex: none; width: 1px; height: 28px; background: var(--border); margin: 0 2px; }
+/* pictures of a block (notebook.js showPictures) */
+#nb-pictures { width: min(760px, calc(100vw - 32px)); }
+.nb-pic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 60vh; overflow-y: auto; margin: 8px 0; }
+.nb-pic { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--subtle-bg); }
+.nb-pic.unused { border-style: dashed; opacity: 0.85; }
+.nb-pic-thumb { height: 110px; display: flex; align-items: center; justify-content: center; background: #fff; color: #7b8794; font-size: 12px; }
+.nb-pic-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.nb-pic-info { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px; font-size: 12px; color: var(--muted); }
+.nb-pic-info button { padding: 2px 8px; }
+.nb-pic-info span:first-child { flex: 1 0 100%; }
+.nb-pic-unused { display: inline-flex; align-items: center; gap: 4px; color: var(--danger); }
 
 /* ---- Notes -------------------------------------------------------------- */
 

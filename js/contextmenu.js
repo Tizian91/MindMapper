@@ -339,6 +339,7 @@
           })),
         },
         hasImage && !multi && { label: 'Replace image…', action: A.replaceImage },
+        hasImage && !multi && { label: 'Save original…', action: A.saveImage },
         hasImage && { label: 'Show as overlay', checked: images.every((n) => n.overlay), action: A.toggleOverlay },
         // ---- views / auto-layout of the subtree below this note ----
         '-',

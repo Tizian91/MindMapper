@@ -455,6 +455,9 @@ window.MM = window.MM || {};
   MM.PAGE_SIZES = { A4: [794, 1123] }; // CSS px (96 dpi) portrait - printed 1:1
   MM.PAGE_RULINGS = { none: 'None', lines: 'Lines', grid: 'Squares', dots: 'Dots' };
   MM.PAGE_MAX = 999;
+  // image of a block kept as a file: "<block id>/<image id>.<ext>" below Blocks/_images/ -
+  // nothing else (no "..", no other folders: the path comes from a file)
+  MM.IMAGE_FILE = /^[a-z0-9]{4,16}\/[a-z0-9]{4,24}\.(jpg|png|webp|gif)$/;
 
   /** The page settings of a block from a file (untrusted), or null for a normal map. */
   MM.cleanPage = function (p) {
@@ -630,6 +633,9 @@ window.MM = window.MM || {};
       } else if (node.file) {
         delete node.file;
       }
+      // image of a block as a file (notebook.js) instead of data in doc.assets
+      if (type === 'image' && typeof n.imageFile === 'string' && MM.IMAGE_FILE.test(n.imageFile)) node.imageFile = n.imageFile;
+      else delete node.imageFile;
       doc.nodes[node.id] = node;
     }
     // a drawing anchored to a note that is not there is free (it would be deleted with its note otherwise)
