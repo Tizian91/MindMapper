@@ -700,6 +700,27 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **🖨 Drucken / PDF:** diese Seite, das ganze Tagebuch oder ein Zeitraum. Für ein PDF im Druckdialog „Als PDF speichern“ wählen. Jede Tagebuchseite beginnt auf einem neuen Blatt.
 - Tagebucheinträge erscheinen nicht in Overview und Auslastung und werden beim Carry-over nicht übertragen.
 
+### Blöcke: Notizblock mit A4-Seiten
+
+Ein **Block** ist ein Notizblock für ein Thema, z. B. ein Training oder einen Kurs: feste **A4-Seiten**, auf die du mit dem Stift schreibst, tippst, zeichnest oder Fotos legst – wie in einen Papierblock. Anders als das Tagebuch hat ein Block keine Tage: Du schreibst einfach Seite für Seite weiter.
+
+- **Block anlegen:** Seitenleiste → Bereich **Blöcke** → **+**. Thema, Unterordner (optional, zum Gruppieren), A4 hoch oder quer und Linierung (keine, Linien, Karos, Punkte) wählen. Jeder Block ist eine Map im Ordner `Blocks/` des Projektordners. Umbenennen, verschieben und löschen wie bei jeder Map (Rechtsklick in der Seitenleiste).
+- **Alles von der Map geht:** Stift, Textmarker, Radierer, Linien, Formen, Text, Notizen, To-dos, Tasks, Bilder. Aufgaben mit Frist aus einem Block erscheinen in Overview und Auslastung – mit Seite, z. B. „📓 FIB-Training · S. 3“.
+- **Leiste unten:**
+  - **◀ Seite 2 / 5 ▶** blättert; ein Klick auf „Seite 2 / 5“ zeigt alle Seiten mit Datum zum Springen. Auch `Bild ↑` / `Bild ↓`, `←` / `→` (wenn nichts markiert ist), `Pos1` / `Ende`. Das **Mausrad scrollt** durch die Seiten, `Ctrl` + Mausrad zoomt. **Fit** passt die aktuelle Seite wieder ein.
+  - **＋** hängt eine neue Seite an. **⋯**: Seite davor / danach einfügen, nach vorne / hinten verschieben, löschen (mit Rückfrage, wenn etwas darauf steht), **Bilder dieses Blocks…**, **Drucken / PDF…**, **Link auf diese Seite kopieren**. Alles davon lässt sich mit `Ctrl+Z` zurücknehmen.
+  - **✍️** Stift an / aus, **T** Text dorthin tippen, wo er stehen soll, **☐** To-do-Liste.
+  - **📷** nimmt ein Foto auf (Handy / Tablet: direkt die Kamera) und legt es in Seitenbreite auf die Seite, **🖼️** fügt Bilder vom Gerät ein. Danach ist der Stift an – zum Draufschreiben. Was du auf ein Bild zeichnest, hängt am Bild und wandert mit.
+  - **🎨** Linierung, Papierfarbe, hoch / quer (der Inhalt wandert mit seiner Seite mit) und die Seitenansicht: **Breite einpassen** oder **ganze Seite**.
+- **Auf Tablet und Handy** ist der Stift beim Öffnen eines Blocks gleich an. Am PC bleibt er aus, damit die Maus nicht versehentlich zeichnet (`P` schaltet ihn ein).
+- **Fotos im Block** werden als eigene Dateien in `Blocks/_images/` gespeichert (auf 1600 Pixel verkleinert), nicht in der Map-Datei. So bleibt der Block klein und das automatische Speichern schnell – auch mit Dropbox am Tablet. Kopierst oder verschiebst du ein Bild aus dem Block in eine normale Map, wird es dort wie gewohnt eingebettet.
+  - **⋯ → Bilder dieses Blocks…** zeigt alle Fotos mit der Seite, auf der sie liegen (Klick springt hin), **⤓** speichert das Original. Gelöschte Bildnotizen lassen ihre Datei zurück (für `Ctrl+Z`); sie stehen dort als **unbenutzt** und lassen sich mit **Gewählte unbenutzte Bilder löschen…** aufräumen.
+  - Beim Löschen eines Blocks fragt MindMapper, ob seine Bilder mit gelöscht werden sollen.
+  - **Original speichern…** (Rechtsklick auf ein Bild oder im Panel) gibt es bei jedem Bild, auch in normalen Maps.
+- **Drucken / PDF** (`Ctrl+P`): diese Seite, alle Seiten oder Seiten von–bis – jede Seite auf einem eigenen A4-Blatt in Originalgröße, mit Linierung und Kopfzeile. **Als PNG kopieren** legt die aktuelle Seite als Bild in die Zwischenablage.
+- **Seitenlinks:** **⋯ → Link auf diese Seite kopieren** legt `[FIB-Training · S. 3](Blocks/FIB-Training.mindmap.json#3)` in die Zwischenablage. In einen **Tagebuch-Eintrag** oder eine Markdown-Note eingefügt, wird daraus ein Link, der den Block auf Seite 3 öffnet. Ins **Link-Feld** einer Note (Panel) eingefügt, öffnet ↗ die Seite. Wird der Block umbenannt, ziehen die Links mit.
+- **Flüssig auch bei vielen Seiten:** Gezeichnet werden nur die Seiten in der Nähe des Bildschirms.
+
 ### Markdown-Zeichen (Markdown-Note und Tagebuch-Eintrag)
 
 Eine **Markdown-Note** und ein **Tagebuch-Eintrag** sind reiner Text mit ein paar Zeichen für die Formatierung (*Markdown*). Beim Bearbeiten (Doppelklick) siehst du den Text mit diesen Zeichen in Schreibmaschinenschrift; `Ctrl+Enter` oder `Esc` beendet, danach steht die fertige Formatierung da. Die Markdown-Note ist gut für eine schnelle Tabelle oder Liste auf der Map, die nicht ins Tagebuch soll – einfügen per Rechtsklick → **Markdown**. Markdown wirkt **nur in diesen beiden Typen** – normale Notes und Outline-Notes zeigen ihren Text so, wie er getippt ist (eine Outline gliederst du mit `Enter` und `Tab`).
@@ -721,6 +742,7 @@ Eine **Markdown-Note** und ein **Tagebuch-Eintrag** sind reiner Text mit ein paa
 | zwei Leerzeichen vor `- Punkt` | Unterpunkt; `Tab` fügt beim Schreiben genau diese zwei Leerzeichen ein |
 | `- [ ] offen` · `- [x] erledigt` | Kästchen, leer bzw. abgehakt (nur Anzeige – abgehakt wird im Text mit `x`) |
 | `[Text](https://beispiel.de)` | Link, öffnet in einem neuen Tab (auch `mailto:`) |
+| `[Text](Blocks/FIB.mindmap.json#3)` | Link auf eine Map des Projekts; mit `#3` auf Seite 3 eines Blocks |
 | Bild mit `Ctrl+V` einfügen oder hineinziehen | Bild, gespeichert in der Map; im Text steht dafür `![Bild](asset:…)` |
 
 **Tabellen** schreibst du Zeile für Zeile, die Spalten getrennt durch `|`:

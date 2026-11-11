@@ -120,3 +120,10 @@ Reihenfolge so gewählt, dass der Block **nach Schritt 2 schon auf dem Tablet nu
 - Stift wird beim Öffnen eines Blocks nur auf Touch-Geräten automatisch eingeschaltet (am PC würde sonst die Maus zeichnen).
 - Noch offen aus Schritt 2: automatische neue Seite beim Schreiben unten, Doppeltipp auf den Rand, Verbindungspfeile außerhalb ausblenden (nur Notizen werden ausgeblendet).
 - `cloud.html` von Hand ergänzt (Python fehlte); beim nächsten Lauf von `tools/make_cloud_html.py` entsteht dasselbe.
+
+**12.11.2026 – Schritt 3 bis 6 umgesetzt** (Headless-Chrome mit simuliertem Projektordner im Speicher; PDF per `--print-to-pdf` geprüft).
+- Schritt 3: `n.imageFile` (geprüft mit `MM.IMAGE_FILE`), Anzeige über Blob-URLs (`notebook.js imageUrl`, Dropbox: Kopie in IndexedDB unter `blockimg:<datei>`), `NB.fitImages` beim Einfügen (`actions.js` paste, ohne eigenen Undo-Schritt) und beim Verschieben (`transfer.js`). Bilder ohne Dateiablage (SVG, kein Projektordner, Schreibfehler) bleiben eingebettet. Block duplizieren gibt es in der App nicht – entfällt.
+- Schritt 4: `export.js printPages` – eine Seite pro Blatt, `contain: strict` am Blatt (sonst leere Zusatzseiten im Druck). PNG: Bereich `page`.
+- Schritt 5: `links.js split / isMapLink`, Markdown-Links auf Maps (`a[data-maplink]`, ein Klick-Handler für die ganze Seite), `rewriteLinks` zieht `#n` und Markdown-Links mit.
+- Schritt 6: Handbuch-Abschnitt „Blöcke“ (in `HANDBUCH.html` von Hand eingefügt, da Python fehlte – `tools/make_handbook_html.py` erzeugt dasselbe), README.
+- Offen / Ideen: automatische neue Seite beim Schreiben unten, Doppeltipp auf den Rand, Pfeile auf fernen Seiten ausblenden, Seitenvorschau (Miniaturen), Seiten abschließen wie im Laborbuch, A5/A3.
