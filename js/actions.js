@@ -39,6 +39,7 @@
   };
 
   A.fit = function () {
+    if (S.doc.page) return MM.notebook.show(MM.notebook.cur); // a block: the current page
     const nodes = Object.values(S.doc.nodes);
     const vp = document.getElementById('viewport').getBoundingClientRect();
     const v = S.doc.view;

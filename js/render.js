@@ -38,6 +38,7 @@
 
   R.all = function () {
     R.applyView();
+    if (MM.notebook) MM.notebook.render(); // paper sheets of a block
     R.nodes();
     R.edges();
     R.overlay();
@@ -60,6 +61,7 @@
     }
     vp.classList.toggle('filter-dim', S.filter.mode === 'dim');
     vp.classList.toggle('filter-hide', S.filter.mode === 'hide');
+    if (MM.notebook) MM.notebook.onView(); // a block: current page, pages drawn
   };
 
   // ---- Nodes -------------------------------------------------------------
@@ -105,6 +107,7 @@
       div.classList.toggle('filtered-out', MM.meta.filteredOut(n));
       div.classList.toggle('overlay', !!n.overlay);
       div.classList.toggle('moved', !!n.movedTo);
+      div.classList.toggle('offpage', MM.notebook ? MM.notebook.off(n) : false); // a block: only pages near the screen
       div.dataset.type = n.type;
       R.updateNode(div, n);
     }

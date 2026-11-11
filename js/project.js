@@ -446,6 +446,8 @@
       // Diaries/ holds the diaries (own sidebar section), and a diary file is no map anywhere
       if (depth === 0 && kind === 'dir' && name === P.DIARY_FOLDER) continue;
       if (kind === 'file' && DIARY_EXT.test(name)) continue;
+      // Blocks/_images/ holds the photos of the blocks (notebook.js) - no maps
+      if (kind === 'dir' && depth === 1 && prefix === MM.notebook.FOLDER + '/' && name === MM.notebook.IMAGE_FOLDER) continue;
       if (kind === 'dir' && depth < 4) {
         out.push({ kind: 'dir', name, path: prefix + name, children: await list(prefix + name + '/', depth + 1) });
       } else if (kind === 'file' && /\.json$/i.test(name)) {
@@ -863,7 +865,7 @@
    */
   P.fillPlan = async function () {
     const path = S.file.path;
-    const kind = path && MM.templates.parsePath(path).kind;
+    const kind = path && !S.doc.page && MM.templates.parsePath(path).kind; // a block named "2026-11-11" is no plan
     if (kind !== 'day' && kind !== 'week' && kind !== 'month') return;
     const doc = S.doc;
     const before = JSON.stringify(doc.planned || []);
@@ -899,7 +901,7 @@
    */
   P.offerCarry = async function () {
     const path = S.file.path;
-    if (!path || S.doc.carriedOver !== false || !MM.templates.hasStarted(path)) return;
+    if (!path || S.doc.page || S.doc.carriedOver !== false || !MM.templates.hasStarted(path)) return;
     const t = MM.templates.forPath(path);
     const carry = t.prevName ? await P.carryFrom(P.folderOf(path), t.prevName) : null;
     S.doc.carriedOver = true;
@@ -1098,7 +1100,7 @@
   /** The open document as a plain object (used when renaming the open map). */
   function ST_doc() {
     return MM.clone({
-      nodes: S.doc.nodes, edges: S.doc.edges, assets: S.doc.assets, view: S.doc.view, carriedOver: S.doc.carriedOver, planned: S.doc.planned,
+      nodes: S.doc.nodes, edges: S.doc.edges, assets: S.doc.assets, view: S.doc.view, carriedOver: S.doc.carriedOver, planned: S.doc.planned, page: S.doc.page,
     });
   }
 
@@ -1208,7 +1210,10 @@
 
   // ---- Sidebar ---------------------------------------------------------------------
 
-  function tree(entries, depth) {
+  /** The folder Blocks/ (own sidebar section) or undefined. */
+  const blocksEntry = () => P.entries.find((e) => e.kind === 'dir' && e.path === MM.notebook.FOLDER);
+
+  function tree(entries, depth, icon = '') {
     let h = '';
     for (const e of entries) {
       if (e.kind === 'dir') {
@@ -1216,12 +1221,12 @@
         h += `<div class="sb-dir${closed ? ' closed' : ''}" data-dir="${esc(e.path)}" style="--d:${depth}">` +
           `<span class="sb-caret"></span><span class="sb-dir-name">${esc(e.name)}</span>` +
           (planFolder(e.path) ? '' : `<button class="sb-more" data-more title="${esc(tr('Delete folder…'))}">⋯</button>`) + '</div>';
-        if (!closed) h += tree(e.children, depth + 1);
+        if (!closed) h += tree(e.children, depth + 1, icon);
       } else {
         const active = S.file.path === e.path ? ' active' : '';
         const copies = e.copies ? `<button class="sb-copies" data-copies title="${esc(tr('{n} conflict copies of this map (e.g. from a sync program) - compare, keep one, clean up', { n: e.copies.length }))}">⚠ ${e.copies.length}</button>` : '';
         h += `<div class="sb-file${active}" data-file="${esc(e.path)}" style="--d:${depth}" title="${esc(e.path)}">` +
-          `<span class="sb-file-name">${esc(displayName(e.name))}</span>${copies}` +
+          `<span class="sb-file-name">${icon}${esc(displayName(e.name))}</span>${copies}` +
           `<button class="sb-more" data-more title="${esc(tr('Rename, move, delete…'))}">⋯</button></div>`;
       }
     }
@@ -1263,7 +1268,13 @@
           <button data-p="${cloud ? 'cloudMenu' : 'choose'}" title="${esc(tr(cloud ? 'Other folder (Dropbox or local), disconnect…' : 'Open another folder'))}">…</button></div>
         <button class="sb-wide primary" data-p="new">${tr('+ New map')}</button>
         ${back ? `<button class="sb-wide sb-back" data-p="back" title="${esc(back)}">${tr('← Back to {name}', { name: esc(displayName(back.split('/').pop())) })}</button>` : ''}
-        <div class="sb-tree">${tree(P.entries, 0) || `<p class="hint">${tr('No maps yet.')}</p>`}</div>
+        <div class="sb-tree">${tree(P.entries.filter((e) => e !== blocksEntry()), 0) || `<p class="hint">${tr('No maps yet.')}</p>`}</div>
+        <div class="sb-diaries sb-blocks">
+          <div class="sb-subhead"><span>${tr('Blocks')}</span>
+            <button data-p="newBlock" title="${esc(tr('New block…'))}">+</button></div>
+          <div class="sb-tree">${(blocksEntry() && tree(blocksEntry().children, 0, '📓 ')) ||
+            `<p class="hint">${tr('No block yet. A block is a notepad with A4 pages for one topic.')}</p>`}</div>
+        </div>
         <div class="sb-diaries">
           <div class="sb-subhead"><span>${tr('Diaries')}</span>
             <button data-p="newDiary" title="${esc(tr('New diary…'))}">+</button></div>
@@ -1556,6 +1567,7 @@
       else if (a === 'overview') MM.overview.open();
       else if (a === 'hide') MM.actions.toggleProject();
       else if (a === 'newDiary') P.newDiary().then((name) => name && MM.diary.open(name));
+      else if (a === 'newBlock') MM.notebook.create();
       return;
     }
     const diary = t.closest('[data-diary]');

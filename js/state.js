@@ -450,6 +450,36 @@ window.MM = window.MM || {};
   const str = (v) => (v === null || v === undefined ? '' : String(v));
   const oneOf = (v, catalog, fallback) => (typeof v === 'string' && Object.hasOwn(catalog, v) ? v : fallback);
 
+  // ---- Blocks (notebook.js): a map with fixed pages ----------------------------------
+  // doc.page = { id, size, orient, count, ruling, paper, created: ['YYYY-MM-DD', …] }
+  MM.PAGE_SIZES = { A4: [794, 1123] }; // CSS px (96 dpi) portrait - printed 1:1
+  MM.PAGE_RULINGS = { none: 'None', lines: 'Lines', grid: 'Squares', dots: 'Dots' };
+  MM.PAGE_MAX = 999;
+
+  /** The page settings of a block from a file (untrusted), or null for a normal map. */
+  MM.cleanPage = function (p) {
+    if (!p || typeof p !== 'object') return null;
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const day = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    const count = Math.max(1, Math.min(MM.PAGE_MAX, Math.round(num(p.count, 1)) || 1));
+    const created = (Array.isArray(p.created) ? p.created : []).slice(0, count)
+      .map((d) => (/^\d{4}-\d{2}-\d{2}$/.test(d) ? d : day));
+    while (created.length < count) created.push(created.length ? created[created.length - 1] : day);
+    return {
+      id: typeof p.id === 'string' && /^[a-z0-9]{4,16}$/.test(p.id) ? p.id : MM.pageId(),
+      size: oneOf(p.size, MM.PAGE_SIZES, 'A4'),
+      orient: p.orient === 'landscape' ? 'landscape' : 'portrait',
+      count,
+      ruling: oneOf(p.ruling, MM.PAGE_RULINGS, 'grid'),
+      paper: typeof p.paper === 'string' && /^#[0-9a-f]{3,8}$/i.test(p.paper) ? p.paper : '#fdfdf8',
+      created,
+    };
+  };
+
+  /** A new block id (folder name of its images, see plans/notebook-plan.md). */
+  MM.pageId = () => Math.random().toString(36).slice(2, 7) + Date.now().toString(36).slice(-5);
+
   /** Fill in missing fields so older or hand-edited files still load. */
   MM.normalizeDoc = function (raw) {
     const doc = MM.emptyDoc();
@@ -606,6 +636,9 @@ window.MM = window.MM || {};
     for (const n of Object.values(doc.nodes)) {
       if (n.anchor && (!doc.nodes[n.anchor.node] || doc.nodes[n.anchor.node].type === 'draw')) n.anchor = null;
     }
+      // a block (notebook.js): fixed pages
+    const page = MM.cleanPage(raw.page);
+    if (page) doc.page = page;
     // a connection end is either attached to a note or a free point
     const end = (x) => (typeof x.node === 'string'
       ? { node: x.node, anchor: str(x.anchor) || 'auto' }
@@ -692,7 +725,8 @@ window.MM = window.MM || {};
   // If the document changed since the last snapshot, the old snapshot goes
   // onto the undo stack.
 
-  const snapshot = () => JSON.stringify({ nodes: MM.state.doc.nodes, edges: MM.state.doc.edges });
+  // page: the pages of a block (adding / moving pages is a step of its own, notebook.js)
+  const snapshot = () => JSON.stringify({ nodes: MM.state.doc.nodes, edges: MM.state.doc.edges, page: MM.state.doc.page });
 
   MM.history = {
     undoStack: [],
@@ -727,6 +761,8 @@ window.MM = window.MM || {};
       const data = JSON.parse(s);
       MM.state.doc.nodes = data.nodes;
       MM.state.doc.edges = data.edges;
+      if (data.page) MM.state.doc.page = data.page;
+      else delete MM.state.doc.page;
       this.last = s;
       MM.pruneSelection();
       MM.state.rev++;

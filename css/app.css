@@ -509,6 +509,49 @@ details.st-group.few summary { color: var(--muted); }
 }
 #group-layer, #node-layer, #label-layer, #overlay-node-layer, #ui-layer { position: absolute; left: 0; top: 0; }
 
+/* ---- Blocks (notebook.js): A4 paper sheets below the notes -------------------- */
+#page-layer { position: absolute; left: 0; top: 0; pointer-events: none; }
+#viewport.block-mode { background-color: color-mix(in srgb, var(--canvas) 78%, #7a8494); }
+#viewport.block-mode.show-grid { background-image: none; } /* the pages have their own ruling */
+/* the paper stays light in the dark theme: what is written on it keeps the light colours */
+#viewport.block-mode #world {
+  --text: #1f2933; --muted: #7b8794; --label: #52606d; --border: #dde2e9; --panel: #ffffff;
+  --chip-bg: #ffffff; --chip-text: #4a5568; --chip-border: #e2e8f0; --mix-base: white; --mix-ink: black;
+  --track: #e2e8f0; --line-soft: rgba(0, 0, 0, 0.12); --input-bg: #ffffff; --btn-bg: #ffffff;
+  color-scheme: light; color: var(--text);
+}
+.nb-page {
+  position: absolute;
+  background-color: var(--nb-paper, #fdfdf8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 6px 18px rgba(0, 0, 0, 0.12);
+  --nb-line: 30px; /* ~8 mm lines */
+  --nb-sq: 18.9px; /* 5 mm squares / dots */
+}
+.nb-page[data-ruling="lines"] { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--nb-line) - 1px), rgba(0, 0, 0, 0.1) calc(var(--nb-line) - 1px), rgba(0, 0, 0, 0.1) var(--nb-line)); background-position: 0 calc(var(--nb-head) + 8px); }
+.nb-page[data-ruling="grid"] { background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px); background-size: var(--nb-sq) var(--nb-sq); }
+.nb-page[data-ruling="dots"] { background-image: radial-gradient(rgba(0, 0, 0, 0.22) 1px, transparent 1.3px); background-size: var(--nb-sq) var(--nb-sq); }
+.nb-head {
+  position: absolute; left: 0; right: 0; top: 0; height: var(--nb-head);
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 0 18px; font-size: 11px; color: #8a929c; background: var(--nb-paper, #fdfdf8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08); white-space: nowrap; overflow: hidden;
+}
+.nb-head span:first-child { overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.node.offpage { display: none !important; } /* far from the screen: not laid out, not painted */
+#nb-bar {
+  position: fixed; z-index: 55; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px; max-width: calc(100vw - 16px); overflow-x: auto;
+  padding: 6px 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 4px 16px var(--shadow); touch-action: manipulation; user-select: none;
+}
+#nb-bar[hidden] { display: none; }
+#nb-bar button { flex: none; min-width: 40px; height: 40px; border-radius: 10px; padding: 0 8px; font-size: 18px; display: inline-flex; align-items: center; justify-content: center; }
+#nb-bar button.nb-label { font-size: 13px; min-width: 96px; font-variant-numeric: tabular-nums; }
+#nb-bar button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+#nb-bar button.dim { opacity: 0.4; }
+#nb-bar .nb-t { font: 700 18px/1 Georgia, "Times New Roman", serif; }
+#nb-bar .nb-sep { flex: none; width: 1px; height: 28px; background: var(--border); margin: 0 2px; }
+
 /* ---- Notes -------------------------------------------------------------- */
 
 .node {

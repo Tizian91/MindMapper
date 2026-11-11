@@ -743,7 +743,8 @@
     e.preventDefault();
     const scale = e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1;
     const dx = e.deltaX * scale, dy = e.deltaY * scale;
-    if (e.ctrlKey || (S.settings.wheel === 'zoom' && !e.shiftKey)) {
+    // a block scrolls through its pages like a document; Ctrl + wheel (and pinching a touchpad) zooms
+    if (e.ctrlKey || (S.settings.wheel === 'zoom' && !e.shiftKey && !S.doc.page)) {
       const r = vp.getBoundingClientRect();
       MM.zoomAt(S.doc.view.zoom * Math.exp(-dy * 0.0015), e.clientX - r.left, e.clientY - r.top);
     } else {
@@ -819,7 +820,7 @@
     else if (ctrl && key === 's') e.shiftKey ? A.saveAs() : A.save();
     else if (ctrl && key === 'o') A.open();
     else if (ctrl && key === 'p') A.exportPdf(); // the map as PDF instead of printing the screen
-    else if (ctrl && key === 'a') A.selectAll();
+    else if (ctrl && key === 'a') S.doc.page ? MM.notebook.selectPage() : A.selectAll(); // a block: the current page
     else if (ctrl && e.altKey && key === 'c') A.copyPng(); // as a picture (Ctrl+Shift+C opens the browser's tools)
     else if (ctrl && key === 'c') A.copy();
     else if (ctrl && key === 'x') A.cut();
@@ -838,6 +839,10 @@
     else if (key === 'Tab') A.insertByKey('text');
     // N, T, L, G, H, M, C: insert a note (connected to the selected one)
     else if (!e.altKey && !e.shiftKey && A.INSERT_KEYS[key] && !document.querySelector('dialog[open]')) A.insertByKey(A.INSERT_KEYS[key]);
+    // a block: turn the pages (arrow keys only while nothing is selected - else they move it)
+    else if (S.doc.page && (key === 'PageUp' || (key === 'ArrowLeft' && !S.selection.size))) MM.notebook.turn(-1);
+    else if (S.doc.page && (key === 'PageDown' || (key === 'ArrowRight' && !S.selection.size))) MM.notebook.turn(1);
+    else if (S.doc.page && (key === 'Home' || key === 'End')) MM.notebook.show(key === 'Home' ? 0 : S.doc.page.count - 1);
     else if (key === 'ArrowLeft') A.nudge(-step, 0);
     else if (key === 'ArrowRight') A.nudge(step, 0);
     else if (key === 'ArrowUp') A.nudge(0, -step);

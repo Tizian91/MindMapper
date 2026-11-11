@@ -29,6 +29,7 @@
       ? ' · ' + MM.tf('st_filterShown', { n: Object.values(S.doc.nodes).filter(MM.meta.matches).length }) : '';
     document.getElementById('status-info').textContent = MM.tf('st_counts', { nodes, edges }) + sel + shown;
     MM.load.renderStatus(); // planned hours today / this week / smallest buffer
+    if (MM.notebook) MM.notebook.renderBar(); // pen on / off
   };
 
   let flashTimer = null;

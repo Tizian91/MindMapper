@@ -60,9 +60,15 @@
    * before(orig, copy): called while the copy still has every element of the original.
    */
   function copyOfWorld(nodeIds, keepIds, before) {
+    // a block: every page into the copy (notebook.js draws only those near the screen)
+    if (MM.notebook) MM.notebook.showAll(true);
     const orig = document.getElementById('world');
     const world = orig.cloneNode(true);
-    if (before) before(orig, world);
+    try {
+      if (before) before(orig, world);
+    } finally {
+      if (MM.notebook) MM.notebook.showAll(false);
+    }
     world.removeAttribute('id');
     for (const sel of ['#overlay-layer', '#ui-layer']) world.querySelectorAll(sel).forEach((x) => x.remove());
     if (!keepIds) world.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id')); // no second #node-layer etc.

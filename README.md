@@ -34,6 +34,7 @@ load the example map again (it is shown on the very first start and contains a s
 | `js/workload.js` | Planned hours per day / week from estimates and deadlines, buffer until each deadline |
 | `js/routines.js` | Recurring notes (meetings, weekly time budgets): rules, capacity, entries in new day / week plans |
 | `js/draw.js`, `js/ink.js` | Drawings on the map: shapes (rectangle, ellipse, line, arrow) and freehand with a pen or the mouse (pressure, marker, eraser, palm rejection); anchored to the note below |
+| `js/notebook.js` | Blocks: maps with fixed A4 pages (folder `Blocks/`, own sidebar section) - paper sheets, page geometry, "New block" dialog, page mode (see `plans/notebook-plan.md`) |
 | `js/images.js` | Image import (file picker, clipboard, drag & drop), image assets |
 | `js/files.js` | Data notes: copy any file into `Assets/`, open / replace it |
 | `js/editing.js` | In-place text editing |

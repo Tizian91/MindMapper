@@ -9,7 +9,7 @@
  *
  * New file in index.html? Add it to FILES, so it is there offline from the start.
  */
-const CACHE = 'mindmapper-v5';
+const CACHE = 'mindmapper-v6';
 const FILES = [
   './',
   'index.html',
@@ -61,6 +61,7 @@ const FILES = [
   'js/workload.js',
   'js/routines.js',
   'js/diary.js',
+  'js/notebook.js',
   'js/main.js',
 ];
 
