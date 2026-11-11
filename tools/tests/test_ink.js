@@ -114,6 +114,55 @@ try {
   check('saved: a shape has no ink', doc.nodes[rect.id].draw === 'rect' && !('ink' in doc.nodes[rect.id]) && !('marker' in doc.nodes[rect.id]));
   check('saved: same path after loading', K.path(nn).length > 0 && K.path(doc.nodes[mk.id]) === K.path(mk));
   check('file size: about 3 numbers per point', JSON.stringify(nn.ink).length < 400, JSON.stringify(nn.ink).length);
+
+  // ---- shape recognition (K.recognize) ----
+  const along = (corners, per) => { // a stroke along the corners, a little shaky
+    const a = [];
+    for (let c = 0; c + 1 < corners.length; c++) {
+      const [x0, y0] = corners[c], [x1, y1] = corners[c + 1];
+      for (let i = 0; i < per; i++) a.push(x0 + ((x1 - x0) * i) / per + Math.sin(a.length) * 1.5, y0 + ((y1 - y0) * i) / per + Math.cos(a.length) * 1.5, 1);
+    }
+    const [lx, ly] = corners[corners.length - 1];
+    a.push(lx, ly, 1);
+    return a;
+  };
+  const circle = [];
+  for (let i = 0; i <= 60; i++) circle.push(200 + 100 * Math.cos((i / 60) * 2 * Math.PI) + Math.sin(i) * 2, 200 + 60 * Math.sin((i / 60) * 2 * Math.PI), 1);
+  const rec = (pts) => (K.recognize(pts, 40) || { kind: null }).kind;
+  check('recognise: a straight stroke is a line', rec(along([[0, 0], [300, 10]], 30)) === 'line');
+  const lv = K.recognize(along([[0, 0], [300, 10]], 30), 40);
+  check('recognise: a nearly level line becomes level', lv && Math.abs(lv.b.y - lv.a.y) < 0.5, lv && lv.b.y);
+  check('recognise: rectangle', rec(along([[0, 0], [300, 0], [300, 200], [0, 200], [2, 4]], 20)) === 'rect');
+  check('recognise: rectangle started in the middle of a side', rec(along([[150, 0], [300, 0], [300, 200], [0, 200], [0, 0], [140, 2]], 20)) === 'rect');
+  check('recognise: ellipse', rec(circle) === 'ellipse');
+  check('recognise: triangle', rec(along([[150, 0], [300, 250], [0, 250], [148, 6]], 25)) === 'triangle');
+  check('recognise: diamond', rec(along([[150, 0], [300, 150], [150, 300], [0, 150], [146, 4]], 25)) === 'diamond');
+  check('recognise: a scribble is nothing', rec(along([[0, 0], [100, 80], [20, 160], [160, 30], [60, 220]], 15)) === null);
+  check('recognise: small strokes (letters) are nothing', rec(along([[0, 0], [20, 0], [20, 15], [0, 15], [0, 1]], 5)) === null);
+  check('recognise: a hook (open, bent) is nothing', rec(along([[0, 0], [200, 0], [200, 150]], 20)) === null);
+  const box = K.recognize(along([[10, 20], [310, 20], [310, 220], [10, 220], [12, 24]], 20), 40);
+  check('recognise: box of a shape', box && Math.abs(box.a.x - 10) < 4 && Math.abs(box.b.y - 220) < 4, box && JSON.stringify(box.a));
+
+  // ---- lasso: inside a loop ----
+  const loop = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 }];
+  check('inside: point in the loop', K.inside({ x: 50, y: 50 }, loop) && !K.inside({ x: 150, y: 50 }, loop));
+
+  // ---- new shapes: paths and outlines ----
+  for (const kind of ['round', 'triangle', 'diamond', 'arrow2']) {
+    const s = D.create(kind, { x: 0, y: 0 }, { x: 100, y: 60 }, false);
+    check('shape ' + kind + ': path and outline', /^M/.test(D.path(s)) && D.outline(s).length >= 2);
+  }
+  const tri = D.create('triangle', { x: 1000, y: 1000 }, { x: 1100, y: 1100 }, false);
+  check('eraser takes a shape on its line', K.eraseAt({ x: 1000, y: 1099 }, 3) && !S.doc.nodes[tri.id]);
+  const box2 = D.create('rect', { x: 2000, y: 2000 }, { x: 2200, y: 2200 }, false);
+  check('eraser in the middle of a rectangle leaves it', !K.eraseAt({ x: 2100, y: 2100 }, 3) && S.doc.nodes[box2.id]);
+  check('saved: new shape kinds stay', MM.normalizeDoc({ nodes: { a: { id: 'a', type: 'draw', draw: 'diamond' } } }).nodes.a.draw === 'diamond');
+
+  // ---- settings of older versions: the line tool became "Shapes" ----
+  S.settings.pen = { tool: 'line', line: { color: '#dc2626', width: 6 } };
+  const cfg = K.cfg();
+  check('old line tool: Shapes with a line, colour and width kept', cfg.tool === 'shape' && cfg.shape.kind === 'line' && cfg.shape.color === '#dc2626' && cfg.shape.width === 6);
+  check('recognise shapes is on by default', cfg.recognize === true);
 } catch (e) {
   out.push('ERROR ' + (e && e.stack || e));
 }

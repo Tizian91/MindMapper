@@ -645,7 +645,7 @@
     // drawing: the shape of draw.js in a box of 1000 units width, line width in px
     const W = 1000, H = Math.max(1, (W * o.h) / o.w);
     const d = MM.draw.path({ draw: o.shape, line: o.line, w: W, h: H, style: { strokeWidth: (o.width * W) / (o.w * REF_WIDTH) } });
-    const line = o.shape === 'line' || o.shape === 'arrow';
+    const line = MM.isLineKind(o.shape);
     return `<div class="${cls}" data-ov="${esc(o.id)}" style="${pos}">
       <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="${d}" fill="${line || o.fill === 'none' ? 'none' : esc(o.fill)}"
         stroke="${esc(o.color)}" stroke-width="${o.width}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg>${handle}</div>`;
@@ -914,7 +914,7 @@
     else renderTools();
   }
 
-  const KIND_ICONS = { rect: '▭', ellipse: '◯', line: '╱', arrow: '➚' };
+  const KIND_ICONS = { rect: '▭', round: '▢', ellipse: '◯', triangle: '△', diamond: '◇', line: '╱', arrow: '➚', arrow2: '⤢' };
 
   function renderTools() {
     const box = dialog.querySelector('.dy-ov-tools');

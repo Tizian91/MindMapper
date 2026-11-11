@@ -619,6 +619,11 @@ details.st-group.few summary { color: var(--muted); }
 #ink-palette .ink-own input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
 #ink-palette .ink-width i { display: block; width: var(--w); height: var(--w); max-width: 24px; max-height: 24px; border-radius: 50%; background: currentColor; }
 #ink-palette[hidden] { display: none; }
+#ink-palette .ink-shape path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+#ink-palette button.ink-kind { min-width: 36px; padding: 0 4px; }
+#ink-palette .ink-lasso-icon { font-size: 22px; line-height: 1; font-weight: 400; }
+#ink-palette button:disabled { opacity: 0.4; }
+#ink-palette.compact [data-ink-tool] span { display: none; }
 @media (max-width: 600px) { #ink-palette button span { display: none; } }
 .node.editing { cursor: text; }
 

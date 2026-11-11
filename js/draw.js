@@ -23,7 +23,7 @@
   const A = MM.actions;
 
   D.is = (n) => !!n && n.type === 'draw';
-  const isLine = (n) => n.draw === 'line' || n.draw === 'arrow';
+  const isLine = (n) => MM.isLineKind(n.draw);
   const frame = (n) => ({ x: n.x, y: n.y, w: n.w, h: n.h });
   const same = (a, b) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
   const r2 = (v) => Math.round(v * 100) / 100;
@@ -43,14 +43,44 @@
       const l = n.line || { x1: 0, y1: 0, x2: 1, y2: 1 };
       const x1 = l.x1 * w, y1 = l.y1 * h, x2 = l.x2 * w, y2 = l.y2 * h;
       let d = `M${x1},${y1}L${x2},${y2}`;
-      if (n.draw === 'arrow') {
-        const len = Math.max(10, sw * 4), ang = Math.atan2(y2 - y1, x2 - x1), spread = 0.45;
-        const p = (a) => `${x2 - len * Math.cos(a)},${y2 - len * Math.sin(a)}`;
-        d += `M${p(ang - spread)}L${x2},${y2}L${p(ang + spread)}`;
-      }
+      const len = Math.max(10, sw * 4), spread = 0.45;
+      const head = (tx, ty, ang) => {
+        const p = (a) => `${tx - len * Math.cos(a)},${ty - len * Math.sin(a)}`;
+        return `M${p(ang - spread)}L${tx},${ty}L${p(ang + spread)}`;
+      };
+      if (n.draw === 'arrow' || n.draw === 'arrow2') d += head(x2, y2, Math.atan2(y2 - y1, x2 - x1));
+      if (n.draw === 'arrow2') d += head(x1, y1, Math.atan2(y1 - y2, x1 - x2));
       return d;
     }
+    if (n.draw === 'round') {
+      const r = Math.max(0, Math.min((w - sw) / 2, (h - sw) / 2, Math.min(w, h) * 0.18));
+      return `M${k + r},${k}H${w - k - r}A${r},${r} 0 0 1 ${w - k},${k + r}V${h - k - r}A${r},${r} 0 0 1 ${w - k - r},${h - k}` +
+        `H${k + r}A${r},${r} 0 0 1 ${k},${h - k - r}V${k + r}A${r},${r} 0 0 1 ${k + r},${k}Z`;
+    }
+    if (n.draw === 'triangle') return `M${w / 2},${k}L${w - k},${h - k}H${k}Z`;
+    if (n.draw === 'diamond') return `M${w / 2},${k}L${w - k},${h / 2}L${w / 2},${h - k}L${k},${h / 2}Z`;
     return `M${k},${k}H${w - k}V${h - k}H${k}Z`;
+  };
+
+  /**
+   * The line of a drawing (not freehand) as points in world coordinates, closed shapes
+   * closed - for the eraser and the lasso (ink.js).
+   */
+  D.outline = function (n) {
+    const { x, y, w, h } = n;
+    if (isLine(n)) {
+      const l = n.line || { x1: 0, y1: 0, x2: 1, y2: 1 };
+      return [{ x: x + l.x1 * w, y: y + l.y1 * h }, { x: x + l.x2 * w, y: y + l.y2 * h }];
+    }
+    const at = (fx, fy) => ({ x: x + fx * w, y: y + fy * h });
+    if (n.draw === 'ellipse') {
+      const out = [];
+      for (let i = 0; i <= 36; i++) out.push(at(0.5 + 0.5 * Math.cos((i / 36) * 2 * Math.PI), 0.5 + 0.5 * Math.sin((i / 36) * 2 * Math.PI)));
+      return out;
+    }
+    if (n.draw === 'triangle') return [at(0.5, 0), at(1, 1), at(0, 1), at(0.5, 0)];
+    if (n.draw === 'diamond') return [at(0.5, 0), at(1, 0.5), at(0.5, 1), at(0, 0.5), at(0.5, 0)];
+    return [at(0, 0), at(1, 0), at(1, 1), at(0, 1), at(0, 0)];
   };
 
   /**
@@ -60,7 +90,7 @@
   D.boxFor = function (kind, a, b, square) {
     let dx = b.x - a.x, dy = b.y - a.y;
     if (square) {
-      if (kind === 'line' || kind === 'arrow') {
+      if (MM.isLineKind(kind)) {
         const len = Math.hypot(dx, dy), ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
         dx = Math.round(len * Math.cos(ang));
         dy = Math.round(len * Math.sin(ang));
@@ -229,14 +259,7 @@
 
   // ---- Actions (toolbar, panel, context menu) -----------------------------------
 
-  A.drawMenu = function () {
-    if (MM.menu.isOpen()) return MM.menu.close();
-    const r = document.getElementById('draw-btn').getBoundingClientRect();
-    MM.menu.open(Object.entries(D.KINDS).map(([k, label]) => ({ label, checked: S.tool === k, action: () => D.setTool(k) }))
-      .concat(['-', { label: 'Text (no frame)', checked: S.tool === 'text', action: () => D.setTool('text') }]),
-    r.left, r.bottom + 2);
-  };
-
+  // shapes are drawn in the pen mode now (ink.js: "Shapes" in its palette)
   A.drawTool = (kind) => D.setTool(kind);
 
   /** ✍ in the toolbar (P): freehand with the pen or the mouse (ink.js). */

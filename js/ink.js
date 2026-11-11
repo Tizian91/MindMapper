@@ -38,30 +38,42 @@
 
   K.PEN_COLORS = ['#1f2937', '#2563eb', '#dc2626', '#16a34a', '#9333ea'];
   K.MARKER_COLORS = ['#facc15', '#4ade80', '#f472b6', '#60a5fa'];
-  K.WIDTHS = { pen: [1.5, 3, 6], marker: [12, 20, 32], line: [1.5, 3, 6], text: [14, 18, 28], eraser: [8, 18, 36] };
-  K.TOOLS = ['pen', 'marker', 'line', 'text', 'eraser'];
+  K.WIDTHS = { pen: [1.5, 3, 6], marker: [12, 20, 32], shape: [1.5, 3, 6], text: [14, 18, 28], eraser: [8, 18, 36] };
+  K.TOOLS = ['pen', 'marker', 'shape', 'text', 'eraser', 'lasso'];
+  // "Shapes": drawings of draw.js, drawn in the pen mode (lines snap, see snapPoint)
+  K.SHAPES = ['line', 'arrow', 'arrow2', 'rect', 'round', 'ellipse', 'triangle', 'diamond'];
   const SNAP = 12;         // screen px: an end this close to the end of another line snaps to it
+  const HOLD = 500;        // ms the pen rests at the end of a stroke: its shape is recognised
   const DEFAULTS = {
     tool: 'pen',
     pen: { color: K.PEN_COLORS[0], width: 3 },
     marker: { color: K.MARKER_COLORS[0], width: 20 },
-    line: { color: K.PEN_COLORS[0], width: 3 },
+    // kind: the shape; dash: dashed line; fill: filled, see-through in the colour
+    shape: { color: K.PEN_COLORS[0], width: 3, kind: 'line', dash: false, fill: false },
     text: { color: K.PEN_COLORS[0], width: 18 }, // width = font size
     eraser: { width: 18 }, // radius on screen
+    lasso: {},
   };
 
   /** Settings of the palette (kept in the browser), completed with the defaults. */
   K.cfg = function () {
     const c = S.settings.pen && typeof S.settings.pen === 'object' ? S.settings.pen : {};
+    // older settings: the line tool was a tool of its own
+    const tool = c.tool === 'line' ? 'shape' : c.tool;
     const out = {
-      tool: K.TOOLS.includes(c.tool) ? c.tool : DEFAULTS.tool,
+      tool: K.TOOLS.includes(tool) ? tool : DEFAULTS.tool,
       pen: Object.assign({}, DEFAULTS.pen, c.pen),
       marker: Object.assign({}, DEFAULTS.marker, c.marker),
-      line: Object.assign({}, DEFAULTS.line, c.line),
+      shape: Object.assign({}, DEFAULTS.shape, c.line && !c.shape ? { color: c.line.color, width: c.line.width } : null, c.shape),
       text: Object.assign({}, DEFAULTS.text, c.text),
       eraser: Object.assign({}, DEFAULTS.eraser, c.eraser),
+      lasso: {},
       finger: !!c.finger, // one finger writes (phones / tablets without a stylus)
+      recognize: c.recognize !== false, // pen held still at the end of a stroke: a clean shape (on unless switched off)
     };
+    if (!K.SHAPES.includes(out.shape.kind)) out.shape.kind = 'line';
+    out.shape.dash = !!out.shape.dash;
+    out.shape.fill = !!out.shape.fill;
     S.settings.pen = out;
     return out;
   };
@@ -265,17 +277,18 @@
       if (n.type !== 'draw' || (MM.meta && MM.meta.isHidden && MM.meta.isHidden(n))) continue;
       const half = (Number(n.style.strokeWidth) || 0) / 2;
       if (p.x < n.x - r || p.x > n.x + n.w + r || p.y < n.y - r || p.y > n.y + n.h + r) continue;
-      if (n.draw === 'line' || n.draw === 'arrow') {
-        // a straight line (sketch): it goes as a whole when the eraser touches it
-        const [a, b] = K.ends(n);
-        if (K.segDist(p, a, b) <= r + half) {
+      if (n.draw !== 'ink') {
+        // a shape (line, arrow, rectangle …): it goes as a whole when the eraser touches its line
+        const pts = MM.draw.outline(n);
+        let hit = false;
+        for (let i = 1; i < pts.length && !hit; i++) hit = K.segDist(p, pts[i - 1], pts[i]) <= r + half;
+        if (hit) {
           delete S.doc.nodes[n.id];
           S.selection.delete(n.id);
           any = true;
         }
         continue;
       }
-      if (n.draw !== 'ink') continue;
       const strokes = K.strokes(n);
       const left = strokes.filter((s) => !K.hits(s, p, r + half));
       if (left.length === strokes.length) continue;
@@ -288,6 +301,86 @@
       }
     }
     return any;
+  };
+
+  // ---- Shape recognition ------------------------------------------------------------------
+  // A stroke after which the pen rested a moment (HOLD) becomes a clean shape if it looks
+  // like one: open and straight - a line; closed - triangle, rectangle, diamond or ellipse.
+
+  /** Is point p inside the polygon pts ([{x, y}])? */
+  K.inside = function (p, pts) {
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const a = pts[i], b = pts[j];
+      if ((a.y > p.y) !== (b.y > p.y) && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+    }
+    return inside;
+  };
+
+  /**
+   * The shape a stroke (flat [x, y, p, …], world coordinates) was meant to be, or null:
+   * { kind, a, b } - a line from a to b, or a shape in the box a (top left) - b.
+   * minSize: smallest size in world units (small strokes are letters, not shapes).
+   */
+  K.recognize = function (flat, minSize) {
+    const pts = [];
+    for (let i = 0; i + 2 < flat.length; i += 3) pts.push({ x: flat[i], y: flat[i + 1] });
+    if (pts.length < 4) return null;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, len = 0;
+    pts.forEach((p, i) => {
+      x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+      if (i) len += Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y);
+    });
+    const w = x1 - x0, h = y1 - y0, diag = Math.hypot(w, h);
+    if (diag < (minSize || 0)) return null;
+    const first = pts[0], last = pts[pts.length - 1];
+    const chord = Math.hypot(last.x - first.x, last.y - first.y);
+    // open and straight: a line (nearly level / upright: exactly)
+    if (chord > diag * 0.85 && chord / len > 0.94) {
+      const b = { x: last.x, y: last.y };
+      const ang = Math.atan2(b.y - first.y, b.x - first.x), step = Math.PI / 4;
+      const near = Math.round(ang / step) * step;
+      if (Math.abs(ang - near) < 0.09) { // ~5°: onto the 45° steps
+        b.x = first.x + chord * Math.cos(near);
+        b.y = first.y + chord * Math.sin(near);
+      }
+      return { kind: 'line', a: { x: r2(first.x), y: r2(first.y) }, b: { x: r2(b.x), y: r2(b.y) } };
+    }
+    if (chord > diag * 0.3 || w < diag * 0.15 || h < diag * 0.15) return null; // not closed, or too thin
+    const box = { kind: '', a: { x: r2(x0), y: r2(y0) }, b: { x: r2(x1), y: r2(y1) } };
+    // corners: the stroke with fewer points, then points on a straight way dropped
+    const simple = K.simplify(flat, diag * 0.07);
+    let v = [];
+    for (let i = 0; i + 2 < simple.length; i += 3) v.push({ x: simple[i], y: simple[i + 1] });
+    if (v.length > 2 && Math.hypot(v[0].x - v[v.length - 1].x, v[0].y - v[v.length - 1].y) < diag * 0.3) v.pop();
+    for (let again = true; again && v.length > 3;) {
+      again = false;
+      for (let i = 0; i < v.length; i++) {
+        const a = v[(i + v.length - 1) % v.length], p = v[i], b = v[(i + 1) % v.length];
+        const turn = Math.abs(Math.atan2(b.y - p.y, b.x - p.x) - Math.atan2(p.y - a.y, p.x - a.x));
+        const bend = Math.min(turn, 2 * Math.PI - turn);
+        if (bend < 0.45) { // less than ~25°: no corner
+          v.splice(i, 1);
+          again = true;
+          break;
+        }
+      }
+    }
+    const near = (p, q, tol) => Math.hypot(p.x - q.x, p.y - q.y) < tol;
+    const tol = Math.min(w, h) * 0.35;
+    const corners = [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }];
+    const middles = [{ x: (x0 + x1) / 2, y: y0 }, { x: x1, y: (y0 + y1) / 2 }, { x: (x0 + x1) / 2, y: y1 }, { x: x0, y: (y0 + y1) / 2 }];
+    if (v.length === 3) return Object.assign(box, { kind: 'triangle' });
+    if (v.length === 4) {
+      if (v.every((p) => corners.some((c) => near(p, c, tol)))) return Object.assign(box, { kind: 'rect' });
+      if (v.every((p) => middles.some((c) => near(p, c, tol)))) return Object.assign(box, { kind: 'diamond' });
+    }
+    // round: every point about as far from the middle as an ellipse in the box would be
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = w / 2, ry = h / 2;
+    const err = pts.reduce((s, p) => s + Math.abs(Math.hypot((p.x - cx) / rx, (p.y - cy) / ry) - 1), 0) / pts.length;
+    if (v.length >= 5 && err < 0.16) return Object.assign(box, { kind: 'ellipse' });
+    if (v.length === 4) return Object.assign(box, { kind: 'rect' });
+    return null;
   };
 
   // ---- Straight lines (sketches) --------------------------------------------------------
@@ -312,7 +405,7 @@
   K.snapPoint = function (p, r) {
     let best = null, bd = r;
     for (const n of Object.values(S.doc.nodes)) {
-      if (n.type !== 'draw' || (n.draw !== 'line' && n.draw !== 'arrow') || (MM.meta && MM.meta.isHidden && MM.meta.isHidden(n))) continue;
+      if (n.type !== 'draw' || !MM.isLineKind(n.draw) || (MM.meta && MM.meta.isHidden && MM.meta.isHidden(n))) continue;
       for (const e of K.ends(n)) {
         const d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d <= bd) {
@@ -392,7 +485,20 @@
     if (!K.on() || e.pointerType === 'touch' || active) return; // a finger: touch.js asks K.fingerDown
     if (vp.classList.contains('space-pan')) return; // Space + drag pans the map
     if (e.button !== 0 && !erasing(e)) return; // right / middle mouse button as usual
+    if (!erasing(e) && onSelection(e)) return; // lasso: what was caught is moved (interaction.js)
     begin(e);
+  }
+
+  /**
+   * Lasso: does the pointer come down on what the lasso caught (the box around it, a little
+   * wider)? Then it is moved, resized or deleted as usual - no new lasso.
+   */
+  function onSelection(e) {
+    if (K.cfg().tool !== 'lasso') return false;
+    const sel = MM.selectedNodes();
+    if (!sel.length) return false;
+    const p = MM.interaction.toWorld(e.clientX, e.clientY), b = MM.geo.bbox(sel), pad = 16 / (S.doc.view.zoom || 1);
+    return p.x >= b.x - pad && p.x <= b.x + b.w + pad && p.y >= b.y - pad && p.y <= b.y + b.h + pad;
   }
 
   /**
@@ -400,7 +506,7 @@
    * if "☝️ Finger" is on. Returns true if it took the touch.
    */
   K.fingerDown = function (e) {
-    if (!K.fingerDraws() || active) return false;
+    if (!K.fingerDraws() || active || onSelection(e)) return false;
     begin(e);
     return true;
   };
@@ -438,10 +544,20 @@
     const tool = autoErase ? 'eraser' : cfg.tool;
     active = {
       id: e.pointerId, type: e.pointerType, tool, pts: [], erased: false, t0: Date.now(), cx: e.clientX, cy: e.clientY,
-      color: tool !== 'eraser' ? cfg[tool].color : null,
+      color: tool !== 'eraser' && tool !== 'lasso' ? cfg[tool].color : null,
       width: cfg[tool].width,
       under: null,
+      kind: tool === 'shape' ? cfg.shape.kind : null,
+      dash: tool === 'shape' && cfg.shape.dash,
+      fill: tool === 'shape' && cfg.shape.fill,
+      shape: null, // a stroke recognised as a shape (pen held still at its end)
     };
+    if (tool === 'lasso') {
+      MM.select([]);
+      MM.refresh();
+      addEvents([e]);
+      return;
+    }
     if (tool !== 'eraser') {
       const p = MM.interaction.toWorld(e.clientX, e.clientY);
       // anchored to the note / image it starts on (Alt: free), as a drawing
@@ -454,8 +570,9 @@
       if (!wasEditing) MM.draw.placeText(MM.interaction.toWorld(e.clientX, e.clientY), { color: cfg.text.color, size: cfg.text.width, free: freeKey(e) });
       return;
     }
-    if (tool === 'line') {
-      const r = SNAP / (S.doc.view.zoom || 1), w = MM.interaction.toWorld(e.clientX, e.clientY);
+    if (tool === 'shape') {
+      // lines snap to the ends of other lines (and the grid), boxes only to the grid
+      const r = MM.isLineKind(active.kind) ? SNAP / (S.doc.view.zoom || 1) : 0, w = MM.interaction.toWorld(e.clientX, e.clientY);
       active.a = freeKey(e) ? { x: r2(w.x), y: r2(w.y), kind: null } : K.snapPoint(w, r);
       active.b = active.a;
       drawLive();
@@ -467,13 +584,15 @@
 
   function move(e) {
     if (e.pointerType === 'pen') penSeen = Date.now();
-    if (!active && K.on() && e.pointerType !== 'touch' && S.settings.pen && S.settings.pen.tool === 'line') hover(e);
+    if (!active && K.on() && e.pointerType !== 'touch' && S.settings.pen && S.settings.pen.tool === 'shape' &&
+      MM.isLineKind(S.settings.pen.shape && S.settings.pen.shape.kind)) hover(e);
     if (!active || e.pointerId !== active.id) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     active.cx = e.clientX;
     active.cy = e.clientY;
-    addEvents(e.getCoalescedEvents ? e.getCoalescedEvents() : [e]);
+    const all = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    addEvents(all.length ? all : [e]); // some browsers give none (e.g. made-up events)
   }
 
   function up(e) {
@@ -493,18 +612,32 @@
   /** Points of the pointer events: world coordinates, a little steadied, pressure. */
   function addEvents(list) {
     const zoom = S.doc.view.zoom || 1;
-    if (active.tool === 'line') {
-      const ev = list[list.length - 1];
-      active.b = K.lineEnd(active.a, MM.interaction.toWorld(ev.clientX, ev.clientY), ev.shiftKey, SNAP / zoom, freeKey(ev));
+    if (active.tool === 'shape') {
+      const ev = list[list.length - 1], p = MM.interaction.toWorld(ev.clientX, ev.clientY);
+      if (MM.isLineKind(active.kind)) active.b = K.lineEnd(active.a, p, ev.shiftKey, SNAP / zoom, freeKey(ev));
+      else {
+        // a box: Shift - square / circle; corners onto the grid (if on)
+        active.b = freeKey(ev) ? { x: r2(p.x), y: r2(p.y), kind: null } : K.snapPoint(p, 0);
+        active.square = ev.shiftKey;
+      }
       drawLive();
       return;
     }
+    if (active.shape) return; // recognised: the shape stays as it is until the pen is lifted
+    let moved = false;
     for (const ev of list) {
       const p = MM.interaction.toWorld(ev.clientX, ev.clientY);
       if (active.tool === 'eraser') {
         erase(p, (active.width / 2) / zoom);
         continue;
       }
+      if (active.tool === 'lasso') {
+        const pts = active.pts, n = pts.length;
+        if (!n || Math.hypot(p.x - pts[n - 3], p.y - pts[n - 2]) >= 3 / zoom) pts.push(p.x, p.y, 1);
+        continue;
+      }
+      // the pen rests: no new point yet, the hold timer goes on (shape recognition)
+      if (active.pts.length && Math.hypot(p.x - active.pts[active.pts.length - 3], p.y - active.pts[active.pts.length - 2]) * zoom > 3) moved = true;
       // a mouse has no pressure (reports 0.5 while pressed): the full width
       const pr = active.type === 'pen' ? (ev.pressure > 0 ? ev.pressure : 0.5) : 1;
       const pts = active.pts, n = pts.length;
@@ -517,10 +650,25 @@
         pts.push(p.x, p.y, pts[n - 1] * 0.5 + pr * 0.5);
       } else {
         pts.push(p.x, p.y, pr);
+        moved = true;
       }
     }
     if (active.tool !== 'eraser') drawLive();
+    // shape recognition: the pen rests a moment at the end of a pen stroke
+    if (active.tool === 'pen' && K.cfg().recognize && moved) {
+      clearTimeout(holdTimer);
+      const a = active;
+      holdTimer = setTimeout(() => {
+        if (active !== a || a.shape) return;
+        const shape = K.recognize(a.pts, 40 / (S.doc.view.zoom || 1));
+        if (!shape) return;
+        a.shape = shape;
+        if (navigator.vibrate) navigator.vibrate(10);
+        drawLive();
+      }, HOLD);
+    }
   }
+  let holdTimer = 0;
 
   let erasePrev = null, eraseFrame = 0;
   function erase(p, r) {
@@ -551,15 +699,38 @@
       live.style.display = '';
       live.style.opacity = active.tool === 'marker' ? 0.4 : 1;
       const path = live.firstElementChild;
-      if (active.tool === 'line') {
-        path.setAttribute('fill', 'none');
+      const zoom = S.doc.view.zoom || 1;
+      path.removeAttribute('stroke-dasharray');
+      path.removeAttribute('transform');
+      if (active.tool === 'lasso') {
+        // the loop being drawn: dashed, closed
+        const p = active.pts, d = [];
+        for (let i = 0; i + 2 < p.length; i += 3) d.push((i ? 'L' : 'M') + p[i] + ',' + p[i + 1]);
+        path.setAttribute('fill', 'rgba(43, 108, 222, 0.08)');
+        path.setAttribute('stroke', '#2b6cde');
+        path.setAttribute('stroke-width', 1.5 / zoom);
+        path.setAttribute('stroke-dasharray', `${6 / zoom} ${4 / zoom}`);
+        path.setAttribute('d', d.join('') + (d.length > 2 ? 'Z' : ''));
+        markers([]);
+        return;
+      }
+      const shape = active.tool === 'shape' ? { kind: active.kind, a: active.a, b: active.b, square: active.square } : active.shape;
+      if (shape) {
+        // a shape being drawn, or a stroke recognised as one: as it will look (draw.js)
+        const box = MM.draw.boxFor(shape.kind, shape.a, shape.b, !!shape.square);
+        const n = { draw: shape.kind, line: box.line, w: box.w, h: box.h, style: { strokeWidth: active.width } };
+        path.setAttribute('fill', active.fill ? active.color + '40' : 'none');
         path.setAttribute('stroke', active.color);
         path.setAttribute('stroke-width', active.width);
         path.setAttribute('stroke-linecap', 'round');
-        path.setAttribute('d', `M${active.a.x},${active.a.y}L${active.b.x},${active.b.y}`);
-        markers([active.a, active.b]);
+        path.setAttribute('stroke-linejoin', 'round');
+        if (active.dash) path.setAttribute('stroke-dasharray', MM.geo.dashArray('dashed', active.width));
+        path.setAttribute('transform', `translate(${box.x},${box.y})`);
+        path.setAttribute('d', MM.draw.path(n));
+        markers(MM.isLineKind(shape.kind) && active.tool === 'shape' ? [active.a, active.b] : []);
         return;
       }
+      path.removeAttribute('transform');
       path.setAttribute('stroke', 'none');
       path.setAttribute('fill', active.color);
       path.setAttribute('d', K.outline(active.pts, active.width, active.tool === 'marker'));
@@ -600,7 +771,7 @@
     if (hoverFrame) return;
     hoverFrame = requestAnimationFrame(() => {
       hoverFrame = 0;
-      if (active || !K.on() || !hoverAt || K.cfg().tool !== 'line') return;
+      if (active || !K.on() || !hoverAt || K.cfg().tool !== 'shape' || !MM.isLineKind(K.cfg().shape.kind)) return;
       ensureLive();
       const p = K.snapPoint(MM.interaction.toWorld(hoverAt.x, hoverAt.y), SNAP / (S.doc.view.zoom || 1));
       live.style.display = '';
@@ -623,25 +794,66 @@
       }
       return;
     }
-    if (a.tool === 'line') {
-      const zoom = S.doc.view.zoom || 1;
-      if (Math.hypot(a.b.x - a.a.x, a.b.y - a.a.y) * zoom < 3) return; // a tap, no line
-      const n = MM.draw.create('line', a.a, a.b, false);
-      Object.assign(n.style, { stroke: a.color, strokeWidth: a.width, opacity: 1, strokeStyle: 'solid' });
+    clearTimeout(holdTimer);
+    const zoom = S.doc.view.zoom || 1;
+    if (a.tool === 'lasso') {
+      lassoSelect(a.pts);
+      return;
+    }
+    const shape = a.tool === 'shape' ? { kind: a.kind, a: a.a, b: a.b, square: a.square } : a.shape;
+    if (shape) {
+      if (Math.hypot(shape.b.x - shape.a.x, shape.b.y - shape.a.y) * zoom < 3) return; // a tap, no shape
+      const n = MM.draw.create(shape.kind, shape.a, shape.b, !!shape.square);
+      Object.assign(n.style, {
+        stroke: a.color, strokeWidth: a.width, opacity: 1, strokeStyle: a.dash ? 'dashed' : 'solid',
+        fill: a.fill && !MM.isLineKind(shape.kind) ? a.color + '40' : 'none', // see-through in the colour of the line
+      });
       MM.draw.setAnchor(n, a.under);
       K.last = null;
       MM.commit();
       return;
     }
     if (!a.pts.length) return;
-    const zoom = S.doc.view.zoom || 1;
     K.add(K.simplify(a.pts, 0.35 / zoom), { tool: a.tool, color: a.color, width: a.width, under: a.under });
     MM.commit();
   }
 
+  /**
+   * Lasso drawn: what lies inside the loop is selected - a note or shape with its middle,
+   * a freehand drawing with most of its points. Then it can be moved, resized or deleted.
+   */
+  function lassoSelect(flat) {
+    const loop = [];
+    for (let i = 0; i + 2 < flat.length; i += 3) loop.push({ x: flat[i], y: flat[i + 1] });
+    const ids = loop.length < 3 ? [] : Object.values(S.doc.nodes).filter((n) => {
+      if ((MM.meta.isHidden && MM.meta.isHidden(n)) || (MM.notebook && MM.notebook.off(n))) return false;
+      if (n.type === 'draw' && n.draw === 'ink') {
+        const pts = K.strokes(n).flatMap((s) => {
+          const out = [];
+          for (let i = 0; i + 2 < s.length; i += 3) out.push({ x: s[i], y: s[i + 1] });
+          return out;
+        });
+        return pts.filter((p) => K.inside(p, loop)).length * 2 >= pts.length;
+      }
+      return K.inside({ x: n.x + n.w / 2, y: n.y + n.h / 2 }, loop);
+    }).map((n) => n.id);
+    MM.select(ids);
+    MM.refresh();
+    renderPalette();
+    if (ids.length) MM.ui.flash(MM.tr('{n} caught - drag to move, the corner to resize, 🗑 deletes', { n: ids.length }));
+  }
+
   // ---- Palette ---------------------------------------------------------------------------
 
-  const TOOLS = [['pen', '✏️', 'Pen'], ['marker', '🖍️', 'Marker'], ['line', '📏', 'Line'], ['text', '<b class="ink-t">T</b>', 'Text'], ['eraser', '🧽', 'Eraser']];
+  // the button of the shapes shows the shape chosen (icon from SHAPE_ICONS)
+  const TOOLS = [['pen', '✏️', 'Pen'], ['marker', '🖍️', 'Marker'], ['shape', '', 'Shapes'], ['text', '<b class="ink-t">T</b>', 'Text'],
+    ['eraser', '🧽', 'Eraser'], ['lasso', '<b class="ink-lasso-icon">◌</b>', 'Lasso']];
+  const SHAPE_ICONS = {
+    line: 'M4,18L28,4', arrow: 'M4,18L28,4M20,4H28V10', arrow2: 'M4,18L28,4M20,4H28V10M4,10V18H12',
+    rect: 'M4,4H28V18H4Z', round: 'M9,4H23A5,5 0 0 1 28,9V13A5,5 0 0 1 23,18H9A5,5 0 0 1 4,13V9A5,5 0 0 1 9,4Z',
+    ellipse: 'M4,11A12,7 0 1,0 28,11A12,7 0 1,0 4,11Z', triangle: 'M16,3L28,19H4Z', diamond: 'M16,2L29,11L16,20L3,11Z',
+  };
+  const shapeIcon = (kind) => `<svg class="ink-shape" viewBox="0 0 32 22" width="28" height="19"><path d="${SHAPE_ICONS[kind]}"/></svg>`;
 
   function renderPalette() {
     if (!K.on()) {
@@ -657,9 +869,28 @@
     }
     const esc = MM.render.esc, tr = MM.tr;
     const cfg = K.cfg(), tool = cfg.tool;
-    const colors = tool === 'marker' ? K.MARKER_COLORS : tool === 'eraser' ? [] : K.PEN_COLORS;
-    const cur = tool === 'eraser' ? null : cfg[tool].color;
-    const widths = K.WIDTHS[tool];
+    const plain = tool === 'eraser' || tool === 'lasso'; // no colour
+    const colors = tool === 'marker' ? K.MARKER_COLORS : plain ? [] : K.PEN_COLORS;
+    const cur = plain ? null : cfg[tool].color;
+    const widths = K.WIDTHS[tool] || [];
+    const toggle = (attr, on, icon, label, title) =>
+      `<button type="button" ${attr} class="${on ? 'active' : ''}" title="${esc(tr(title))}">${icon}<span>${esc(tr(label))}</span></button>`;
+    // what belongs to the tool chosen: the shapes, recognising shapes, deleting what the lasso caught
+    let extra = '';
+    if (tool === 'shape') {
+      extra = K.SHAPES.map((k) => `<button type="button" data-ink-shape="${k}" class="ink-kind${cfg.shape.kind === k ? ' active' : ''}" title="${esc(tr(MM.DRAW_KINDS[k]))}">${shapeIcon(k)}</button>`).join('') +
+        '<span class="ink-sep"></span>' +
+        toggle('data-ink-dash', cfg.shape.dash, '┄', 'Dashed', 'Dashed line') +
+        (MM.isLineKind(cfg.shape.kind) ? '' : toggle('data-ink-fill', cfg.shape.fill, '◧', 'Filled', 'Filled, see-through in the colour of the line'));
+    } else if (tool === 'pen') {
+      extra = toggle('data-ink-recognize', cfg.recognize, '✨', 'Shapes', cfg.recognize
+        ? 'Recognise shapes is on: hold the pen still a moment at the end of a stroke - a line, circle, rectangle, triangle or diamond becomes a clean shape. Tap to switch it off'
+        : 'Recognise shapes is off. Tap to switch it on: hold the pen still at the end of a stroke and it becomes a clean shape');
+    } else if (tool === 'lasso') {
+      const n = S.selection.size;
+      extra = `<button type="button" data-ink-delete ${n ? '' : 'disabled'} title="${esc(tr('Delete what the lasso caught (Del)'))}">🗑<span>${esc(tr('Delete'))}</span></button>`;
+    }
+    palette.classList.toggle('compact', tool === 'shape'); // many buttons: the tools without their names
     palette.innerHTML =
       // first: on a phone the palette scrolls sideways, this one must be in sight
       // touch screens: draw with a finger (one finger writes, two move and zoom)
@@ -668,15 +899,16 @@
           ? 'One finger draws, two fingers move and zoom the map. Tap: fingers move the map again, only the stylus draws'
           : 'Draw with a finger: one finger draws, two fingers move and zoom the map'))}">☝️<span>${esc(tr('Finger'))}</span></button><span class="ink-sep"></span>`
         : '') +
-      TOOLS.map(([k, icon, label]) => `<button type="button" data-ink-tool="${k}" class="${tool === k ? 'active' : ''}" title="${esc(tr(label))}">${icon}<span>${esc(tr(label))}</span></button>`).join('') +
-      '<span class="ink-sep"></span>' +
+      TOOLS.map(([k, icon, label]) => `<button type="button" data-ink-tool="${k}" class="${tool === k ? 'active' : ''}" title="${esc(tr(label))}">${k === 'shape' ? shapeIcon(cfg.shape.kind) : icon}<span>${esc(tr(label))}</span></button>`).join('') +
+      (extra ? '<span class="ink-sep"></span>' + extra : '') +
+      (plain && tool === 'lasso' ? '' : '<span class="ink-sep"></span>') +
       colors.map((c) => `<button type="button" class="ink-color${c === cur ? ' active' : ''}" data-ink-color="${c}" style="--c:${c}" title="${c}"></button>`).join('') +
-      (tool === 'eraser' ? '' : `<label class="ink-color ink-own${colors.includes(cur) ? '' : ' active'}" title="${esc(tr('Own colour'))}" style="--c:${esc(cur)}"><input type="color" value="${esc(cur)}" data-ink-own></label>`) +
-      '<span class="ink-sep"></span>' +
+      (plain ? '' : `<label class="ink-color ink-own${colors.includes(cur) ? '' : ' active'}" title="${esc(tr('Own colour'))}" style="--c:${esc(cur)}"><input type="color" value="${esc(cur)}" data-ink-own></label>`) +
+      (widths.length && !plain ? '<span class="ink-sep"></span>' : '') +
       widths.map((w, i) => `<button type="button" class="ink-width${cfg[tool].width === w ? ' active' : ''}" data-ink-width="${w}" title="${esc(tr(tool === 'text' ? ['Small', 'Medium', 'Large'][i] : ['Thin', 'Medium', 'Thick'][i]))}">` +
         (tool === 'text' ? `<b style="font-size:${11 + i * 4}px">A</b>` : `<i style="--w:${Math.min(22, tool === 'eraser' ? w / 1.6 : tool === 'marker' ? w / 1.5 : w * 1.6)}px"></i>`) + '</button>').join('') +
-      // lines and texts: snap to the grid of the map (the same as "Snap to grid")
-      (tool === 'line' || tool === 'text'
+      // shapes and texts: snap to the grid of the map (the same as "Snap to grid")
+      (tool === 'shape' || tool === 'text'
         ? `<span class="ink-sep"></span><button type="button" data-ink-grid class="${S.settings.grid ? 'active' : ''}" title="${esc(tr('Snap to the grid (the grid of the map - notes snap to it as well)'))}">▦<span>${esc(tr('Grid'))}</span></button>`
         : '') +
       '<span class="ink-sep"></span>' +
@@ -697,7 +929,13 @@
     if (change.tool) {
       cfg.tool = change.tool;
       if (live) live.style.display = 'none'; // no snap circle of the line tool left over
-      if (change.tool === 'line') MM.ui.flash(MM.tr('📏 Drag to draw a line - its ends snap to the ends of other lines. Shift: steps of 45°, Ctrl: no snapping'));
+      if (change.tool === 'shape' && MM.isLineKind(cfg.shape.kind)) MM.ui.flash(MM.tr('📏 Drag to draw a line - its ends snap to the ends of other lines. Shift: steps of 45°, Ctrl: no snapping'));
+      if (change.tool === 'shape' && !MM.isLineKind(cfg.shape.kind)) MM.ui.flash(MM.tr('Drag to draw the shape - Shift: square / circle'));
+      if (change.tool === 'lasso') MM.ui.flash(MM.tr('◌ Draw a loop around what you want to move, resize or delete'));
+      if (change.tool !== 'lasso' && S.selection.size) { // what the lasso caught is let go
+        MM.select([]);
+        MM.refresh();
+      }
       if (change.tool === 'text') MM.ui.flash(MM.tr('T Tap where the text should go'));
     }
     else Object.assign(cfg[cfg.tool], change);
@@ -723,6 +961,24 @@
       MM.saveSettings();
       renderPalette();
       MM.ui.flash(MM.tr(cfg.finger ? '☝️ One finger draws - two fingers move and zoom' : '☝️ Fingers move the map again - the stylus draws'));
+    } else if (b.dataset.inkShape) {
+      setCfg({ kind: b.dataset.inkShape });
+    } else if (b.hasAttribute('data-ink-dash')) {
+      setCfg({ dash: !K.cfg().shape.dash });
+    } else if (b.hasAttribute('data-ink-fill')) {
+      setCfg({ fill: !K.cfg().shape.fill });
+    } else if (b.hasAttribute('data-ink-recognize')) {
+      const cfg = K.cfg();
+      cfg.recognize = !cfg.recognize;
+      S.settings.pen = cfg;
+      MM.saveSettings();
+      renderPalette();
+      MM.ui.flash(MM.tr(cfg.recognize
+        ? '✨ Recognise shapes on: hold the pen still a moment at the end of a stroke'
+        : '✨ Recognise shapes off: strokes stay as you write them'));
+    } else if (b.hasAttribute('data-ink-delete')) {
+      if (S.selection.size) MM.actions.deleteSelection();
+      renderPalette();
     } else if (b.hasAttribute('data-ink-close')) K.toggle(false);
   }
 

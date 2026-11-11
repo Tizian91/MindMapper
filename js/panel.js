@@ -78,7 +78,7 @@
 
   /** Small icon of a drawing shape. */
   function drawIcon(kind) {
-    const d = { rect: 'M4,4H28V18H4Z', ellipse: 'M4,11A12,7 0 1,0 28,11A12,7 0 1,0 4,11Z', line: 'M4,18L28,4', arrow: 'M4,18L28,4M20,4H28V10' }[kind];
+    const d = { rect: 'M4,4H28V18H4Z', round: 'M9,4H23A5,5 0 0 1 28,9V13A5,5 0 0 1 23,18H9A5,5 0 0 1 4,13V9A5,5 0 0 1 9,4Z', ellipse: 'M4,11A12,7 0 1,0 28,11A12,7 0 1,0 4,11Z', triangle: 'M16,3L28,19H4Z', diamond: 'M16,2L29,11L16,20L3,11Z', line: 'M4,18L28,4', arrow: 'M4,18L28,4M20,4H28V10', arrow2: 'M4,18L28,4M20,4H28V10M4,10V18H12' }[kind];
     return `<svg viewBox="0 0 32 22" width="32" height="22"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`;
   }
 
@@ -88,7 +88,7 @@
     const count = nodes.length > 1 ? ` <span class="muted">(${nodes.length})</span>` : '';
     const kinds = {};
     Object.entries(MM.DRAW_KINDS).forEach(([k, label]) => (kinds[k] = MM.tr(label)));
-    const line = n.draw === 'line' || n.draw === 'arrow';
+    const line = MM.isLineKind(n.draw);
     // freehand (ink.js): no other shape, no line style, no fill - colour, width, opacity
     const ink = nodes.some((x) => x.draw === 'ink');
     const filled = st.fill && st.fill !== 'none';

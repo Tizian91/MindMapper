@@ -252,7 +252,7 @@
     svg.setAttribute('width', n.w);
     svg.setAttribute('height', n.h);
     const d = MM.draw.path(n), sw = Number(st.strokeWidth) || 0;
-    const line = n.draw === 'line' || n.draw === 'arrow';
+    const line = MM.isLineKind(n.draw);
     const filled = !line && !ink && st.fill && st.fill !== 'none';
     path.setAttribute('d', d);
     path.setAttribute('fill', ink ? st.stroke : filled ? st.fill : 'none');

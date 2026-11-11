@@ -666,6 +666,27 @@
     'Link copied - paste it into a diary entry or the link of a note': 'Link kopiert – in einen Tagebucheintrag oder als Link einer Notiz einfügen',
     'Only a block in the project folder can be linked.': 'Nur ein Block im Projektordner lässt sich verlinken.',
     'The block "{path}" does not exist (any more).': 'Den Block „{path}“ gibt es nicht (mehr).',
+    // ---- ink.js (shapes, lasso, recognising shapes) ----
+    'Shapes': 'Formen',
+    'Lasso': 'Lasso',
+    'Rounded rectangle': 'Abgerundetes Rechteck',
+    'Triangle': 'Dreieck',
+    'Diamond': 'Raute',
+    'Double arrow': 'Doppelpfeil',
+    'Dashed': 'Gestrichelt',
+    'Dashed line': 'Gestrichelte Linie',
+    'Filled': 'Gefüllt',
+    'Filled, see-through in the colour of the line': 'Gefüllt, durchscheinend in der Linienfarbe',
+    'Recognise shapes is on: hold the pen still a moment at the end of a stroke - a line, circle, rectangle, triangle or diamond becomes a clean shape. Tap to switch it off':
+      'Formerkennung ist an: am Ende eines Strichs den Stift kurz stillhalten – aus Linie, Kreis, Rechteck, Dreieck oder Raute wird eine saubere Form. Tippen schaltet sie aus',
+    'Recognise shapes is off. Tap to switch it on: hold the pen still at the end of a stroke and it becomes a clean shape':
+      'Formerkennung ist aus. Tippen schaltet sie ein: am Ende eines Strichs den Stift kurz stillhalten, dann wird daraus eine saubere Form',
+    '✨ Recognise shapes on: hold the pen still a moment at the end of a stroke': '✨ Formerkennung an: am Ende eines Strichs den Stift kurz stillhalten',
+    '✨ Recognise shapes off: strokes stay as you write them': '✨ Formerkennung aus: Striche bleiben, wie du sie schreibst',
+    'Delete what the lasso caught (Del)': 'Löschen, was das Lasso gefangen hat (Entf)',
+    'Drag to draw the shape - Shift: square / circle': 'Ziehen zeichnet die Form – Shift: Quadrat / Kreis',
+    '◌ Draw a loop around what you want to move, resize or delete': '◌ Eine Schlinge um das ziehen, was du verschieben, vergrößern oder löschen willst',
+    '{n} caught - drag to move, the corner to resize, 🗑 deletes': '{n} gefangen – ziehen verschiebt, die Ecke ändert die Größe, 🗑 löscht',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

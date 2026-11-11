@@ -39,7 +39,12 @@ window.MM = window.MM || {};
   MM.TEXT_TYPES = Object.keys(MM.NODE_TYPES).filter((t) => t !== 'image' && t !== 'file' && t !== 'draw');
 
   /** Shapes of drawings (see draw.js). */
-  MM.DRAW_KINDS = { rect: 'Rectangle', ellipse: 'Ellipse', line: 'Line', arrow: 'Arrow' };
+  MM.DRAW_KINDS = {
+    rect: 'Rectangle', round: 'Rounded rectangle', ellipse: 'Ellipse', triangle: 'Triangle', diamond: 'Diamond',
+    line: 'Line', arrow: 'Arrow', arrow2: 'Double arrow',
+  };
+  /** Drawings drawn from one end to the other (end points in n.line), not in a box. */
+  MM.isLineKind = (kind) => kind === 'line' || kind === 'arrow' || kind === 'arrow2';
 
   /** Outline and task notes share the nested bullet list. */
   MM.hasBlocks = (n) => n.type === 'outline' || n.type === 'task';
