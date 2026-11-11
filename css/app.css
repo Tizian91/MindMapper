@@ -1708,3 +1708,7 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
   .dy-spacer { display: none; }
   .dy-scroll { padding: 10px 6px; }
 }
+/* a block (export.js printPages): one page per A4 sheet, in its real size */
+#map-print .mp-sheet { break-after: page; contain: strict; overflow: clip; } /* the moved copy must not reach past its sheet */
+#map-print .mp-sheet:last-child { break-after: auto; }
+#map-print .nb-page { box-shadow: none; }

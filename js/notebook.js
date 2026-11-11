@@ -364,6 +364,7 @@
         { label: 'Delete this page…', action: () => NB.remove(k) },
         '-',
         { label: 'Pictures of this block…', action: NB.showPictures },
+        { label: 'Print / PDF…', shortcut: 'Ctrl+P', action: () => MM.mapPrint.open() },
       ]);
     } else if (a === 'pen') {
       const pen = MM.ink.on();

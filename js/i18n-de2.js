@@ -654,6 +654,13 @@
     'No pictures yet - 📷 and 🖼 in the bar add some.': 'Noch keine Bilder – 📷 und 🖼 in der Leiste fügen welche ein.',
     'Delete the chosen unused pictures…': 'Gewählte unbenutzte Bilder löschen…',
     'Delete {n} unused picture(s)? This cannot be undone.': '{n} unbenutzte(s) Bild(er) löschen? Das lässt sich nicht rückgängig machen.',
+    'Block as PDF / print': 'Block als PDF / drucken',
+    'Pages': 'Seiten',
+    'This page ({n})': 'Diese Seite ({n})',
+    'All pages (1 – {n})': 'Alle Seiten (1 – {n})',
+    'Every page on its own A4 sheet, in its real size. For a PDF choose "Save as PDF" as the printer.':
+      'Jede Seite auf einem eigenen A4-Blatt, in Originalgröße. Für ein PDF als Drucker „Als PDF speichern“ wählen.',
+    'Print / PDF…': 'Drucken / PDF…',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

@@ -38,6 +38,8 @@
   /** { box, nodeIds (null = all) } for the chosen scope. */
   function area(scope, pad) {
     const nodes = Object.values(S.doc.nodes), edges = Object.values(S.doc.edges);
+    // a block: the page shown (notebook.js)
+    if (scope === 'page' && S.doc.page) return { box: MM.notebook.pageBox(MM.notebook.cur), nodeIds: null };
     if (scope === 'view') {
       const vp = document.getElementById('viewport').getBoundingClientRect(), v = S.doc.view;
       return { box: { x: -v.x / v.zoom, y: -v.y / v.zoom, w: vp.width / v.zoom, h: vp.height / v.zoom }, nodeIds: null };
@@ -155,21 +157,29 @@
     const offX = (W - box.w * scale) / 2, offY = (H - box.h * scale) / 2;
     world.style.transform = `translate(${offX - box.x * scale}px, ${offY - box.y * scale}px) scale(${scale})`;
 
+    const out = printArea();
+    const name = mapName();
+    const date = new Date().toLocaleDateString(MM.locale(), { day: 'numeric', month: 'long', year: 'numeric' });
+    out.innerHTML = (choice.title ? `<div class="mp-title"><b>${esc(name)}</b><span>${esc(date)}</span></div>` : '') +
+      `<div class="mp-page" style="width:${W}px;height:${H}px"></div>`;
+    out.querySelector('.mp-page').appendChild(world);
+    printOut(out, `size: ${choice.paper} ${landscape ? 'landscape' : 'portrait'}; margin: ${MARGIN}mm;`);
+  };
+
+  function printArea() {
     let out = document.getElementById('map-print');
     if (!out) {
       out = document.createElement('div');
       out.id = 'map-print';
       document.body.appendChild(out);
     }
-    const name = mapName();
-    const date = new Date().toLocaleDateString(MM.locale(), { day: 'numeric', month: 'long', year: 'numeric' });
-    out.innerHTML = (choice.title ? `<div class="mp-title"><b>${esc(name)}</b><span>${esc(date)}</span></div>` : '') +
-      `<div class="mp-page" style="width:${W}px;height:${H}px"></div>`;
-    out.querySelector('.mp-page').appendChild(world);
+    return out;
+  }
 
-    // page size for this print, the light theme while printing
+  /** Open the print dialog for #map-print: `page` = the @page rule, the light theme while printing. */
+  function printOut(out, page) {
     const style = document.createElement('style');
-    style.textContent = `@media print { @page { size: ${choice.paper} ${landscape ? 'landscape' : 'portrait'}; margin: ${MARGIN}mm; } }`;
+    style.textContent = `@media print { @page { ${page} } }`;
     document.head.appendChild(style);
     const root = document.documentElement, theme = root.getAttribute('data-theme');
     root.setAttribute('data-theme', 'light');
@@ -185,7 +195,93 @@
     window.addEventListener('afterprint', done);
     // let the browser lay out the copy (images, fonts) before the dialog opens
     requestAnimationFrame(() => setTimeout(() => window.print(), 50));
+  }
+
+  // ---- A block (notebook.js): its pages 1:1 on A4 sheets ------------------------------
+
+  /** Print / PDF of pages from … to (indices) of the open block, one sheet per page. */
+  X.printPages = function (from, to) {
+    MM.edit.finish();
+    const NB = MM.notebook, page = S.doc.page;
+    if (!page) return;
+    const { w, h } = NB.dims();
+    const landscape = page.orient === 'landscape';
+    const sheetW = (landscape ? 297 : 210) * PX, sheetH = (landscape ? 210 : 297) * PX;
+    const s = Math.min(sheetW / w, sheetH / h); // 1:1 (A4 at 96 dpi), rounding only
+    const base = copyOfWorld(null, false);
+    base.className = 'mp-world';
+    const out = printArea();
+    out.innerHTML = '';
+    for (let k = from; k <= to; k++) {
+      const box = NB.pageBox(k);
+      const world = base.cloneNode(true);
+      // only this page: its sheet of paper and the notes on it
+      world.querySelectorAll('.nb-page').forEach((x) => { if (+x.dataset.page !== k) x.remove(); });
+      world.querySelectorAll('.node[data-id]').forEach((x) => {
+        const n = S.doc.nodes[x.dataset.id];
+        if (!n || n.x > box.x + box.w || n.x + n.w < box.x || n.y > box.y + box.h || n.y + n.h < box.y) x.remove();
+      });
+      webLinks(world);
+      world.style.transform = `scale(${s}) translate(${-box.x}px, ${-box.y}px)`;
+      const sheet = document.createElement('div');
+      sheet.className = 'mp-page mp-sheet';
+      sheet.style.cssText = `width:${sheetW}px;height:${sheetH - 1}px`; // a hair less: no empty sheet in between
+      sheet.appendChild(world);
+      out.appendChild(sheet);
+    }
+    printOut(out, `size: A4 ${landscape ? 'landscape' : 'portrait'}; margin: 0;`);
   };
+
+  /** Ctrl+P / "PDF" in a block: which pages. */
+  function blockDialog() {
+    const page = S.doc.page, NB = MM.notebook, cur = NB.cur + 1;
+    const d = document.createElement('dialog');
+    d.id = 'map-print-dialog';
+    d.innerHTML = `
+      <form method="dialog" class="dlg">
+        <h3>${esc(tr('Block as PDF / print'))}</h3>
+        <div class="row col"><label>${esc(tr('Pages'))}</label>
+          <label class="check"><input type="radio" name="which" value="cur" checked> ${esc(tr('This page ({n})', { n: cur }))}</label>
+          <label class="check"><input type="radio" name="which" value="all"> ${esc(tr('All pages (1 – {n})', { n: page.count }))}</label>
+          <label class="check"><input type="radio" name="which" value="range"> ${esc(tr('Pages'))}
+            <input type="number" name="from" min="1" max="${page.count}" value="${cur}" style="width:4.5em"> –
+            <input type="number" name="to" min="1" max="${page.count}" value="${page.count}" style="width:4.5em"></label></div>
+        <p class="hint">${esc(tr('Every page on its own A4 sheet, in its real size. For a PDF choose "Save as PDF" as the printer.'))}</p>
+        <div class="dlg-buttons">
+          <button type="button" data-mp="cancel">${esc(tr('Cancel'))}</button>
+          <span style="flex:1"></span>
+          <button type="button" data-mp="png">📋 ${esc(tr('Copy as PNG'))}</button>
+          <button type="submit" class="primary">🖨 ${esc(tr('Print / PDF'))}</button>
+        </div>
+      </form>`;
+    document.body.appendChild(d);
+    const f = d.querySelector('form');
+    const range = () => {
+      const clamp = (v) => Math.max(1, Math.min(page.count, Math.round(+v) || 1)) - 1;
+      if (f.which.value === 'all') return [0, page.count - 1];
+      if (f.which.value === 'range') {
+        const a = clamp(f.from.value), b = clamp(f.to.value);
+        return [Math.min(a, b), Math.max(a, b)];
+      }
+      return [cur - 1, cur - 1];
+    };
+    for (const x of [f.from, f.to]) x.addEventListener('focus', () => { f.which.value = 'range'; });
+    d.addEventListener('keydown', (e) => e.stopPropagation());
+    d.addEventListener('close', () => d.remove());
+    d.querySelector('[data-mp="cancel"]').addEventListener('click', () => d.close());
+    // the page shown as a picture (PNG)
+    d.querySelector('[data-mp="png"]').addEventListener('click', () => {
+      d.close();
+      X.copyPng('page', false);
+    });
+    f.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const [a, b] = range();
+      d.close();
+      X.printPages(a, b);
+    });
+    d.showModal();
+  }
 
   // ---- As a picture (PNG) into the clipboard -----------------------------------------
   // No library: the copy of the map goes into an SVG (<foreignObject>) together with the
@@ -421,6 +517,7 @@
 
   /** Toolbar "PDF" / Ctrl+P: the dialog with the last choice. */
   X.open = function () {
+    if (S.doc.page) return blockDialog(); // a block: pages on A4 sheets
     if (dialog) dialog.remove(); // built in the current language each time
     dialog = build();
     const f = dialog.querySelector('form');
