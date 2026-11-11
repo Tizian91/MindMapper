@@ -107,6 +107,7 @@
   let lo = 0, hi = -1; // world y range drawn
   let all = false;     // NB.showAll: everything drawn (export)
   let seenId = '';     // block whose first view was set up
+  let shownId = '';    // block a page of which was shown on purpose (NB.show, e.g. a link to a page)
 
   /** Is note n outside the pages drawn now? */
   NB.off = function (n) {
@@ -149,7 +150,7 @@
     if (page.id !== seenId) {
       seenId = page.id;
       // a new block (view never moved): show its first page
-      if (!v.x && !v.y && v.zoom === 1) return setTimeout(() => NB.show(0), 0);
+      if (!v.x && !v.y && v.zoom === 1) return setTimeout(() => { if (shownId !== page.id) NB.show(0); }, 0);
       // a touch screen: write at once
       if (navigator.maxTouchPoints > 0 && MM.ink && !MM.ink.on()) setTimeout(() => MM.ink.toggle(true), 0);
     }
@@ -182,6 +183,7 @@
     v.x = (r.width - b.w * z) / 2 - b.x * z;
     v.y = topPad - b.y * z;
     NB.cur = k;
+    shownId = page.id;
     MM.refresh();
     renderBar();
   };
@@ -290,6 +292,17 @@
     if (change.orient) NB.show(NB.cur);
   };
 
+  /** "Copy link to this page": a Markdown link - for a diary entry, or the link field of a note. */
+  NB.copyLink = async function (k) {
+    if (!S.file.path) {
+      alert(tr('Only a block in the project folder can be linked.'));
+      return;
+    }
+    const text = `[${blockName()} · ${tr('p. {n}', { n: k + 1 })}](${S.file.path}#${k + 1})`;
+    const ok = await MM.links.copy(text);
+    MM.ui.flash(ok ? tr('Link copied - paste it into a diary entry or the link of a note') : text);
+  };
+
   /** Ctrl+A in a block: the notes of the current page. */
   NB.selectPage = function () {
     MM.select(onPage(NB.cur).map((n) => n.id));
@@ -365,6 +378,7 @@
         '-',
         { label: 'Pictures of this block…', action: NB.showPictures },
         { label: 'Print / PDF…', shortcut: 'Ctrl+P', action: () => MM.mapPrint.open() },
+        { label: 'Copy link to this page', action: () => NB.copyLink(k) },
       ]);
     } else if (a === 'pen') {
       const pen = MM.ink.on();

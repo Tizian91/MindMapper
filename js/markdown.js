@@ -43,6 +43,8 @@
       return stash(u ? `<img src="${esc(u)}" alt="${esc(alt)}" title="${esc(alt)}">` : `<span class="md-missing">[${esc(alt || 'image')}]</span>`);
     });
     s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, url) => {
+      // a map of the project, maybe a page of a block (links.js opens it)
+      if (MM.links && MM.links.isMapLink(url)) return stash(`<a href="#" class="md-maplink" data-maplink="${esc(url)}">`) + label + stash('</a>');
       const u = safeUrl(url, false);
       // the label stays in the text, so bold / italic / a stashed image in it still work
       return u ? stash(`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">`) + label + stash('</a>') : label;

@@ -84,6 +84,8 @@
         status, detail, tags: n.tags || [],
         progress: m.progress === null || m.progress === undefined ? null : m.progress,
         derived: n.derivedMap || '',
+        // a block (notebook.js): its page, shown as "📓 FIB · p. 3"
+        page: doc.page ? MM.notebook.pageOf(n.y + Math.min(n.h, 40) / 2, doc.page) + 1 : 0,
       });
     }
     // arrows between tasks: source = main task, target = sub-task
@@ -519,7 +521,7 @@
       ${prog}
       <span class="ov-chips">${chips}</span>
       ${mapBadge}
-      <span class="ov-map" title="${esc(it.path)}">${esc(MM.links.label(it.path))}</span>
+      <span class="ov-map" title="${esc(it.path)}">${esc(MM.links.label(it.page ? it.path + '#' + it.page : it.path))}</span>
     </div>`;
   }
 
@@ -880,7 +882,7 @@
       it.meta.deadline ? tr('Deadline {d}', { d: MM.meta.formatDate(it.meta.deadline) }) : '',
       buf ? tr('Buffer until then: {b}', { b: (buf.buffer < 0 ? '−' : '+') + MM.load.hours(Math.abs(buf.buffer)) }) : '',
       old ? tr('Priority') + ': ' + MM.t('prio_' + it.meta.priority, old.label) : '',
-      MM.links.label(it.path),
+      MM.links.label(it.page ? it.path + '#' + it.page : it.path),
     ].filter(Boolean).join('\n');
     // sub-tasks are not dragged: their place follows the main task
     return `<div class="mx-b${ring}${est ? '' : ' no-est'}${it.status === 'done' ? ' done' : ''}${sub ? ' mx-sub' : ''}"` +

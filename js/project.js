@@ -930,14 +930,21 @@
     P.render();
   };
 
-  /** Follow a link to a map of the project; offer to create it if it doesn't exist yet. */
-  P.openLinked = async function (path) {
+  /**
+   * Follow a link to a map of the project; offer to create it if it doesn't exist yet.
+   * page: a page of a block (from 1, links.js split) - shown after opening.
+   */
+  P.openLinked = async function (path, page) {
     if (P.status !== 'ready') {
       alert(tr('This link points to the map "{path}".\nOpen the project folder first (sidebar "Project").', { path }));
       return;
     }
     if (P.find(path)) {
-      await P.openMap(path);
+      if ((await P.openMap(path)) && page && S.doc.page) MM.notebook.show(page - 1);
+      return;
+    }
+    if (page) { // a page of a block that is gone: nothing to create
+      alert(tr('The block "{path}" does not exist (any more).', { path }));
       return;
     }
     const t = MM.templates.forPath(path);
@@ -1078,6 +1085,16 @@
             n[key] = newPath;
             changed = true;
           }
+        }
+        // a link to a page of a block: "Blocks/FIB.mindmap.json#3"
+        if (typeof n.link === 'string' && n.link.startsWith(oldPath + '#')) {
+          n.link = newPath + n.link.slice(oldPath.length);
+          changed = true;
+        }
+        // Markdown links in diary entries / Markdown notes: [FIB · p. 3](Blocks/FIB.mindmap.json#3)
+        if (typeof n.text === 'string' && (n.text.includes('](' + oldPath + ')') || n.text.includes('](' + oldPath + '#'))) {
+          n.text = n.text.split('](' + oldPath + ')').join('](' + newPath + ')').split('](' + oldPath + '#').join('](' + newPath + '#');
+          changed = true;
         }
         for (const it of n.items || []) {
           if (it.moved === oldLabel) {

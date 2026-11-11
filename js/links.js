@@ -33,15 +33,36 @@
         return s;
       }
     }
-    return s.split('/').pop().replace(/\.mindmap\.json$/i, '').replace(/\.json$/i, '');
+    const { path, page } = L.split(s);
+    const name = path.split('/').pop().replace(/\.mindmap\.json$/i, '').replace(/\.json$/i, '');
+    // a block (notebook.js), maybe one of its pages: "📓 FIB-Training · p. 3"
+    if (!path.startsWith(MM.notebook.FOLDER + '/')) return name;
+    return '📓 ' + name + (page ? ' · ' + MM.tr('p. {n}', { n: page }) : '');
   };
+
+  /**
+   * A link to a map, maybe to a page of a block: "Blocks/FIB.mindmap.json#3" ->
+   * { path: "Blocks/FIB.mindmap.json", page: 3 } (page 0: the map itself).
+   */
+  L.split = function (link) {
+    const s = String(link || '').trim();
+    const m = /^(.+\.json)#(\d{1,4})$/i.exec(s);
+    return m ? { path: m[1], page: Number(m[2]) } : { path: s, page: 0 };
+  };
+
+  /** A map link as Markdown links write it ("Blocks/FIB.mindmap.json#3"): no address, no ".." */
+  L.isMapLink = (s) => /^[^:\\/][^:\\]*\.json(#\d{1,4})?$/i.test(String(s || '')) && !/(^|\/)\.\.(\/|$)/.test(s);
 
   /** Turn user input into a stored link: URLs and PC paths stay, map names get a file extension. */
   L.normalize = function (input) {
     // Explorer's "Copy as path" puts the path in quotes
-    const s = String(input || '').trim().replace(/^"(.*)"$/, '$1').trim();
+    let s = String(input || '').trim().replace(/^"(.*)"$/, '$1').trim();
+    // a Markdown link ("Copy link to this page" of a block): its target
+    const md = /^\[[^\]]*\]\(([^)\s]+)\)$/.exec(s);
+    if (md) s = md[1];
     if (!s || L.isUrl(s)) return s;
     if (L.isPath(s)) return s.replace(/[\\/]+$/, '') || s;
+    if (/\.json#\d{1,4}$/i.test(s)) return s.replace(/^\/+/, ''); // a page of a block
     return /\.json$/i.test(s) ? s.replace(/^\/+/, '') : s.replace(/^\/+/, '') + '.mindmap.json';
   };
 
@@ -56,6 +77,7 @@
   };
 
   /** Copy text to the clipboard (resolves to true on success). */
+  L.copy = copy; // also for "Copy link to this page" (notebook.js)
   async function copy(text) {
     try {
       await navigator.clipboard.writeText(text);
@@ -89,8 +111,24 @@
     if (!s) return;
     if (L.isPath(s)) L.openPath(s);
     else if (L.isUrl(s)) window.open(s.startsWith('www.') ? 'https://' + s : s, '_blank', 'noopener');
-    else MM.project.openLinked(s);
+    else {
+      const { path, page } = L.split(s);
+      MM.project.openLinked(path, page);
+    }
   };
+
+  // Map links in Markdown (diary entries, Markdown notes): markdown.js renders them as
+  // <a data-maplink="…">. A click opens the map (a block on its page); the diary reader
+  // closes for it.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[data-maplink]');
+    if (!a) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const reader = document.querySelector('#diary-dialog[open]');
+    if (reader) reader.close();
+    L.open(a.dataset.maplink);
+  }, true);
 
   L.icon = '<svg viewBox="0 0 16 16"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5"/></svg>';
 })(window.MM);

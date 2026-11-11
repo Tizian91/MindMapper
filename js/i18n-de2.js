@@ -661,6 +661,11 @@
     'Every page on its own A4 sheet, in its real size. For a PDF choose "Save as PDF" as the printer.':
       'Jede Seite auf einem eigenen A4-Blatt, in Originalgröße. Für ein PDF als Drucker „Als PDF speichern“ wählen.',
     'Print / PDF…': 'Drucken / PDF…',
+    'p. {n}': 'S. {n}',
+    'Copy link to this page': 'Link auf diese Seite kopieren',
+    'Link copied - paste it into a diary entry or the link of a note': 'Link kopiert – in einen Tagebucheintrag oder als Link einer Notiz einfügen',
+    'Only a block in the project folder can be linked.': 'Nur ein Block im Projektordner lässt sich verlinken.',
+    'The block "{path}" does not exist (any more).': 'Den Block „{path}“ gibt es nicht (mehr).',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);
