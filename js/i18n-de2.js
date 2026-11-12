@@ -344,8 +344,8 @@
     'No appointments. An appointment is a note with a "Scheduled" date (panel → Details) - or a routine with a time.': 'Keine Termine. Ein Termin ist eine Note mit „Scheduled“-Datum (Panel → Details) – oder eine Routine mit Uhrzeit.',
     '{n} tasks': '{n} Aufgaben',
     '{count} · {est} estimated · {open} open': '{count} · {est} geschätzt · {open} offen',
-    '{n} task(s) shown (done ones only without "Hide done").\nEstimated: their estimates added up - a main task only with the part not split up into sub-tasks.\nOpen: what is left of that after the progress so far.':
-      '{n} Aufgabe(n) angezeigt (erledigte nur ohne „Hide done“).\nGeschätzt: ihre Schätzungen zusammen – eine Haupttask nur mit dem Teil, der noch nicht auf Untertasks verteilt ist.\nOffen: was davon nach dem bisherigen Fortschritt noch übrig ist.',
+    '{n} task(s) shown (done ones only without "Hide done").\nEstimated: their estimates added up - a main task with all of it (its sub-tasks included); a sub-task whose main task is in the same group is not counted again.\nOpen: what is left of that after the progress so far.':
+      '{n} Aufgabe(n) angezeigt (erledigte nur ohne „Hide done“).\nGeschätzt: ihre Schätzungen zusammen – eine Haupttask mit ihrem ganzen Aufwand (Untertasks eingerechnet); eine Untertask, deren Haupttask in derselben Gruppe steht, zählt nicht noch einmal.\nOffen: was davon nach dem bisherigen Fortschritt noch übrig ist.',
     'Ø: average progress of the tasks.': 'Ø: durchschnittlicher Fortschritt der Aufgaben.',
     'Delete folder…': 'Ordner löschen…',
     'Folder of the plans - delete single maps instead': 'Ordner der Pläne – stattdessen einzelne Maps löschen',

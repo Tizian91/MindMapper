@@ -149,6 +149,9 @@
       it.minutes = it.children.length ? it.rest || 0 : Number(it.meta.estimate) || 0;
       // what is left of it: the part not split up counts as not started, done = nothing
       it.open = MM.notPlanned(it.status) ? 0 : it.children.length ? it.minutes : it.minutes * (1 - (Number(it.progress) || 0) / 100);
+      // the whole task (sub-tasks included) for the heads of groups: estimate and what is left
+      it.effort = it.children.length ? v.w : it.minutes;
+      it.openAll = !it.children.length ? it.open : MM.notPlanned(it.status) ? 0 : v.w * (1 - (Number(v.p) || 0) / 100);
     }
   }
 
@@ -157,12 +160,21 @@
    * No double counting: a main task only adds the part of its estimate not split up.
    */
   function sumHTML(list, extra) {
-    const est = list.reduce((s, it) => s + (it.minutes || 0), 0);
-    const open = Math.round(list.reduce((s, it) => s + (it.open || 0), 0));
+    // a main task counts with all of it (its sub-tasks included) - also when they are listed
+    // elsewhere (other deadline, derived map); a sub-task below a main task of the same group
+    // is not counted again
+    const keys = new Set(list.map(keyOf));
+    const below = (it) => {
+      for (let k = it.parent, hop = 0; k && hop < 50; k = byKey.get(k) && byKey.get(k).parent, hop++) if (keys.has(k)) return true;
+      return false;
+    };
+    const tops = list.filter((it) => !below(it));
+    const est = tops.reduce((s, it) => s + (it.effort || 0), 0);
+    const open = Math.round(tops.reduce((s, it) => s + (it.openAll || 0), 0));
     const d = MM.meta.formatDuration;
     const count = list.length === 1 ? tr('1 task') : tr('{n} tasks', { n: list.length });
     const text = !est ? count : tr('{count} · {est} estimated · {open} open', { count, est: d(est), open: open ? d(open) : '0' });
-    return { text, title: tr('{n} task(s) shown (done ones only without "Hide done").\nEstimated: their estimates added up - a main task only with the part not split up into sub-tasks.\nOpen: what is left of that after the progress so far.', { n: list.length }) + (extra || '') };
+    return { text, title: tr('{n} task(s) shown (done ones only without "Hide done").\nEstimated: their estimates added up - a main task with all of it (its sub-tasks included); a sub-task whose main task is in the same group is not counted again.\nOpen: what is left of that after the progress so far.', { n: list.length }) + (extra || '') };
   }
 
   /**
