@@ -458,7 +458,31 @@ window.MM = window.MM || {};
   // ---- Blocks (notebook.js): a map with fixed pages ----------------------------------
   // doc.page = { id, size, orient, count, ruling, paper, created: ['YYYY-MM-DD', …] }
   MM.PAGE_SIZES = { A4: [794, 1123] }; // CSS px (96 dpi) portrait - printed 1:1
-  MM.PAGE_RULINGS = { none: 'None', lines: 'Lines', grid: 'Squares', dots: 'Dots' };
+  MM.PAGE_RULINGS = { none: 'None', lines: 'Lines', grid: 'Squares', dots: 'Dots', staff: 'Music staves' };
+
+  /**
+   * Background of printed pages (blocks and diaries), chosen in their print dialog and kept
+   * in the browser: 'screen' as shown (paper colour and ruling), 'white' (the ruling on pure
+   * white - no faint colour for the printer), 'plain' (pure white, no ruling).
+   */
+  MM.PRINT_BGS = { screen: 'As on screen', white: 'White (with the ruling)', plain: 'Plain (white, no ruling)' };
+  MM.printBg = () => (Object.hasOwn(MM.PRINT_BGS, MM.state.settings.printBg) ? MM.state.settings.printBg : 'screen');
+  /** Radio buttons of the choice for a print dialog (name="printBg"). */
+  MM.printBgHTML = function () {
+    const esc = MM.render.esc, cur = MM.printBg();
+    return `<div class="row col"><label>${esc(MM.tr('Page background'))}</label>` +
+      Object.entries(MM.PRINT_BGS).map(([k, l]) =>
+        `<label class="check"><input type="radio" name="printBg" value="${k}"${k === cur ? ' checked' : ''}> ${esc(MM.tr(l))}</label>`).join('') + '</div>';
+  };
+  /** Remember the choice of a print dialog (form or element with the radio buttons). */
+  MM.takePrintBg = function (box) {
+    const r = box.querySelector('input[name="printBg"]:checked');
+    if (r && Object.hasOwn(MM.PRINT_BGS, r.value)) {
+      MM.state.settings.printBg = r.value;
+      MM.saveSettings();
+    }
+    return MM.printBg();
+  };
   MM.PAGE_MAX = 999;
   // image of a block kept as a file: "<block id>/<image id>.<ext>" below Blocks/_images/ -
   // nothing else (no "..", no other folders: the path comes from a file)

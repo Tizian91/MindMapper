@@ -173,6 +173,7 @@
       out.id = 'map-print';
       document.body.appendChild(out);
     }
+    delete out.dataset.bg; // a map is printed as it is (blocks: X.printPages sets it)
     return out;
   }
 
@@ -199,8 +200,8 @@
 
   // ---- A block (notebook.js): its pages 1:1 on A4 sheets ------------------------------
 
-  /** Print / PDF of pages from … to (indices) of the open block, one sheet per page. */
-  X.printPages = function (from, to) {
+  /** Print / PDF of pages from … to (indices) of the open block, one sheet per page; bg: MM.PRINT_BGS. */
+  X.printPages = function (from, to, bg) {
     MM.edit.finish();
     const NB = MM.notebook, page = S.doc.page;
     if (!page) return;
@@ -212,6 +213,7 @@
     base.className = 'mp-world';
     const out = printArea();
     out.innerHTML = '';
+    out.dataset.bg = bg || MM.printBg();
     for (let k = from; k <= to; k++) {
       const box = NB.pageBox(k);
       const world = base.cloneNode(true);
@@ -246,6 +248,7 @@
           <label class="check"><input type="radio" name="which" value="range"> ${esc(tr('Pages'))}
             <input type="number" name="from" min="1" max="${page.count}" value="${cur}" style="width:4.5em"> –
             <input type="number" name="to" min="1" max="${page.count}" value="${page.count}" style="width:4.5em"></label></div>
+        ${MM.printBgHTML()}
         <p class="hint">${esc(tr('Every page on its own A4 sheet, in its real size. For a PDF choose "Save as PDF" as the printer.'))}</p>
         <div class="dlg-buttons">
           <button type="button" data-mp="cancel">${esc(tr('Cancel'))}</button>
@@ -277,8 +280,9 @@
     f.addEventListener('submit', (e) => {
       e.preventDefault();
       const [a, b] = range();
+      const bg = MM.takePrintBg(f);
       d.close();
-      X.printPages(a, b);
+      X.printPages(a, b, bg);
     });
     d.showModal();
   }

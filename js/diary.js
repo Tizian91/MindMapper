@@ -1130,6 +1130,7 @@
       <label class="dy-print-row"><input type="radio" name="dy-pr" value="all"> ${esc(tr('Whole diary ({n} pages)', { n: view.days.length }))}</label>
       <label class="dy-print-row"><input type="radio" name="dy-pr" value="range"> ${esc(tr('From'))}
         <input type="date" class="dy-pr-from" value="${esc(first)}"> ${esc(tr('to'))} <input type="date" class="dy-pr-to" value="${esc(last)}"></label>
+      ${MM.printBgHTML()}
       <div class="dy-print-row"><button type="button" class="primary" data-dy="doPrint">🖨 ${esc(tr('Print / PDF'))}</button></div>
       <p class="hint">${esc(tr('For a PDF choose "Save as PDF" as the printer.'))}</p>`;
   }
@@ -1146,6 +1147,7 @@
       alert(tr('No pages in this period.'));
       return;
     }
+    const bg = MM.takePrintBg(box); // page background on paper: as shown / white / plain
     popup(null);
     flushSave();
     let out = document.getElementById('diary-print');
@@ -1154,6 +1156,7 @@
       out.id = 'diary-print';
       document.body.appendChild(out);
     }
+    out.dataset.bg = bg;
     const ruling = view.diary.style.ruling;
     const sel = view.sel;
     view.sel = null; // no selection frame on paper

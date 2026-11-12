@@ -530,6 +530,19 @@ details.st-group.few summary { color: var(--muted); }
 .nb-page[data-ruling="lines"] { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--nb-line) - 1px), rgba(0, 0, 0, 0.1) calc(var(--nb-line) - 1px), rgba(0, 0, 0, 0.1) var(--nb-line)); background-position: 0 calc(var(--nb-head) + 8px); }
 .nb-page[data-ruling="grid"] { background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px); background-size: var(--nb-sq) var(--nb-sq); }
 .nb-page[data-ruling="dots"] { background-image: radial-gradient(rgba(0, 0, 0, 0.22) 1px, transparent 1.3px); background-size: var(--nb-sq) var(--nb-sq); }
+/* music staves: five lines 2 mm apart, a staff every 20 mm, 12 mm in from the edges */
+.nb-page[data-ruling="staff"] {
+  --st: 7.56px; --st-c: rgba(0, 0, 0, 0.42);
+  background-image: repeating-linear-gradient(to bottom,
+    var(--st-c) 0, var(--st-c) 1px, transparent 1px, transparent var(--st),
+    var(--st-c) var(--st), var(--st-c) calc(var(--st) + 1px), transparent calc(var(--st) + 1px), transparent calc(2 * var(--st)),
+    var(--st-c) calc(2 * var(--st)), var(--st-c) calc(2 * var(--st) + 1px), transparent calc(2 * var(--st) + 1px), transparent calc(3 * var(--st)),
+    var(--st-c) calc(3 * var(--st)), var(--st-c) calc(3 * var(--st) + 1px), transparent calc(3 * var(--st) + 1px), transparent calc(4 * var(--st)),
+    var(--st-c) calc(4 * var(--st)), var(--st-c) calc(4 * var(--st) + 1px), transparent calc(4 * var(--st) + 1px), transparent 75.6px);
+  background-size: calc(100% - 90px) calc(100% - var(--nb-head) - 50px);
+  background-position: 45px calc(var(--nb-head) + 30px);
+  background-repeat: no-repeat;
+}
 .nb-head {
   position: absolute; left: 0; right: 0; top: 0; height: var(--nb-head);
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
@@ -1482,6 +1495,9 @@ span.ov-caret { cursor: default; }
 .dy-page[data-ruling="lines"] { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--dy-line) - 1px), rgba(0, 0, 0, 0.09) calc(var(--dy-line) - 1px), rgba(0, 0, 0, 0.09) var(--dy-line)); }
 .dy-page[data-ruling="grid"] { background-image: linear-gradient(rgba(0, 0, 0, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.07) 1px, transparent 1px); background-size: var(--dy-line) var(--dy-line); }
 .dy-page[data-ruling="dots"] { background-image: radial-gradient(rgba(0, 0, 0, 0.18) 1px, transparent 1.2px); background-size: var(--dy-line) var(--dy-line); }
+/* printing a block or a diary: "white" keeps the ruling on pure white, "plain" is pure white (MM.PRINT_BGS) */
+#map-print[data-bg="white"] .nb-page, #map-print[data-bg="white"] .nb-head, #diary-print[data-bg="white"] .dy-page { background-color: #fff !important; }
+#map-print[data-bg="plain"] .nb-page, #map-print[data-bg="plain"] .nb-head, #diary-print[data-bg="plain"] .dy-page { background: #fff !important; }
 .dy-day { margin: 0 0 18px; font-size: 1.5em; color: var(--dy-accent); border-bottom: 2px solid var(--dy-accent); padding-bottom: 4px; }
 .dy-none { color: #7b8794; font-style: italic; }
 .dy-entry { position: relative; margin: 0 0 var(--dy-line); padding: 0; border-radius: 6px; }
