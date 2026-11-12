@@ -84,6 +84,8 @@
     target.classList.add('editing');
     div.classList.add('editing');
     target.focus({ preventScroll: true }); // the canvas must never scroll (interaction.js)
+    // while a text is written the map lets the tablet's handwriting recognition in (app.css)
+    document.getElementById('viewport').classList.add('text-editing');
     // a long entry is continued at its end, not selected (typing would replace it)
     setCaret(target, (opts && opts.caret !== undefined) ? opts.caret : markdown ? 'end' : 'all');
 
@@ -133,6 +135,7 @@
     target.removeEventListener('drop', onPaste);
     target.contentEditable = 'false';
     target.classList.remove('editing');
+    document.getElementById('viewport').classList.remove('text-editing');
 
     const n = MM.node(ed.nodeId);
     if (n && !opts.noWrite) writeText(ed, n, text, true);
