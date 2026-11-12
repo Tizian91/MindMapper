@@ -485,9 +485,26 @@
     if (!K.on() || e.pointerType === 'touch' || active) return; // a finger: touch.js asks K.fingerDown
     if (vp.classList.contains('space-pan')) return; // Space + drag pans the map
     if (e.button !== 0 && !erasing(e)) return; // right / middle mouse button as usual
-    if (!erasing(e) && onSelection(e)) return; // lasso: what was caught is moved (interaction.js)
+    if (!erasing(e) && onSelection(e)) {
+      // lasso: what was caught is moved from anywhere in its frame, also between the strokes
+      // (a drawing only takes clicks on its line); its handles resize / turn as usual (interaction.js)
+      if (!onHandle(e.target)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        MM.interaction.moveSelection(e);
+      }
+      return;
+    }
     begin(e);
   }
+
+  const onHandle = (t) => !!(t && t.closest && t.closest('.handle-resize, .handle-rotate, .handle-endpoint'));
+
+  /**
+   * A finger on what the lasso caught (touch.js): it moves it - not the map. Its handles are
+   * left to touch.js (they act like the mouse there).
+   */
+  K.grabsSelection = (e) => K.on() && onSelection(e) && !onHandle(e.target);
 
   /**
    * Lasso: does the pointer come down on what the lasso caught (the box around it, a little

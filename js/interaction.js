@@ -379,6 +379,15 @@
     }
   }
 
+  /**
+   * Move the whole selection from this pointer-down, wherever in its frame it is - also
+   * between the strokes of a drawing (ink.js lasso, touch.js). No click selects anew.
+   */
+  I.moveSelection = function (e) {
+    if (MM.editing) MM.edit.finish();
+    startMove(e, I.toWorld(e.clientX, e.clientY), { clickedId: null, deselectOnClick: false });
+  };
+
   function startMove(e, p, extra) {
     const orig = new Map();
     for (const n of MM.selectedNodes()) {
@@ -617,7 +626,7 @@
         else if (drag.deselectOnClick) {
           S.selection.delete(drag.clickedId);
           MM.refresh();
-        } else if (!e.shiftKey && !e.ctrlKey && S.selection.size > 1) {
+        } else if (drag.clickedId && !e.shiftKey && !e.ctrlKey && S.selection.size > 1) {
           MM.select([drag.clickedId]);
           MM.refresh();
         } else MM.refresh();

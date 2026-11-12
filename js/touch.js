@@ -84,6 +84,16 @@
       e.preventDefault();
       return;
     }
+    // what the lasso caught (ink.js): one finger in its frame moves it, not the map
+    if (!touches.size && MM.ink && MM.ink.grabsSelection(e)) {
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      mode = 'direct'; // interaction.js gets the moves and the end (a 2nd finger ends it, see startPinch)
+      start = { e, x: e.clientX, y: e.clientY, timer: 0 };
+      stop(e);
+      e.preventDefault();
+      I().moveSelection(e);
+      return;
+    }
     // freehand with a finger (ink.js "☝️ Finger"): one finger writes; a second one makes
     // the first part of a pinch (the stroke just begun is dropped)
     if (MM.ink && MM.ink.fingerDraws()) {
