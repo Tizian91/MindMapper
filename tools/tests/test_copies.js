@@ -24,6 +24,7 @@ const root = process.argv[2], out = [];
     // the sidebar tree: copies hang at their map, a copy without its map stays a map
     MM.storage = { PROJECT_SETTINGS_FILE: 'mindmapper.settings.json' };
     MM.diary = { loadIndex() {} };
+    MM.notebook = { retryImages() {} }; // blocks (notebook.js): pictures read again after the folder scan
     MM.load = { scheduleRefresh() {} };
     const tree = {
       '': ['mindmapper.settings.json', 'mindmapper.settings [conflicted].json', 'mindmapper.settings [conflicted] [conflicted].json',

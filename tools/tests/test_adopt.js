@@ -15,6 +15,7 @@ const root = process.argv[2], out = [];
     MM.ui = { flash: (m) => flashes.push(m), update() {} };
     MM.render = { esc: (s) => String(s) };
     MM.diary = { loadIndex() {} };
+    MM.notebook = { retryImages() {} }; // blocks (notebook.js): pictures read again after the folder scan
     MM.load = { scheduleRefresh() {} };
     P.render = () => {};
     P.fillPlan = async () => {};

@@ -11,6 +11,7 @@ const root = process.argv[2], out = [];
     MM.render = { esc: (s) => String(s) };
     MM.load = { scheduleRefresh() {} };
     MM.diary.loadIndex = () => {};
+    MM.notebook = MM.notebook || { retryImages() {} }; // blocks (notebook.js): pictures read again after the folder scan
     P.render = () => {};
 
     // names of conflict copies of a diary file
