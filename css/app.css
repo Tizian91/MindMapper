@@ -485,11 +485,12 @@ details.st-group.few summary { color: var(--muted); }
   -webkit-touch-callout: none; /* no "copy / share" bubble on a long press (touch.js uses it for the menu) */
   touch-action: none;
 }
-/* A note being written: Android / Chrome offer the stylus handwriting recognition (writing
-   turned into text) only where touch-action allows "auto" or "manipulation" - "none" turns
-   it off. So while a text is edited the map allows it; afterwards fingers and stylus belong
-   to the map again (touch.js, ink.js). */
-#viewport.text-editing, #viewport.text-editing .editing { touch-action: manipulation; }
+/* A note being written with the stylus: Android / Chrome offer the stylus handwriting
+   recognition (writing turned into text) only where touch-action allows "auto" or
+   "manipulation" - "none" turns it off. So while a text is edited and the stylus is near
+   (ink.js penNearNow, also hovering) the map allows it; fingers keep moving and zooming the
+   map, and without editing everything belongs to the map (touch.js, ink.js). */
+#viewport.text-editing.pen-near, #viewport.text-editing.pen-near .editing { touch-action: manipulation; }
 #viewport.show-grid {
   background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 1.4px);
 }

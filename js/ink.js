@@ -477,11 +477,25 @@
     for (const t of ['click', 'dblclick', 'contextmenu']) vp.addEventListener(t, quiet, true);
   };
 
+  /**
+   * The stylus touches or hovers over the screen (any tool, pen mode on or off): palm
+   * rejection, and #viewport.pen-near for a while - with a note being written that lets
+   * the tablet's handwriting recognition in (app.css); fingers keep the map then.
+   */
+  let penTimer = 0;
+  function penNearNow() {
+    penSeen = Date.now();
+    if (!vp) return;
+    vp.classList.add('pen-near');
+    clearTimeout(penTimer);
+    penTimer = setTimeout(() => vp.classList.remove('pen-near'), 1500);
+  }
+
   /** Eraser end (Windows: button 5 / buttons 32) or side button of the pen held (buttons 2). */
   const erasing = (e) => e.pointerType === 'pen' && (e.button === 5 || (e.buttons & 32) || (e.buttons & 2));
 
   function down(e) {
-    if (e.pointerType === 'pen') penSeen = Date.now();
+    if (e.pointerType === 'pen') penNearNow();
     if (!K.on() || e.pointerType === 'touch' || active) return; // a finger: touch.js asks K.fingerDown
     if (vp.classList.contains('space-pan')) return; // Space + drag pans the map
     if (e.button !== 0 && !erasing(e)) return; // right / middle mouse button as usual
@@ -600,7 +614,7 @@
   }
 
   function move(e) {
-    if (e.pointerType === 'pen') penSeen = Date.now();
+    if (e.pointerType === 'pen') penNearNow();
     if (!active && K.on() && e.pointerType !== 'touch' && S.settings.pen && S.settings.pen.tool === 'shape' &&
       MM.isLineKind(S.settings.pen.shape && S.settings.pen.shape.kind)) hover(e);
     if (!active || e.pointerId !== active.id) return;
@@ -613,7 +627,7 @@
   }
 
   function up(e) {
-    if (e.pointerType === 'pen') penSeen = Date.now();
+    if (e.pointerType === 'pen') penNearNow();
     if (!active || e.pointerId !== active.id) return;
     e.preventDefault();
     e.stopImmediatePropagation();
