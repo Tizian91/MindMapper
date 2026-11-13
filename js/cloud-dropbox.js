@@ -342,7 +342,7 @@
             const key = e.path_lower;
             if (key === lower('')) continue;
             if (e['.tag'] === 'folder' && !t.dirs.has(key)) t.dirs.set(key, []);
-            if (e['.tag'] === 'file') t.files.set(key, { rev: e.rev, modified: Date.parse(e.server_modified) || 0 });
+            if (e['.tag'] === 'file') t.files.set(key, { rev: e.rev, modified: Date.parse(e.server_modified) || 0, size: e.size || 0 });
           }
           for (const e of entries) {
             if (e.path_lower === lower('') || e['.tag'] === 'deleted') continue;
@@ -372,7 +372,7 @@
         return;
       }
       const known = tree.files.has(key);
-      tree.files.set(key, { rev: meta.rev, modified: Date.parse(meta.server_modified) || Date.now() });
+      tree.files.set(key, { rev: meta.rev, modified: Date.parse(meta.server_modified) || Date.now(), size: meta.size || 0 });
       if (known) return;
       // a new file (maybe in new folders): simplest to list again next time
       tree = null;
@@ -385,7 +385,7 @@
 
     B.stat = async function (path) {
       const f = (await loadTree()).files.get(lower(path));
-      return f ? { version: f.rev, modified: f.modified } : null;
+      return f ? { version: f.rev, modified: f.modified, size: f.size } : null;
     };
 
     B.exists = async (path) => !!(await B.stat(path));

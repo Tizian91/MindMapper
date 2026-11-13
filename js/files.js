@@ -236,6 +236,7 @@
       alert(MM.tr('This note points to "{path}".\nAllow access to the project folder first (sidebar "Project").', { path: file.path }));
       return;
     }
+    await F.restoreTrashed(); // deleted with its note, the note came back (Ctrl+Z)
     let blob = null;
     try {
       blob = await MM.project.backend.readBlob(file.path);
@@ -247,6 +248,12 @@
       }
       return;
     }
+    showBlob(blob, file.name);
+  };
+
+  /** Show a file in a new tab (types the browser can show) or download it. */
+  function showBlob(blob, name) {
+    const file = { name };
     try {
       const url = URL.createObjectURL(blob);
       if (INLINE.test(ext(file.name))) {
@@ -276,6 +283,261 @@
       }
     } catch (err) {
       alert(MM.tr('Could not open {name}: {err}', { name: file.name, err: describeError(err) }));
+    }
+  }
+
+  // ---- Deleting assets -------------------------------------------------------
+  // Deleting a note never deletes its file on its own. Audio notes ask (F.askDelete);
+  // "Clean up Assets…" (F.showOrphans) lists files no note of the project uses any more.
+  // A deleted file stays in memory for this session: when its note comes back (Ctrl+Z),
+  // the file is written back (F.restoreTrashed).
+
+  const trash = new Map(); // path -> Blob
+
+  /** Delete a file of Assets/ (kept in memory for Ctrl+Z). */
+  F.removeAsset = async function (path) {
+    const B = MM.project.backend;
+    let blob = null;
+    try { blob = await B.readBlob(path); } catch (e) { /* gone already */ }
+    if (blob) trash.set(path, blob);
+    await B.remove(path);
+  };
+
+  /** Notes of the open map point to deleted files again (undo / redo): write those back. */
+  F.restoreTrashed = async function () {
+    if (!trash.size || !MM.project.backend) return;
+    const want = new Set();
+    for (const n of Object.values(S.doc.nodes)) if (n.file && trash.has(n.file.path)) want.add(n.file.path);
+    for (const path of want) {
+      const blob = trash.get(path);
+      trash.delete(path);
+      try {
+        await MM.project.writeBlob(path, blob);
+      } catch (err) {
+        trash.set(path, blob);
+        MM.ui.flash(MM.tr('Could not bring back {path}', { path }));
+      }
+    }
+    if (want.size) MM.project.scan();
+  };
+
+  /** The paths of all entries (maps and their conflict copies) below `entries`. */
+  function mapFiles(entries, out = []) {
+    for (const e of entries || []) {
+      if (e.kind === 'file') {
+        out.push({ path: e.path });
+        for (const c of e.copies || []) out.push({ path: c.path, raw: true });
+      } else mapFiles(e.children, out);
+    }
+    return out;
+  }
+
+  /**
+   * Everything of the project that can point to a file of Assets/: the open map (from
+   * memory), every map (with changes not written yet), conflict copies and diaries.
+   * Resolves with { uses(path, skipOpen), unread: [paths that could not be read] }.
+   * skipOpen: leave the open map out (it was searched on its own).
+   */
+  F.references = async function (onStep) {
+    const P = MM.project;
+    const texts = [], unread = [];
+    const files = mapFiles(P.entries).filter((f) => f.path !== S.file.path);
+    for (const d of P.diaries || []) {
+      files.push({ path: d.path, raw: true });
+      for (const c of d.copies || []) files.push({ path: c.path, raw: true });
+    }
+    let i = 0;
+    for (const f of files) {
+      if (onStep) onStep(++i, files.length);
+      try {
+        if (f.raw) {
+          const r = await P.backend.read(f.path);
+          if (r) texts.push(r.text.toLowerCase());
+        } else {
+          const doc = await P.readMap(f.path); // with changes not written yet (P.later)
+          if (doc) texts.push(JSON.stringify(doc.nodes).toLowerCase());
+          else unread.push(f.path);
+        }
+      } catch (err) {
+        unread.push(f.path);
+      }
+    }
+    const key = (path) => JSON.stringify(String(path).toLowerCase()).slice(1, -1);
+    const open = () => JSON.stringify(S.doc.nodes).toLowerCase(); // the open map, also one outside the folder
+    return {
+      uses: (path, skipOpen) => (!skipOpen && open().includes(key(path))) || texts.some((t) => t.includes(key(path))),
+      unread,
+    };
+  };
+
+  /**
+   * Del / Cut on notes: audio notes ask whether their recordings go as well.
+   * Resolves with 'cancel', 'note' (only the notes) or 'both'; 'note' when nothing to ask.
+   */
+  const audioOf = (nodes) => nodes.filter((n) => n && n.type === 'file' && MM.audio && MM.audio.isAudio(n.file));
+
+  /** Would deleting `nodes` ask about recordings? (audio notes, a project folder) */
+  F.asksOnDelete = (nodes) => !!(MM.project && MM.project.backend && audioOf(nodes).length);
+
+  F.askDelete = function (nodes) {
+    const audio = audioOf(nodes);
+    if (!audio.length || !MM.project.backend) return Promise.resolve('note');
+    const esc = MM.render.esc, tr = MM.tr;
+    return new Promise((resolve) => {
+      let answer = 'cancel';
+      const d = document.createElement('dialog');
+      const what = audio.length === 1 ? tr('the recording "{name}"', { name: audio[0].file.name }) : tr('{n} recordings', { n: audio.length });
+      d.innerHTML = `
+        <form method="dialog" class="dlg">
+          <h3>${esc(tr(audio.length === 1 ? 'Delete audio note' : 'Delete audio notes'))}</h3>
+          <p>${esc(tr('Delete {what} from Assets/ as well?', { what }))}</p>
+          <p class="hint">${esc(tr('Ctrl+Z brings both back while MindMapper stays open. A recording that another note still uses is kept.'))}</p>
+          <div class="dlg-buttons">
+            <button type="button" data-del="cancel">${esc(tr('Cancel'))}</button>
+            <span style="flex:1"></span>
+            <button type="button" data-del="note">${esc(tr('Only the note'))}</button>
+            <button type="submit" class="primary danger" data-del="both">${esc(tr('Note and recording'))}</button>
+          </div>
+        </form>`;
+      document.body.appendChild(d);
+      d.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-del]');
+        if (!b) return;
+        e.preventDefault();
+        answer = b.dataset.del;
+        d.close();
+      });
+      d.addEventListener('keydown', (e) => e.stopPropagation());
+      d.addEventListener('close', () => {
+        d.remove();
+        resolve(answer);
+      });
+      d.showModal();
+      d.querySelector('[data-del="note"]').focus(); // Enter: the safe choice
+    });
+  };
+
+  /**
+   * The notes `gone` were deleted with "Note and recording": delete their files, unless
+   * another note (this map or another one) still uses them.
+   */
+  F.deleteFilesOf = async function (gone) {
+    const paths = [...new Set(gone.map((n) => n.file && n.file.path).filter(Boolean))];
+    if (!paths.length || !(await MM.project.ensureWriteAccess())) return;
+    const stillHere = (p) => Object.values(S.doc.nodes).some((n) => n.file && n.file.path === p);
+    let refs = null;
+    let removed = 0, kept = 0;
+    for (const p of paths) {
+      if (stillHere(p)) { kept++; continue; }
+      if (!refs) refs = await F.references();
+      if (refs.uses(p, true) || refs.unread.length) { kept++; continue; } // unsure: rather keep it
+      try {
+        await F.removeAsset(p);
+        removed++;
+      } catch (err) {
+        kept++;
+        console.warn('MindMapper: could not delete ' + p, err);
+      }
+    }
+    MM.project.scan();
+    if (kept) MM.ui.flash(MM.tr('{n} recording(s) deleted, {k} kept - still used by another note (or a map could not be read)', { n: removed, k: kept }));
+    else MM.ui.flash(MM.tr('{n} recording(s) deleted', { n: removed }));
+  };
+
+  // ---- Clean up Assets/ (files no note uses) ---------------------------------------
+
+  let orphanDialog = null;
+
+  /** Dialog: the files of Assets/ that no note of the project uses; delete the chosen ones. */
+  F.showOrphans = async function () {
+    const P = MM.project, esc = MM.render.esc, tr = MM.tr;
+    if (P.status !== 'ready' && !(await P.ensureWriteAccess())) {
+      alert(tr('Open a folder in the "Project" sidebar first.'));
+      return;
+    }
+    if (orphanDialog) orphanDialog.remove();
+    const d = (orphanDialog = document.createElement('dialog'));
+    d.className = 'assets-dialog';
+    const box = (body, buttons) => {
+      d.innerHTML = `<div class="dlg"><h3>${esc(tr('Clean up Assets/'))}</h3>${body}
+        <div class="dlg-buttons">${buttons || ''}<span style="flex:1"></span><button type="button" data-as="close">${esc(tr('Close'))}</button></div></div>`;
+    };
+    box(`<p class="hint" data-as-step>${esc(tr('Searching all maps…'))}</p>`);
+    d.addEventListener('keydown', (e) => e.stopPropagation());
+    d.addEventListener('close', () => { d.remove(); if (orphanDialog === d) orphanDialog = null; });
+    document.body.appendChild(d);
+    d.showModal();
+
+    let list = [], unread = [];
+    const search = async () => {
+      await P.scan(); // the newest list of maps
+      await F.restoreTrashed();
+      const names = (await P.backend.list(ASSET_FOLDER)).filter((e) => e.kind === 'file' && !e.name.startsWith('.')).map((e) => e.name);
+      const refs = await F.references((i, n) => {
+        const s = d.querySelector('[data-as-step]');
+        if (s) s.textContent = tr('Searching all maps… ({i} of {n})', { i, n });
+      });
+      unread = refs.unread;
+      list = [];
+      for (const name of names) {
+        const path = ASSET_FOLDER + '/' + name;
+        if (refs.uses(path)) continue;
+        let st = null;
+        try { st = await P.backend.stat(path); } catch (e) { /* no details */ }
+        list.push({ path, name, size: st && st.size, modified: st && st.modified });
+      }
+      list.sort((a, b) => (b.modified || 0) - (a.modified || 0));
+      return names.length;
+    };
+
+    const show = (total) => {
+      if (!d.open) return;
+      const sum = list.reduce((s, f) => s + (f.size || 0), 0);
+      const warn = unread.length
+        ? `<p class="hint warn">${esc(tr('{n} map(s) could not be read - a file listed here may still be used there. Nothing is ticked.', { n: unread.length }))}<br>${unread.map(esc).join('<br>')}</p>` : '';
+      const date = (t) => (t ? new Date(t).toLocaleDateString(MM.getLang() === 'de' ? 'de-DE' : undefined) : '');
+      const rows = list.map((f, i) => `<label class="as-row"><input type="checkbox" data-as-pick="${i}"${unread.length ? '' : ' checked'}>
+          ${MM.files.icon(f.name)}<span class="as-name" title="${esc(f.path)}">${esc(f.name)}</span>
+          <span class="as-meta">${esc([f.size ? F.humanSize(f.size) : '', date(f.modified)].filter(Boolean).join(' · '))}</span>
+          <button type="button" data-as-open="${i}" title="${esc(tr('Open the file'))}">↗</button></label>`).join('');
+      box(`<p class="hint">${esc(list.length
+        ? tr('{n} of {t} file(s) in Assets/ are used by no note of any map, conflict copy or diary ({size}).', { n: list.length, t: total, size: F.humanSize(sum) })
+        : tr('All {t} file(s) in Assets/ are used by notes.', { t: total }))}</p>${warn}
+        ${rows ? `<div class="as-list">${rows}</div>` : ''}`,
+      list.length ? `<button type="button" class="danger" data-as="delete">${esc(tr('Delete the chosen files…'))}</button>` : '');
+    };
+
+    d.addEventListener('click', async (e) => {
+      const t = e.target;
+      if (t === d || t.closest('[data-as="close"]')) return d.close();
+      const open = t.closest('[data-as-open]');
+      if (open) {
+        e.preventDefault();
+        const f = list[+open.dataset.asOpen];
+        let blob = null;
+        try { blob = await P.backend.readBlob(f.path); } catch (err) { /* below */ }
+        if (blob) showBlob(blob, f.name);
+        else alert(tr('File not found:\n{path}', { path: f.path }));
+        return;
+      }
+      if (t.closest('[data-as="delete"]')) {
+        const chosen = [...d.querySelectorAll('[data-as-pick]:checked')].map((c) => list[+c.dataset.asPick]);
+        if (!chosen.length) return;
+        if (!confirm(tr('Delete {n} file(s) from Assets/?', { n: chosen.length }))) return;
+        let failed = 0;
+        for (const f of chosen) {
+          try { await F.removeAsset(f.path); } catch (err) { failed++; }
+        }
+        MM.ui.flash(failed ? tr('{n} file(s) could not be deleted', { n: failed }) : tr('{n} file(s) deleted', { n: chosen.length }));
+        box(`<p class="hint" data-as-step>${esc(tr('Searching all maps…'))}</p>`);
+        show(await search());
+      }
+    });
+
+    try {
+      show(await search());
+    } catch (err) {
+      box(`<p class="hint warn">${esc(tr('Could not search: {err}', { err: describeError(err) }))}</p>`);
     }
   };
 

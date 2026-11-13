@@ -466,7 +466,21 @@
     MM.refresh();
   };
 
-  A.deleteSelection = function () {
+  /**
+   * Delete the selected notes and connections. Audio notes ask whether their recordings
+   * go as well (files.js askDelete); opts.keepFiles (Cut): never ask, files stay.
+   */
+  A.deleteSelection = function (opts) {
+    const nodes = MM.selectedNodes();
+    const ask = !(opts && opts.keepFiles) && MM.files && MM.files.asksOnDelete(nodes);
+    if (!ask) return removeSelection(nodes, 'note'); // at once, as always
+    const doc = S.doc;
+    return MM.files.askDelete(nodes).then((answer) => {
+      if (answer !== 'cancel' && S.doc === doc) return removeSelection(nodes, answer);
+    });
+  };
+
+  function removeSelection(nodes, answer) {
     const doc = S.doc;
     for (const id of S.selection) {
       if (doc.nodes[id]) delete doc.nodes[id];
@@ -480,7 +494,8 @@
     }
     MM.select([]);
     MM.commit();
-  };
+    if (answer === 'both') return MM.files.deleteFilesOf(nodes.filter((n) => n.type === 'file'));
+  }
 
   // ---- Clipboard -----------------------------------------------------------
 
@@ -504,7 +519,7 @@
 
   A.cut = function () {
     A.copy();
-    A.deleteSelection();
+    A.deleteSelection({ keepFiles: true }); // cut is a move: the files go along
   };
 
   A.hasClipboard = () => !!clipboard;
@@ -648,6 +663,7 @@
     if (MM.history.undo()) {
       S.dirty = true;
       MM.storage.scheduleAutosave();
+      MM.files.restoreTrashed(); // a note came back whose file was deleted with it
     }
     MM.refresh();
   };
@@ -656,6 +672,7 @@
     if (MM.history.redo()) {
       S.dirty = true;
       MM.storage.scheduleAutosave();
+      MM.files.restoreTrashed();
     }
     MM.refresh();
   };

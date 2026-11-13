@@ -1300,7 +1300,8 @@
             (d.copies ? `<button class="sb-copies" data-diary-copies title="${esc(tr('{n} conflict copies of this diary (e.g. from a sync program) - keep one, clean up', { n: d.copies.length }))}">⚠ ${d.copies.length}</button>` : '') +
             '</div>').join('') ||
             `<p class="hint">${tr('No diary yet. Diary entries are notes of the type "Diary entry".')}</p>`}
-        </div>`;
+        </div>
+        <button class="sb-wide sb-assets" data-p="assets" title="${esc(tr('Files in Assets/ that no note uses any more'))}">🧹 ${tr('Clean up Assets…')}</button>`;
       if (!S.file.path) {
         h += `<p class="hint sb-outside">${tr('The open map ({name}) is not part of this folder. Use <b>Save as</b> to store it here.', { name: esc(displayName(S.file.name)) })}</p>`;
       }
@@ -1589,6 +1590,7 @@
       else if (a === 'hide') MM.actions.toggleProject();
       else if (a === 'newDiary') P.newDiary().then((name) => name && MM.diary.open(name));
       else if (a === 'newBlock') MM.notebook.create();
+      else if (a === 'assets') MM.files.showOrphans();
       return;
     }
     const diary = t.closest('[data-diary]');

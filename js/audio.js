@@ -140,6 +140,7 @@
     }
     const me = (cur = { id: n.id, path: n.file.path, audio: null, url: '', loading: true });
     AU.paint(n.id);
+    await MM.files.restoreTrashed(); // deleted with its note, the note came back (Ctrl+Z)
     let blob = null;
     try { blob = await MM.project.backend.readBlob(n.file.path); } catch (e) { /* missing */ }
     if (cur !== me) return null; // another note was started meanwhile

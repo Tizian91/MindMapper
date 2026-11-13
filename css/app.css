@@ -1319,6 +1319,18 @@ dl.keys dd { margin: 0; color: var(--label); }
 @keyframes rec-blink { 50% { opacity: 0.3; } }
 .rec-time { font-size: 22px; font-variant-numeric: tabular-nums; min-width: 4em; }
 .rec-level { flex: 1; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+/* "Clean up Assets/" (files.js showOrphans) */
+.assets-dialog .dlg { width: min(560px, 92vw); box-sizing: border-box; }
+.as-list { display: flex; flex-direction: column; gap: 2px; max-height: 50vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 4px; }
+.as-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+.as-row:hover { background: var(--accent-soft); }
+.as-row .file-badge { min-width: 30px; height: 24px; font-size: 9px; }
+.as-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-meta { flex: none; font-size: 11px; color: var(--muted); }
+.as-row button { flex: none; padding: 1px 7px; }
+.hint.warn { color: var(--danger); }
+.sb-assets { margin-top: 14px; color: var(--muted); }
+button.primary.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
 .rec-level > span { display: block; height: 100%; width: 0; background: #2f9e44; transition: width 0.08s; }
 
 /* a note that has a derived map gets a subtle marker on its border */

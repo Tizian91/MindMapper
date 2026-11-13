@@ -729,6 +729,36 @@
     'The recording could not be saved in the project folder. Download it instead?':
       'Die Aufnahme konnte nicht im Projektordner gespeichert werden. Stattdessen herunterladen?',
     'File not found:\n{path}': 'Datei nicht gefunden:\n{path}',
+    // ---- files.js (deleting recordings, cleaning up Assets/) ----
+    'Delete audio note': 'Audio-Notiz löschen',
+    'Delete audio notes': 'Audio-Notizen löschen',
+    'the recording "{name}"': 'die Aufnahme „{name}“',
+    '{n} recordings': '{n} Aufnahmen',
+    'Delete {what} from Assets/ as well?': 'Soll {what} auch aus Assets/ gelöscht werden?',
+    'Ctrl+Z brings both back while MindMapper stays open. A recording that another note still uses is kept.':
+      'Ctrl+Z bringt beides zurück, solange MindMapper offen bleibt. Eine Aufnahme, die noch eine andere Notiz benutzt, bleibt erhalten.',
+    'Only the note': 'Nur die Notiz',
+    'Note and recording': 'Notiz und Aufnahme',
+    '{n} recording(s) deleted': '{n} Aufnahme(n) gelöscht',
+    '{n} recording(s) deleted, {k} kept - still used by another note (or a map could not be read)':
+      '{n} Aufnahme(n) gelöscht, {k} behalten – noch von einer anderen Notiz benutzt (oder eine Map war nicht lesbar)',
+    'Could not bring back {path}': '{path} konnte nicht wiederhergestellt werden',
+    'Clean up Assets…': 'Assets aufräumen…',
+    'Clean up Assets/': 'Assets/ aufräumen',
+    'Files in Assets/ that no note uses any more': 'Dateien in Assets/, die keine Notiz mehr benutzt',
+    'Searching all maps…': 'Alle Maps werden durchsucht…',
+    'Searching all maps… ({i} of {n})': 'Alle Maps werden durchsucht… ({i} von {n})',
+    '{n} of {t} file(s) in Assets/ are used by no note of any map, conflict copy or diary ({size}).':
+      '{n} von {t} Datei(en) in Assets/ benutzt keine Notiz – in keiner Map, Konfliktkopie und keinem Tagebuch ({size}).',
+    'All {t} file(s) in Assets/ are used by notes.': 'Alle {t} Datei(en) in Assets/ werden von Notizen benutzt.',
+    '{n} map(s) could not be read - a file listed here may still be used there. Nothing is ticked.':
+      '{n} Map(s) ließen sich nicht lesen – eine Datei hier könnte dort noch benutzt werden. Deshalb ist nichts angehakt.',
+    'Open the file': 'Datei öffnen',
+    'Delete the chosen files…': 'Ausgewählte Dateien löschen…',
+    'Delete {n} file(s) from Assets/?': '{n} Datei(en) aus Assets/ löschen?',
+    '{n} file(s) deleted': '{n} Datei(en) gelöscht',
+    '{n} file(s) could not be deleted': '{n} Datei(en) ließen sich nicht löschen',
+    'Could not search: {err}': 'Suche fehlgeschlagen: {err}',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

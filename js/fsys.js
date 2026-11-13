@@ -7,7 +7,7 @@
  *   list(folder)                    direct children: [{ kind: 'dir'|'file', name }]
  *   read(path)                      { text, version } or null if missing
  *   readBlob(path)                  Blob or null if missing
- *   stat(path)                      { version, modified } or null if missing
+ *   stat(path)                      { version, modified, size } or null if missing
  *   write(path, text, { expect, expectHash })
  *                                   { version } - parent folders are created; with expect (the
  *                                   version read before) a file changed or deleted since is not
@@ -117,7 +117,7 @@
 
     B.stat = async function (path) {
       const f = await fileOrNull(path);
-      return f ? { version: f.lastModified, modified: f.lastModified } : null;
+      return f ? { version: f.lastModified, modified: f.lastModified, size: f.size } : null;
     };
 
     B.exists = async (path) => !!(await fileOrNull(path));

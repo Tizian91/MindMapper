@@ -29,6 +29,7 @@ ELECTRON_RUN_AS_NODE=1 "/c/Users/<Name>/AppData/Local/Programs/Microsoft VS Code
 | `test_carry.js` | Übertrag: nur lose Einträge von Aufgabenlisten, keine Notes, keine Termine (`templates.js collectUnfinished`) |
 | `test_lists.js` | Listen *Overdue* / *Open tasks*: nur Haupttasks, Horizont, Sortierung, Nachführen, vergangene Pläne bleiben (`tasklists.js`) |
 | `test_assets.js` | Datei in `Assets/` ablegen: dieselbe Datei wird wiederverwendet, keine Kopie „(2)“ (`files.js store`) |
+| `test_assetclean.js` | Aufnahmen mitlöschen / Assets aufräumen: was als benutzt zählt (offene Map, andere Maps, Konfliktkopien, Tagebücher, Groß-/Kleinschreibung), noch benutzte Dateien bleiben, `Ctrl+Z` schreibt die Datei zurück, unlesbare Map → behalten (`files.js references`, `deleteFilesOf`, `restoreTrashed`) |
 | `test_audio.js` | Audio-Notizen: welche Dateinotizen abspielen, Zeitanzeige, Dateiname einer Aufnahme, Länge bleibt beim Speichern erhalten (`audio.js`) |
 | `test_crop.js` | Bilder zuschneiden: Rahmen ziehen / verschieben, Seitenverhältnisse, Lage der Note nach dem Zuschneiden (auch gedreht) (`images.js cropBox`, `ratioFrame`, `croppedFrame`) |
 | `test_copies.js` | Konfliktkopien erkennen (pCloud, Dropbox, MindMapper) und an die Map hängen (`project.js copyOf`) |
