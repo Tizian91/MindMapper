@@ -1299,6 +1299,27 @@ dl.keys dd { margin: 0; color: var(--label); }
 .file-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-title:empty::before { content: var(--ph-file, "File note"); color: var(--muted); font-weight: 400; }
 .file-sub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* audio notes (audio.js): ▶ instead of the badge, a thin bar to seek */
+.audio-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%; font-size: 13px; line-height: 1;
+  color: #fff; background: var(--accent); border: 1px solid var(--accent);
+}
+.audio-btn.playing { background: var(--accent-hover); letter-spacing: -2px; }
+.audio-bar {
+  position: relative; height: 4px; margin-top: 6px; border-radius: 2px; cursor: pointer;
+  background: var(--border);
+}
+.audio-bar::before { content: ""; position: absolute; inset: -6px 0; } /* bigger target to hit */
+.audio-bar > span { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 2px; background: var(--accent); }
+/* recording dialog */
+.rec-row { display: flex; align-items: center; gap: 10px; margin: 6px 0 4px; }
+.rec-dot { width: 14px; height: 14px; border-radius: 50%; background: #e03131; animation: rec-blink 1.2s ease-in-out infinite; }
+.rec-dialog.paused .rec-dot { animation: none; background: var(--muted); }
+@keyframes rec-blink { 50% { opacity: 0.3; } }
+.rec-time { font-size: 22px; font-variant-numeric: tabular-nums; min-width: 4em; }
+.rec-level { flex: 1; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.rec-level > span { display: block; height: 100%; width: 0; background: #2f9e44; transition: width 0.08s; }
 
 /* a note that has a derived map gets a subtle marker on its border */
 .node.has-map > .node-shape { stroke-dasharray: 6 3; }

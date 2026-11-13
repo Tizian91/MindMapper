@@ -704,6 +704,31 @@
     'The picture could not be loaded': 'Das Bild konnte nicht geladen werden',
     'Drag the corners or edges of the frame, or the frame itself. Dragging on the picture draws a new frame.':
       'Ecken oder Kanten des Rahmens ziehen, oder den Rahmen selbst verschieben. Ziehen auf dem Bild zieht einen neuen Rahmen auf.',
+    // ---- audio.js ----
+    'Audio recording…': 'Audioaufnahme…',
+    'Audio recording': 'Audioaufnahme',
+    'Recording': 'Aufnahme',
+    'Play': 'Abspielen',
+    'Pause': 'Pause',
+    'Continue': 'Weiter',
+    'Stop and save': 'Stopp und speichern',
+    'Click to jump there': 'Klicken springt dorthin',
+    'Recording saved': 'Aufnahme gespeichert',
+    'Throw the recording away?': 'Aufnahme verwerfen?',
+    'Could not play the recording': 'Die Aufnahme lässt sich nicht abspielen',
+    'This browser cannot play {name}.': 'Dieser Browser kann {name} nicht abspielen.',
+    'This browser cannot record sound.': 'Dieser Browser kann keinen Ton aufnehmen.',
+    'No microphone found.': 'Kein Mikrofon gefunden.',
+    'Could not start the microphone: {err}': 'Das Mikrofon ließ sich nicht starten: {err}',
+    'The microphone is not allowed. Allow it in the address bar (🔒 / ⓘ) and try again.':
+      'Das Mikrofon ist nicht erlaubt. In der Adressleiste (🔒 / ⓘ) erlauben und noch einmal versuchen.',
+    'Saved as a file in Assets/ of the project folder; the note plays it.':
+      'Wird als Datei in Assets/ des Projektordners gespeichert; die Notiz spielt sie ab.',
+    'Audio notes keep the recording as a file in your project folder (Assets/).\n':
+      'Audio-Notizen legen die Aufnahme als Datei in deinen Projektordner (Assets/).\n',
+    'The recording could not be saved in the project folder. Download it instead?':
+      'Die Aufnahme konnte nicht im Projektordner gespeichert werden. Stattdessen herunterladen?',
+    'File not found:\n{path}': 'Datei nicht gefunden:\n{path}',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

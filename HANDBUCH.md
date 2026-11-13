@@ -648,6 +648,10 @@ Regelmäßige Aufgaben sind normale Notes mit einer Regel – am besten gesammel
 - **Andere Dateien** (Excel, Word, PDF, …) auf die Fläche ziehen oder **Insert → File…**: Die Datei wird in den Unterordner `Assets/` des Projektordners kopiert, die Note verweist darauf.
   - Öffnen per Klick auf das Symbol, ↗ oder `Ctrl+Klick`. PDF, Text, Bilder usw. öffnen im Browser, alles andere wird heruntergeladen.
   - Rechtsklick: **Open file ↗**, **Replace file…**, **Show file path**. Löschen der Note löscht die Datei nicht.
+- **Audio-Notizen:** Rechtsklick auf die Fläche oder **Insert → Audio recording…** (*Audioaufnahme…*). Beim ersten Mal fragt der Browser, ob er das Mikrofon benutzen darf. Ein Fenster zeigt die Zeit und einen Pegel, damit man sieht, dass das Mikrofon etwas hört. **❚❚ Pause** hält an, **● Weiter** nimmt weiter auf, **■ Stopp und speichern** legt die Notiz an. **Abbrechen** verwirft die Aufnahme, ab 3 Sekunden mit Rückfrage.
+  - Die Aufnahme wird als Datei in `Assets/` gespeichert (z. B. `Aufnahme 2026-11-13 14-32.webm`) – wie bei den anderen Dateien, nicht in der Map. Eine Minute sind etwa ein halbes Megabyte. Deshalb braucht es einen offenen Projektordner, in der Dropbox-Version liegt sie im Dropbox-Ordner. Klappt das Speichern nicht, bietet MindMapper die Aufnahme zum Herunterladen an.
+  - In der Notiz: **▶** spielt ab, **❚❚** hält an, ein Klick auf den dünnen Balken springt an diese Stelle. Darunter steht die Länge bzw. die Zeit beim Abspielen. Es läuft immer nur ein Ton auf einmal. Den Titel kannst du wie bei jeder Note ändern; **↗** oder `Ctrl+Klick` öffnet die Datei selbst.
+  - Hineingezogene Audiodateien (MP3, M4A, WAV, OGG …) bekommen denselben Abspielknopf.
 
 ### Zeichnen auf Bildern und Notes
 

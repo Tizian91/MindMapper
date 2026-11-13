@@ -117,6 +117,7 @@
         R.nodeEls.delete(id);
       }
     }
+    if (MM.audio) MM.audio.prune(); // a sound whose note is gone (deleted, other map) stops
   };
 
   /** Position, outline, content and badges of one node (only what changed). */
@@ -127,7 +128,7 @@
       n.type === 'link' ? n.link : 0,
       n.type === 'task' ? [n.meta, n.tags, new Date().toDateString(), MM.tasks.info(n), n.repeat, MM.getLang(), MM.prioKey()] : 0,
       n.type === 'image' ? [n.imageId, !!S.doc.assets[n.imageId], st.fit, n.imageFile, n.imageFile && MM.notebook.imageState(n.imageFile)] : 0,
-      n.type === 'file' ? [n.file && n.file.path, n.file && n.file.size] : 0,
+      n.type === 'file' ? [n.file && n.file.path, n.file && n.file.size, n.file && n.file.duration] : 0,
       n.type === 'diary' ? [n.diary, MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id]), MM.diary.badge(n)] : 0,
       n.type === 'markdown' ? [MM.getLang(), MM.md.assetIds(n.text).map((id) => !!S.doc.assets[id])] : 0]);
     if (div._contentKey !== contentKey && !editing) {
@@ -419,9 +420,11 @@
       const body = el('div', 'file-body');
       const title = el('div', 'file-title', n.text);
       title.dataset.field = 'text';
-      const sub = el('div', 'file-sub', MM.files ? MM.files.describe(n.file) : '');
+      const audio = MM.audio && MM.audio.isAudio(n.file); // ▶ and a bar to seek instead of the badge
+      const sub = el('div', 'file-sub', audio ? MM.audio.subText(n) : MM.files ? MM.files.describe(n.file) : '');
       body.append(title, sub);
       wrap.append(icon, body);
+      if (audio) MM.audio.build(n, icon, body);
       c.append(wrap);
     } else if (n.type === 'code') {
       const pre = el('pre', 'code-text', n.text);

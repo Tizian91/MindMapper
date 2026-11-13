@@ -100,6 +100,7 @@
         { label: 'Image…', action: () => A.insertImage(at, false) },
         { label: 'Image overlay…', action: () => A.insertImage(at, true) },
         { label: 'File…', action: () => MM.files.pick(at) },
+        { label: 'Audio recording…', action: () => MM.audio.record(at) },
         { label: 'Emoji…', action: () => A.insertEmojiNote(at) });
     }
     return items;

@@ -659,6 +659,7 @@ window.MM = window.MM || {};
       if (node.type === 'file') {
         const f = Object.assign({ path: '', name: '', size: 0, mime: '' }, n.file && typeof n.file === 'object' ? n.file : {});
         node.file = { path: str(f.path), name: str(f.name), size: num(f.size, 0), mime: str(f.mime) };
+        if (num(f.duration, 0) > 0) node.file.duration = num(f.duration, 0); // audio: length in seconds (audio.js)
       } else if (node.file) {
         delete node.file;
       }

@@ -238,6 +238,18 @@
         MM.project.openLinked(n.movedTo);
         return;
       }
+      // audio note: ▶ plays / pauses, the bar jumps (↗ and Ctrl+click still open the file)
+      if (n.type === 'file' && MM.audio && MM.audio.isAudio(n.file) && !e.ctrlKey) {
+        if (t.closest('.file-icon')) {
+          MM.audio.toggle(n);
+          return;
+        }
+        const bar = t.closest('.audio-bar');
+        if (bar) {
+          MM.audio.seek(n, e.clientX, bar);
+          return;
+        }
+      }
       // file note: the icon, the ↗ button or Ctrl+click opens the attached file
       if (n.type === 'file' && (t.closest('.file-icon') || t.closest('.node-linkbtn') || e.ctrlKey)) {
         MM.files.open(n);
@@ -723,7 +735,7 @@
       const id = nodeEl.dataset.id;
       const target = MM.node(id);
       // the file icon already opened the file on pointerdown - do not open it twice
-      if (target && target.type === 'file' && t.closest('.file-icon')) return;
+      if (target && target.type === 'file' && t.closest('.file-icon, .audio-bar')) return;
       const item = t.closest('li[data-item]'), block = t.closest('li[data-block]');
       if (item) MM.edit.start(id, 'item', item.dataset.item);
       else if (block) MM.edit.start(id, 'block', block.dataset.block, { caret: 'end' });

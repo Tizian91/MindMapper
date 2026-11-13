@@ -38,6 +38,7 @@ const FILES = [
   'js/links.js',
   'js/images.js',
   'js/files.js',
+  'js/audio.js',
   'js/editing.js',
   'js/actions.js',
   'js/interaction.js',
