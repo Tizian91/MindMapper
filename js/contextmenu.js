@@ -338,6 +338,7 @@
             label: s.label, checked: nodes.every((n) => (n.meta.status || 'none') === st), action: () => A.setStatus(st),
           })),
         },
+        hasImage && !multi && { label: 'Crop image…', action: A.cropImage },
         hasImage && !multi && { label: 'Replace image…', action: A.replaceImage },
         hasImage && !multi && { label: 'Save original…', action: A.saveImage },
         hasImage && { label: 'Show as overlay', checked: images.every((n) => n.overlay), action: A.toggleOverlay },

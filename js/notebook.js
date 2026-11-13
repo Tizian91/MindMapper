@@ -607,7 +607,7 @@
     const width = b.w - 80;
     // below the head, or at the top of what is visible of the page
     const top = Math.max(b.y + NB.HEAD + 24, -v.y / v.zoom + 24);
-    const ids = await MM.images.insertFiles(files, { x: b.x + b.w / 2, y: Math.min(top, b.y + b.h - 200) }, { width, top: true });
+    const ids = await MM.images.insertFiles(files, { x: b.x + b.w / 2, y: Math.min(top, b.y + b.h - 200) }, { width, top: true, crop: true });
     if (!ids.length) return;
     MM.select([]);
     MM.refresh();

@@ -692,6 +692,18 @@
     'Drag to draw the shape - Shift: square / circle': 'Ziehen zeichnet die Form – Shift: Quadrat / Kreis',
     '◌ Draw a loop around what you want to move, resize or delete': '◌ Eine Schlinge um das ziehen, was du verschieben, vergrößern oder löschen willst',
     '{n} caught - drag to move, the corner to resize, 🗑 deletes': '{n} gefangen – ziehen verschiebt, die Ecke ändert die Größe, 🗑 löscht',
+    // ---- images.js (crop) ----
+    'Crop image…': 'Bild zuschneiden…',
+    'Crop image': 'Bild zuschneiden',
+    'Crop image ({i} of {n})': 'Bild zuschneiden ({i} von {n})',
+    'Crop': 'Zuschneiden',
+    'Free': 'Frei',
+    'Whole image': 'Ganzes Bild',
+    'Insert the rest uncropped': 'Restliche ohne Zuschneiden',
+    'Image cropped': 'Bild zugeschnitten',
+    'The picture could not be loaded': 'Das Bild konnte nicht geladen werden',
+    'Drag the corners or edges of the frame, or the frame itself. Dragging on the picture draws a new frame.':
+      'Ecken oder Kanten des Rahmens ziehen, oder den Rahmen selbst verschieben. Ziehen auf dem Bild zieht einen neuen Rahmen auf.',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

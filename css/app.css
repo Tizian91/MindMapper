@@ -301,6 +301,35 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 .act-title { font-weight: 600; margin-bottom: 4px; overflow-wrap: anywhere; }
 .act-row .row { gap: 6px; }
 .conflict-dialog { max-width: 520px; }
+/* crop an image (images.js askCrop) */
+.crop-dlg { width: auto; max-width: 94vw; box-sizing: border-box; }
+.crop-wrap { display: flex; justify-content: center; }
+.crop-stage {
+  position: relative; padding: 14px; overflow: hidden; line-height: 0; border-radius: 6px;
+  background: repeating-conic-gradient(#cfd4dc 0 25%, #f2f4f7 0 50%) 0 0 / 16px 16px; /* shows transparency */
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair;
+}
+.crop-stage img { display: block; max-width: min(84vw, 900px); max-height: 60vh; pointer-events: none; }
+.crop-frame {
+  position: absolute; cursor: move; box-sizing: border-box;
+  border: 1px solid #fff; outline: 1px dashed rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55);
+}
+.crop-frame[hidden] { display: none; }
+.crop-h {
+  position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; box-sizing: border-box;
+  background: #fff; border: 2px solid var(--accent); border-radius: 3px;
+}
+@media (pointer: coarse) { .crop-h { width: 26px; height: 26px; margin: -13px 0 0 -13px; } }
+.crop-h[data-h="nw"] { left: 0; top: 0; cursor: nwse-resize; }
+.crop-h[data-h="n"] { left: 50%; top: 0; cursor: ns-resize; }
+.crop-h[data-h="ne"] { left: 100%; top: 0; cursor: nesw-resize; }
+.crop-h[data-h="e"] { left: 100%; top: 50%; cursor: ew-resize; }
+.crop-h[data-h="se"] { left: 100%; top: 100%; cursor: nwse-resize; }
+.crop-h[data-h="s"] { left: 50%; top: 100%; cursor: ns-resize; }
+.crop-h[data-h="sw"] { left: 0; top: 100%; cursor: nesw-resize; }
+.crop-h[data-h="w"] { left: 0; top: 50%; cursor: ew-resize; }
+.crop-ratios { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
 /* routine categories (panel settings) and leisure routines (workload page) */
 .cat-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
 .cat-row input[type="text"] { flex: 1; min-width: 0; }

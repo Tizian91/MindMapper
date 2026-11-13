@@ -113,7 +113,13 @@
   /** Pick image file(s) and insert them at world point `at`. */
   A.insertImage = async function (at, overlay) {
     const files = await MM.images.pick(true);
-    await MM.images.insertFiles(files, at || MM.viewCenter(), { overlay });
+    await MM.images.insertFiles(files, at || MM.viewCenter(), { overlay, crop: true });
+  };
+
+  /** Crop the picture of the selected image note (dialog). */
+  A.cropImage = function () {
+    const n = MM.selectedNodes().find((x) => x.type === 'image');
+    if (n) return MM.images.cropNode(n);
   };
 
   A.replaceImage = async function () {

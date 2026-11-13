@@ -974,7 +974,9 @@
     const files = await MM.images.pick(false);
     if (!files.length || !view.edit) return;
     try {
-      const img = await MM.images.prepare(files[0]);
+      const res = await MM.images.askCrop(files[0]);
+      if (!res || !view.edit) return;
+      const img = await MM.images.prepare(files[0], { rect: res.rect });
       const id = MM.uid('a');
       view.diary.assets[id] = img.url;
       const w = 0.4, h = (w * img.h) / (img.w || 1);

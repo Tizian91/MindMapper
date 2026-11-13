@@ -29,6 +29,7 @@ ELECTRON_RUN_AS_NODE=1 "/c/Users/<Name>/AppData/Local/Programs/Microsoft VS Code
 | `test_carry.js` | Übertrag: nur lose Einträge von Aufgabenlisten, keine Notes, keine Termine (`templates.js collectUnfinished`) |
 | `test_lists.js` | Listen *Overdue* / *Open tasks*: nur Haupttasks, Horizont, Sortierung, Nachführen, vergangene Pläne bleiben (`tasklists.js`) |
 | `test_assets.js` | Datei in `Assets/` ablegen: dieselbe Datei wird wiederverwendet, keine Kopie „(2)“ (`files.js store`) |
+| `test_crop.js` | Bilder zuschneiden: Rahmen ziehen / verschieben, Seitenverhältnisse, Lage der Note nach dem Zuschneiden (auch gedreht) (`images.js cropBox`, `ratioFrame`, `croppedFrame`) |
 | `test_copies.js` | Konfliktkopien erkennen (pCloud, Dropbox, MindMapper) und an die Map hängen (`project.js copyOf`) |
 | `test_revert.js` | Datei auf einen älteren Stand zurückgesetzt (Sync-Programm): fragen statt still laden (`storage.js checkFile`, Konfliktdialog) |
 | `test_apptroutines.js` | Overview *Appointments*: Routinen mit Uhrzeit mit ihren Terminen der nächsten 7 Tage, Nice-to-have blass, nicht unter *By deadline* (`overview.js routineDates`) |
