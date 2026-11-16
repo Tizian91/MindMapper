@@ -211,10 +211,22 @@
   D.setTool = function (kind) {
     S.tool = kind || null;
     if (S.tool && S.settings.penMode) MM.ink.toggle(false); // a shape now, not freehand
-    document.getElementById('viewport').classList.toggle('drawing', !!S.tool);
+    if (S.tool && MM.editing) MM.edit.finish();
+    const vp = document.getElementById('viewport');
+    vp.classList.toggle('drawing', !!S.tool);
+    vp.classList.toggle('texting', S.tool === 'text');
     if (S.tool === 'text') MM.ui.flash(MM.tr('Click where the text should go. Esc cancels.'));
     else if (S.tool) MM.ui.flash(MM.tr('Drag to draw – over a note or image it is anchored to it (Alt: not anchored). Esc cancels.'));
+    if (MM.ink) MM.ink.refreshPalette(); // the text tool shows its colours and sizes there
+    MM.ui.update(); // "T Text" in the toolbar
+    if (MM.notebook && MM.notebook.renderBar) MM.notebook.renderBar();
   };
+
+  /**
+   * "T Text" (toolbar, Shift+T): the next click places a text without a frame - in the colour
+   * and size of its palette - then the tool ends again (a click on a text later moves it).
+   */
+  D.toggleText = () => D.setTool(S.tool === 'text' ? null : 'text');
 
   /**
    * A text without a frame at world point p (it begins there): a note of type text with
@@ -261,6 +273,7 @@
 
   // shapes are drawn in the pen mode now (ink.js: "Shapes" in its palette)
   A.drawTool = (kind) => D.setTool(kind);
+  A.textTool = () => D.toggleText();
 
   /** ✍ in the toolbar (P): freehand with the pen or the mouse (ink.js). */
   A.togglePen = () => MM.ink.toggle();

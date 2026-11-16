@@ -351,7 +351,7 @@
       bar.addEventListener('click', onBar);
       document.getElementById('app').append(bar);
     }
-    const esc = MM.render.esc, pen = MM.ink && MM.ink.on(), tool = pen && MM.ink.cfg().tool;
+    const esc = MM.render.esc, pen = MM.ink && MM.ink.on(), text = S.tool === 'text';
     const b = (a, label, title, cls = '') => `<button type="button" data-nb="${a}" class="${cls}" title="${esc(tr(title))}">${label}</button>`;
     const vert = barVertical();
     const html =
@@ -362,8 +362,8 @@
       b('add', '＋', 'New page at the end') +
       b('more', '⋯', 'Page: insert, move, delete') +
       '<span class="nb-sep"></span>' +
-      b('pen', '✍️', 'Pen on / off (P)', pen && tool !== 'text' ? 'active' : '') +
-      b('text', '<b class="nb-t">T</b>', 'Text: tap where it goes', pen && tool === 'text' ? 'active' : '') +
+      b('pen', '✍️', 'Pen on / off (P)', pen ? 'active' : '') +
+      b('text', '<b class="nb-t">T</b>', 'Text: tap where it goes (Shift+T)', text ? 'active' : '') +
       b('camera', '📷', 'Take a photo (straight onto this page)') +
       b('gallery', '🖼️', 'Add pictures from the device') +
       b('todo', '☐', 'To-do list') +
@@ -408,18 +408,10 @@
         { label: 'Copy link to this page', action: () => NB.copyLink(k) },
       ]);
     } else if (a === 'pen') {
-      const pen = MM.ink.on();
-      if (pen && MM.ink.cfg().tool === 'text') {
-        MM.ink.cfg().tool = 'pen';
-        MM.ink.toggle(true);
-      } else MM.ink.toggle(!pen);
-      MM.saveSettings();
+      MM.ink.toggle();
       renderBar();
     } else if (a === 'text') {
-      MM.ink.cfg().tool = 'text';
-      MM.ink.toggle(true);
-      MM.saveSettings();
-      renderBar();
+      MM.draw.toggleText(); // its own tool: the next tap places a text, then it ends
     } else if (a === 'camera' || a === 'gallery') {
       NB.addPhotos(a === 'camera');
     } else if (a === 'todo') {

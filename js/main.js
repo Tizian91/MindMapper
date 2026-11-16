@@ -16,6 +16,8 @@
     document.querySelectorAll('#toolbar [data-toggle]').forEach((b) => {
       b.classList.toggle('active', !!S.settings[b.dataset.toggle]);
     });
+    const textBtn = document.getElementById('text-btn');
+    if (textBtn) textBtn.classList.toggle('active', S.tool === 'text'); // the text tool is armed
     document.querySelector('[data-action="undo"]').disabled = !MM.history.undoStack.length;
     document.querySelector('[data-action="redo"]').disabled = !MM.history.redoStack.length;
     document.getElementById('zoom-label').textContent = Math.round(S.doc.view.zoom * 100) + '% ▾';

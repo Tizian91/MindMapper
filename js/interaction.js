@@ -175,11 +175,11 @@
     }
     if (e.button !== 0) return;
 
-    // text tool (draw menu): a click places a text without a frame, then the tool ends
+    // text tool ("T Text", Shift+T): a click places a text without a frame, then the tool ends
     if (S.tool === 'text') {
       e.preventDefault(); // the new text keeps the focus
       MM.draw.setTool(null);
-      MM.draw.placeText(p);
+      MM.draw.placeText(p, MM.ink.textOpts(e));
       return;
     }
     // drawing tool chosen: the drag draws a shape, also across notes and images
@@ -855,6 +855,8 @@
     else if (key === 'Escape' && S.settings.penMode) MM.ink.toggle(false);
     // P: freehand on / off (ink.js)
     else if (key === 'p' && !e.altKey && !e.shiftKey && !document.querySelector('dialog[open]')) MM.ink.toggle();
+    // Shift+T: the text tool - the next click places a text (T alone inserts a task)
+    else if (key === 't' && e.shiftKey && !e.altKey && !document.querySelector('dialog[open]')) MM.draw.toggleText();
     else if (key === 'Escape') A.deselect();
     else if (key === 'Enter' || key === 'F2') A.editSelected();
     else if (key === 'Tab') A.insertByKey('text');

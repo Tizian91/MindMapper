@@ -27,10 +27,9 @@
       <div class="tb-group">
         <span class="brand">MindMapper</span>
       </div>
-      <!-- groups by purpose, separated by thin lines: files | overview | editing | display | arranging … view | panel | app -->
+      <!-- groups by purpose, separated by thin lines: files | overview | editing | display | arranging … view | panel + project | app -->
       <div class="tb-group">
         <button data-action="fileMenu" id="file-btn" title="New map, open, save, save as, PDF / print">File ▾</button>
-        <button data-action="toggleProject" data-toggle="showProject" title="Project folder with several maps">Project</button>
       </div>
       <div class="tb-group">
         <button data-action="overview" title="Tasks of all maps in the project folder">Overview</button>
@@ -41,6 +40,7 @@
         <button data-action="redo" title="Redo (Ctrl+Y)">↷</button>
         <button data-action="insertMenu" id="insert-btn" title="Insert a note (or right-click the canvas)">+ Insert ▾</button>
         <button data-action="togglePen" data-toggle="penMode" id="pen-btn" title="Freehand with a pen or the mouse – fingers keep moving the map (P)">✍ Pen</button>
+        <button data-action="textTool" id="text-btn" title="Text: the next click places a text (Shift+T)">T Text</button>
       </div>
       <div class="tb-group">
         <button data-action="toggleMeta" data-toggle="showMeta" title="Show deadline, estimate, priority and tags below notes">Details</button>
@@ -54,7 +54,9 @@
         <button data-action="fit" title="Fit map to window (Shift+1)">Fit</button>
         <button data-action="zoomMenu" id="zoom-label" title="Zoom: in, out, 100 %">100% ▾</button>
       </div>
-      <div class="tb-group">
+      <div class="tb-group tb-sides">
+        <!-- panel and project side by side, in the order of their sides (flipped with the writing hand, panel.js) -->
+        <button data-action="toggleProject" data-toggle="showProject" title="Project folder with several maps">Project</button>
         <button data-action="togglePanel" data-toggle="showPanel" title="Toggle properties panel">Panel</button>
       </div>
       <div class="tb-group">

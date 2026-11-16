@@ -155,6 +155,8 @@ html, body {
 .tb-group + .tb-group:not(.tb-right) { border-left: 1px solid var(--border); padding-left: 10px; margin-left: -4px; }
 #toolbar::-webkit-scrollbar { display: none; }
 .tb-right { margin-left: auto; }
+/* "Project" and "Panel" side by side, each towards its side: right-handed the panel is on the left */
+#toolbar.hand-right .tb-sides { flex-direction: row-reverse; }
 .brand { font-weight: 700; font-size: 15px; color: var(--accent); margin-right: 4px; }
 
 button {
@@ -653,6 +655,9 @@ details.st-group.few summary { color: var(--muted); }
   overflow-wrap: anywhere;
 }
 .node-content > * { width: 100%; margin-block: auto; }
+/* Markdown notes, diary entries and texts without a frame begin at the top, like a page */
+.node[data-type="markdown"] .node-content > *, .node[data-type="diary"] .node-content > *,
+.node.plain-text .node-content > * { margin-block: 0 auto; }
 .node.selected { outline: 1.5px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 
 /* drawings (draw.js): clicks pass through, only the line (or a fill) takes them */
@@ -661,6 +666,7 @@ details.st-group.few summary { color: var(--muted); }
 .node[data-type="draw"].filled .node-shape path:first-child { pointer-events: fill; cursor: move; }
 .node[data-type="draw"].selected { outline-style: dashed; }
 #viewport.drawing, #viewport.drawing .node, #viewport.drawing .draw-hit { cursor: crosshair; }
+#viewport.texting, #viewport.texting .node, #viewport.texting .draw-hit { cursor: text; }
 .node[data-type="draw"] .node-shape { overflow: visible; } /* a wider line is not cut off at the box */
 
 /* freehand (ink.js): pen mode, the stroke being written, the palette */
@@ -669,6 +675,9 @@ details.st-group.few summary { color: var(--muted); }
 .ink-live { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 .ink-live .ink-snap { fill: none; stroke: var(--accent); } /* where the end of a line snaps (ink.js line tool) */
 #ink-palette .ink-t { font: 700 18px/1 Georgia, "Times New Roman", serif; }
+/* the text tool (draw.js): its name at the front of the palette, not a button */
+#ink-palette .ink-label { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 40px; padding: 0 8px; border-radius: 10px; background: var(--accent-soft); color: var(--text); }
+#ink-palette .ink-label span { font-size: 13px; }
 #ink-palette {
   position: fixed; z-index: 60; left: 50%; transform: translateX(-50%);
   display: flex; align-items: center; gap: 4px; max-width: calc(100vw - 16px); overflow-x: auto;

@@ -78,7 +78,7 @@
     '▦ Lines and texts snap to the grid': '▦ Linien und Texte rasten am Raster ein',
     '▦ Grid off - lines still snap to the ends of other lines': '▦ Raster aus – Linien rasten weiter an den Enden anderer Linien ein',
     '📏 Drag to draw a line - its ends snap to the ends of other lines. Shift: steps of 45°, Ctrl: no snapping': '📏 Ziehen zeichnet eine Linie – ihre Enden rasten an den Enden anderer Linien ein. Shift: 45°-Schritte, Strg: ohne Einrasten',
-    'T Tap where the text should go': 'T Dorthin tippen, wo der Text stehen soll',
+    'End the text tool (Esc)': 'Text-Werkzeug beenden (Esc)',
     'Text (no frame)': 'Text (ohne Rahmen)',
     'Click where the text should go. Esc cancels.': 'Dorthin klicken, wo der Text stehen soll. Esc bricht ab.',
     // ---- freehand with a finger ----
@@ -616,7 +616,7 @@
     'New page at the end': 'Neue Seite am Ende',
     'Page: insert, move, delete': 'Seite: einfügen, verschieben, löschen',
     'Pen on / off (P)': 'Stift an / aus (P)',
-    'Text: tap where it goes': 'Text: dorthin tippen, wo er stehen soll',
+    'Text: tap where it goes (Shift+T)': 'Text: dorthin tippen, wo er stehen soll (Umschalt+T)',
     'To-do list': 'To-do-Liste',
     'Paper, ruling, page view': 'Papier, Linierung, Seitenansicht',
     'Last page - "+" adds a new one': 'Letzte Seite – „+“ legt eine neue an',

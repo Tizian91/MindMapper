@@ -25,7 +25,8 @@
  * (a small circle shows it, with mouse and stylus already while hovering), with "▦ Grid"
  * (the grid of the map, settings.grid) to the grid as well; Shift: steps of 45°; Ctrl (Mac:
  * Cmd) held: that point does not snap at all.
- * "T Text" puts a text without a frame where you tap (draw.js placeText).
+ * "T Text" is a tool of its own (draw.js toggleText, Shift+T); while it is armed, this palette
+ * shows only its colours and sizes (K.cfg().text).
  */
 (function (MM) {
   const S = MM.state;
@@ -39,7 +40,8 @@
   K.PEN_COLORS = ['#1f2937', '#2563eb', '#dc2626', '#16a34a', '#9333ea'];
   K.MARKER_COLORS = ['#facc15', '#4ade80', '#f472b6', '#60a5fa'];
   K.WIDTHS = { pen: [1.5, 3, 6], marker: [12, 20, 32], shape: [1.5, 3, 6], text: [14, 18, 28], eraser: [8, 18, 36] };
-  K.TOOLS = ['pen', 'marker', 'shape', 'text', 'eraser', 'lasso'];
+  // the text tool is a tool of its own now (draw.js toggleText, Shift+T) - its colour and size are kept here
+  K.TOOLS = ['pen', 'marker', 'shape', 'eraser', 'lasso'];
   // "Shapes": drawings of draw.js, drawn in the pen mode (lines snap, see snapPoint)
   K.SHAPES = ['line', 'arrow', 'arrow2', 'rect', 'round', 'ellipse', 'triangle', 'diamond'];
   const SNAP = 12;         // screen px: an end this close to the end of another line snaps to it
@@ -566,7 +568,6 @@
     const autoErase = erasing(e);
     e.preventDefault();
     e.stopImmediatePropagation();
-    const wasEditing = !!MM.editing;
     if (MM.editing) MM.edit.finish();
     if (MM.menu && MM.menu.isOpen()) MM.menu.close();
     if (MM.touch && MM.touch.reset) MM.touch.reset(); // a hand that touched first does not pan on
@@ -593,13 +594,6 @@
       const p = MM.interaction.toWorld(e.clientX, e.clientY);
       // anchored to the note / image it starts on (Alt: free), as a drawing
       active.under = e.altKey ? null : MM.interaction.nodeAt(p);
-    }
-    if (tool === 'text') {
-      // a text without a frame where you tap; a tap while writing one only ends it
-      active = null;
-      quietUntil = Date.now() + 400;
-      if (!wasEditing) MM.draw.placeText(MM.interaction.toWorld(e.clientX, e.clientY), { color: cfg.text.color, size: cfg.text.width, free: freeKey(e) });
-      return;
     }
     if (tool === 'shape') {
       // lines snap to the ends of other lines (and the grid), boxes only to the grid
@@ -877,8 +871,10 @@
   // ---- Palette ---------------------------------------------------------------------------
 
   // the button of the shapes shows the shape chosen (icon from SHAPE_ICONS)
-  const TOOLS = [['pen', '✏️', 'Pen'], ['marker', '🖍️', 'Marker'], ['shape', '', 'Shapes'], ['text', '<b class="ink-t">T</b>', 'Text'],
+  const TOOLS = [['pen', '✏️', 'Pen'], ['marker', '🖍️', 'Marker'], ['shape', '', 'Shapes'],
     ['eraser', '🧽', 'Eraser'], ['lasso', '<b class="ink-lasso-icon">◌</b>', 'Lasso']];
+  /** The text tool (draw.js, S.tool 'text') is armed: the palette shows its colours and sizes. */
+  const textMode = () => !K.on() && S.tool === 'text';
   const SHAPE_ICONS = {
     line: 'M4,18L28,4', arrow: 'M4,18L28,4M20,4H28V10', arrow2: 'M4,18L28,4M20,4H28V10M4,10V18H12',
     rect: 'M4,4H28V18H4Z', round: 'M9,4H23A5,5 0 0 1 28,9V13A5,5 0 0 1 23,18H9A5,5 0 0 1 4,13V9A5,5 0 0 1 9,4Z',
@@ -887,7 +883,8 @@
   const shapeIcon = (kind) => `<svg class="ink-shape" viewBox="0 0 32 22" width="28" height="19"><path d="${SHAPE_ICONS[kind]}"/></svg>`;
 
   function renderPalette() {
-    if (!K.on()) {
+    const texting = textMode();
+    if (!K.on() && !texting) {
       if (palette) palette.hidden = true;
       return;
     }
@@ -899,7 +896,7 @@
       document.getElementById('app').append(palette);
     }
     const esc = MM.render.esc, tr = MM.tr;
-    const cfg = K.cfg(), tool = cfg.tool;
+    const cfg = K.cfg(), tool = texting ? 'text' : cfg.tool;
     const plain = tool === 'eraser' || tool === 'lasso'; // no colour
     const colors = tool === 'marker' ? K.MARKER_COLORS : plain ? [] : K.PEN_COLORS;
     const cur = plain ? null : cfg[tool].color;
@@ -922,15 +919,18 @@
       extra = `<button type="button" data-ink-delete ${n ? '' : 'disabled'} title="${esc(tr('Delete what the lasso caught (Del)'))}">🗑<span>${esc(tr('Delete'))}</span></button>`;
     }
     palette.classList.toggle('compact', tool === 'shape'); // many buttons: the tools without their names
-    palette.innerHTML =
+    const tools = texting
+      // the text tool: only what it needs - its name, colours, sizes, the grid
+      ? `<span class="ink-label"><b class="ink-t">T</b><span>${esc(tr('Text'))}</span></span>`
       // first: on a phone the palette scrolls sideways, this one must be in sight
       // touch screens: draw with a finger (one finger writes, two move and zoom)
-      (navigator.maxTouchPoints > 0
+      : (navigator.maxTouchPoints > 0
         ? `<button type="button" data-ink-finger class="${cfg.finger ? 'active' : ''}" title="${esc(tr(cfg.finger
           ? 'One finger draws, two fingers move and zoom the map. Tap: fingers move the map again, only the stylus draws'
           : 'Draw with a finger: one finger draws, two fingers move and zoom the map'))}">☝️<span>${esc(tr('Finger'))}</span></button><span class="ink-sep"></span>`
         : '') +
-      TOOLS.map(([k, icon, label]) => `<button type="button" data-ink-tool="${k}" class="${tool === k ? 'active' : ''}" title="${esc(tr(label))}">${k === 'shape' ? shapeIcon(cfg.shape.kind) : icon}<span>${esc(tr(label))}</span></button>`).join('') +
+        TOOLS.map(([k, icon, label]) => `<button type="button" data-ink-tool="${k}" class="${tool === k ? 'active' : ''}" title="${esc(tr(label))}">${k === 'shape' ? shapeIcon(cfg.shape.kind) : icon}<span>${esc(tr(label))}</span></button>`).join('');
+    palette.innerHTML = tools +
       (extra ? '<span class="ink-sep"></span>' + extra : '') +
       (plain && tool === 'lasso' ? '' : '<span class="ink-sep"></span>') +
       colors.map((c) => `<button type="button" class="ink-color${c === cur ? ' active' : ''}" data-ink-color="${c}" style="--c:${c}" title="${c}"></button>`).join('') +
@@ -943,7 +943,7 @@
         ? `<span class="ink-sep"></span><button type="button" data-ink-grid class="${S.settings.grid ? 'active' : ''}" title="${esc(tr('Snap to the grid (the grid of the map - notes snap to it as well)'))}">▦<span>${esc(tr('Grid'))}</span></button>`
         : '') +
       '<span class="ink-sep"></span>' +
-      `<button type="button" data-ink-close title="${esc(tr('End freehand (P / Esc)'))}">✕</button>`;
+      `<button type="button" data-ink-close title="${esc(tr(texting ? 'End the text tool (Esc)' : 'End freehand (P / Esc)'))}">✕</button>`;
     const own = palette.querySelector('[data-ink-own]');
     if (own) {
       own.addEventListener('input', () => setCfg({ color: own.value }, false));
@@ -967,9 +967,8 @@
         MM.select([]);
         MM.refresh();
       }
-      if (change.tool === 'text') MM.ui.flash(MM.tr('T Tap where the text should go'));
     }
-    else Object.assign(cfg[cfg.tool], change);
+    else Object.assign(cfg[textMode() ? 'text' : cfg.tool], change);
     S.settings.pen = cfg;
     MM.saveSettings();
     if (redraw !== false) renderPalette();
@@ -1010,8 +1009,14 @@
     } else if (b.hasAttribute('data-ink-delete')) {
       if (S.selection.size) MM.actions.deleteSelection();
       renderPalette();
-    } else if (b.hasAttribute('data-ink-close')) K.toggle(false);
+    } else if (b.hasAttribute('data-ink-close')) textMode() ? MM.draw.setTool(null) : K.toggle(false);
   }
 
-  K.refreshPalette = () => renderPalette(); // e.g. after the language changed
+  K.refreshPalette = () => renderPalette(); // e.g. after the language changed, the text tool armed
+
+  /** Colour and size of a text placed with the text tool; free: not onto the grid (Ctrl). */
+  K.textOpts = (e) => {
+    const t = K.cfg().text;
+    return { color: t.color, size: t.width, free: !!e && freeKey(e) };
+  };
 })(window.MM);

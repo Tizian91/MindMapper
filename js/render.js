@@ -109,6 +109,8 @@
       div.classList.toggle('moved', !!n.movedTo);
       div.classList.toggle('offpage', MM.notebook ? MM.notebook.off(n) : false); // a block: only pages near the screen
       div.dataset.type = n.type;
+      // a text without a frame (text tool): begins at the top left, like written on paper
+      div.classList.toggle('plain-text', n.type === 'text' && n.shape === 'none' && !n.symbol);
       R.updateNode(div, n);
     }
     for (const [id, div] of R.nodeEls) {

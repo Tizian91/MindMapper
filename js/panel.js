@@ -477,6 +477,9 @@
     main.classList.toggle('with-panel', show);
     // writing hand: the panel on the side of the free hand, the project on the other (MM.panelLeft)
     main.classList.toggle('hand-right', MM.panelLeft());
+    // the toolbar buttons "Panel" and "Project" in the order of their sides (app.css .tb-sides)
+    const toolbar = document.getElementById('toolbar');
+    if (toolbar) toolbar.classList.toggle('hand-right', MM.panelLeft());
     main.style.setProperty('--panel-w', `${w}px`);
     const resizer = document.getElementById('panel-resizer');
     if (resizer) resizer.setAttribute('aria-valuenow', String(w));
