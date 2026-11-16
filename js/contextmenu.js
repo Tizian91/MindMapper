@@ -61,9 +61,10 @@
   let at = { x: 0, y: 0 };
 
   /** Open a menu at screen position (x, y). */
-  M.open = function (list, x, y) {
+  /** opts.alignRight: x is the right edge of the menu (a bar at the right edge of the screen). */
+  M.open = function (list, x, y, opts) {
     entries = list;
-    at = { x, y };
+    at = { x, y, alignRight: !!(opts && opts.alignRight) };
     root.classList.toggle('menu-drill', drill());
     show([]);
   };
@@ -78,7 +79,8 @@
     root.hidden = false;
     root.scrollTop = 0;
     const r = root.getBoundingClientRect();
-    root.style.left = Math.max(4, Math.min(at.x, window.innerWidth - r.width - 4)) + 'px';
+    const x = at.alignRight ? at.x - r.width : at.x;
+    root.style.left = Math.max(4, Math.min(x, window.innerWidth - r.width - 4)) + 'px';
     root.style.top = Math.max(4, Math.min(at.y, window.innerHeight - r.height - 4)) + 'px';
   }
 

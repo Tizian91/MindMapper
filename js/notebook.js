@@ -166,7 +166,8 @@
     if (cur !== NB.cur || !bar || bar.hidden) {
       NB.cur = cur;
       renderBar();
-    }
+    } else if (bar.classList.contains('vertical') !== barVertical()) renderBar(); // window narrowed / widened
+    else placeBar(r); // the panel / project shown or hidden: the bar keeps to the edge of the map
   };
 
   /** Show page k: fit its width (or the whole page, settings.blockFit), its top at the top. */
@@ -175,12 +176,14 @@
     if (!page) return;
     k = Math.max(0, Math.min(page.count - 1, k));
     const b = NB.pageBox(k), r = vpRect(), v = S.doc.view;
-    const topPad = 72, botPad = 76, side = 16; // room for the pen palette (top) and the bar (bottom)
-    const zWidth = Math.min(2, (r.width - 2 * side) / b.w);
+    // room for the pen palette (top) and the bar: at the side of the free hand, at the bottom on a phone
+    const vert = barVertical(), barW = vert ? 64 : 0, shift = vert ? (MM.panelLeft() ? barW : -barW) / 2 : 0;
+    const topPad = 72, botPad = vert ? 16 : 76, side = 16;
+    const zWidth = Math.min(2, (r.width - 2 * side - barW) / b.w);
     const zPage = Math.min(zWidth, (r.height - topPad - botPad) / b.h);
     const z = MM.geo.clamp(S.settings.blockFit === 'page' ? zPage : zWidth, 0.1, 4);
     v.zoom = z;
-    v.x = (r.width - b.w * z) / 2 - b.x * z;
+    v.x = (r.width - b.w * z) / 2 + shift - b.x * z;
     v.y = topPad - b.y * z;
     NB.cur = k;
     shownId = page.id;
@@ -309,9 +312,30 @@
     MM.refresh();
   };
 
-  // ---- Bar of the block (bottom) ----------------------------------------------------------
+  // ---- Bar of the block -------------------------------------------------------------------
+  // Upright at the edge of the free hand (right-handed: left, settings.hand), so the hand
+  // writing at the bottom of the page does not lie on it. A phone: across the bottom, the
+  // map has no width to spare there.
 
   let bar = null;
+  const barVertical = () => window.innerWidth > 600;
+
+  function placeBar(r = vpRect()) {
+    if (!bar || bar.hidden) return;
+    const vert = barVertical(), s = bar.style;
+    bar.classList.toggle('vertical', vert);
+    if (vert) {
+      s.top = r.top + r.height / 2 + 'px';
+      s.bottom = '';
+      s.maxHeight = Math.max(120, r.height - 20) + 'px';
+      s.left = MM.panelLeft() ? r.left + 10 + 'px' : '';
+      s.right = MM.panelLeft() ? '' : window.innerWidth - r.right + 10 + 'px';
+    } else {
+      s.top = s.right = s.maxHeight = '';
+      s.bottom = Math.max(8, window.innerHeight - r.bottom + 10) + 'px';
+      s.left = r.left + r.width / 2 + 'px';
+    }
+  }
   const PAPERS = [['#fdfdf8', 'White'], ['#fdf8ec', 'Cream'], ['#fffbe0', 'Yellow'], ['#f1f4f7', 'Grey'], ['#eef5ff', 'Blue']];
 
   function renderBar() {
@@ -329,10 +353,12 @@
     }
     const esc = MM.render.esc, pen = MM.ink && MM.ink.on(), tool = pen && MM.ink.cfg().tool;
     const b = (a, label, title, cls = '') => `<button type="button" data-nb="${a}" class="${cls}" title="${esc(tr(title))}">${label}</button>`;
+    const vert = barVertical();
     const html =
-      b('prev', '◀', 'Previous page (Page Up)', NB.cur ? '' : 'dim') +
-      b('pages', esc(tr('Page {n} / {count}', { n: NB.cur + 1, count: page.count })), 'Go to page…', 'nb-label') +
-      b('next', '▶', 'Next page (Page Down)', NB.cur < page.count - 1 ? '' : 'dim') +
+      b('prev', vert ? '▲' : '◀', 'Previous page (Page Up)', NB.cur ? '' : 'dim') +
+      // upright: only the numbers, "Page 1 / 6" is too wide
+      b('pages', vert ? `${NB.cur + 1}<small>/ ${page.count}</small>` : esc(tr('Page {n} / {count}', { n: NB.cur + 1, count: page.count })), 'Go to page…', 'nb-label') +
+      b('next', vert ? '▼' : '▶', 'Next page (Page Down)', NB.cur < page.count - 1 ? '' : 'dim') +
       b('add', '＋', 'New page at the end') +
       b('more', '⋯', 'Page: insert, move, delete') +
       '<span class="nb-sep"></span>' +
@@ -344,16 +370,17 @@
       '<span class="nb-sep"></span>' +
       b('design', '🎨', 'Paper, ruling, page view');
     if (html !== bar._html) bar.innerHTML = bar._html = html; // rebuilt only when changed: no lost clicks
-    const r = vpRect();
-    bar.style.bottom = Math.max(8, window.innerHeight - r.bottom + 10) + 'px';
-    bar.style.left = r.left + r.width / 2 + 'px';
     bar.hidden = false;
+    placeBar();
   }
   NB.renderBar = renderBar;
 
+  /** A menu of the bar: beside the upright bar (towards the map), above the bar at the bottom. */
   function menuAt(btn, items) {
     const r = btn.getBoundingClientRect();
-    MM.menu.open(items, r.left, r.top - 4);
+    if (!bar.classList.contains('vertical')) MM.menu.open(items, r.left, r.top - 4);
+    else if (MM.panelLeft()) MM.menu.open(items, r.right + 8, r.top);
+    else MM.menu.open(items, r.left - 8, r.top, { alignRight: true });
   }
 
   function onBar(e) {

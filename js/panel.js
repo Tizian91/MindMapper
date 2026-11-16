@@ -422,6 +422,8 @@
     <section><h3>${t('appearance')}</h3>
       <div class="row"><label>${t('theme')}</label>${select('data-setting="theme"', set.theme || 'auto', { auto: t('themeAuto'), light: t('themeLight'), dark: t('themeDark') })}</div>
       <div class="row"><label>${t('language')}</label>${select('data-setting="lang"', MM.getLang(), { en: 'English', de: 'Deutsch' })}</div>
+      <div class="row"><label>${esc(MM.tr('Writing hand'))}</label>${select('data-setting="hand"', MM.panelLeft() ? 'right' : 'left', { right: MM.tr('Right-handed'), left: MM.tr('Left-handed') })}</div>
+      <p class="hint">${esc(MM.tr('The panel and the bar of a block are on the side of the free hand, the project on the other side - so the hand with the pen covers nothing.'))}</p>
     </section>
     <section><h3>${t('planningCapacity')}</h3>
       <div class="row"><label>${t('hoursWorkDay')}</label><input type="number" data-setting="hoursPerDay" value="${esc(MM.load.capacity().hours)}" min="0.5" max="24" step="0.5"></div>
@@ -473,11 +475,16 @@
     const show = S.settings.showPanel !== false;
     const w = Math.max(PANEL_MIN, Math.min(PANEL_MAX, S.settings.panelWidth || PANEL_DEFAULT));
     main.classList.toggle('with-panel', show);
+    // writing hand: the panel on the side of the free hand, the project on the other (MM.panelLeft)
+    main.classList.toggle('hand-right', MM.panelLeft());
     main.style.setProperty('--panel-w', `${w}px`);
     const resizer = document.getElementById('panel-resizer');
     if (resizer) resizer.setAttribute('aria-valuenow', String(w));
     const expandBtn = document.getElementById('panel-expand-btn');
-    if (expandBtn) expandBtn.setAttribute('aria-expanded', String(show));
+    if (expandBtn) {
+      expandBtn.setAttribute('aria-expanded', String(show));
+      expandBtn.textContent = MM.panelLeft() ? '›' : '‹';
+    }
     const tbPanelBtn = document.querySelector('#toolbar button[data-action="togglePanel"]');
     if (tbPanelBtn) tbPanelBtn.setAttribute('aria-expanded', String(show));
     if (MM.render && MM.render.applyView) MM.render.applyView();
@@ -514,7 +521,8 @@
     resizer.addEventListener('pointermove', (e) => {
       if (!dragging) return;
       const maxW = Math.min(PANEL_MAX, Math.max(260, window.innerWidth - 300));
-      setWidth(Math.round(Math.max(PANEL_MIN, Math.min(maxW, startW + startX - e.clientX))));
+      const dx = MM.panelLeft() ? e.clientX - startX : startX - e.clientX; // the panel grows away from its edge
+      setWidth(Math.round(Math.max(PANEL_MIN, Math.min(maxW, startW + dx))));
     });
     const stopDrag = (e) => {
       if (!dragging) return;
@@ -533,8 +541,9 @@
     resizer.addEventListener('keydown', (e) => {
       const cur = S.settings.panelWidth || PANEL_DEFAULT;
       let next = null;
-      if (e.key === 'ArrowLeft') next = Math.min(PANEL_MAX, cur + 15);
-      else if (e.key === 'ArrowRight') next = Math.max(PANEL_MIN, cur - 15);
+      const grow = MM.panelLeft() ? 'ArrowRight' : 'ArrowLeft';
+      if (e.key === grow) next = Math.min(PANEL_MAX, cur + 15);
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') next = Math.max(PANEL_MIN, cur - 15);
       else if (e.key === 'Home') next = PANEL_MIN;
       else if (e.key === 'End') next = PANEL_DEFAULT;
       if (next === null) return;
@@ -743,6 +752,10 @@
       S.settings[ds.setting] = el.type === 'checkbox' ? el.checked : value;
       MM.saveSettings();
       if (ds.setting === 'theme') MM.applyTheme();
+      if (ds.setting === 'hand') {
+        P.applyLayout();
+        if (MM.notebook && S.doc.page) MM.notebook.show(MM.notebook.cur); // the page makes room for the bar on the other side
+      }
       if (MM.storage.CAPACITY_KEYS.includes(ds.setting) || ds.setting === 'syncedFolder' || ds.setting === 'askActual') MM.storage.saveProjectSettings();
       return true;
     }

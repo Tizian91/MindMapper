@@ -714,6 +714,7 @@ window.MM = window.MM || {};
       showProject: true,   // project sidebar visible
       showPanel: true,     // properties panel visible
       panelWidth: 270,     // properties panel width in px
+      hand: 'right',       // writing hand: 'right' = panel and block bar left (the free hand), project right; 'left' = mirrored
       overviewRect: null,  // position / size of the overview window { x, y, w, h } (null = centered default)
       theme: 'auto',       // 'auto' | 'light' | 'dark'
       lang: 'en',          // 'en' | 'de'
@@ -739,6 +740,9 @@ window.MM = window.MM || {};
     file: { handle: null, backend: null, name: 'Untitled.mindmap.json', path: null }, // path: location inside the project folder (backend), handle: a single file outside it
     dirty: false,
   };
+
+  /** Right-handed (default): the panel and the bar of a block on the left, for the hand without the pen. */
+  MM.panelLeft = () => MM.state.settings.hand !== 'left';
 
   MM.node = (id) => MM.state.doc.nodes[id];
   MM.edge = (id) => MM.state.doc.edges[id];

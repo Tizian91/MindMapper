@@ -187,6 +187,20 @@ button.danger { color: var(--danger); }
 #main.with-sidebar:not(.with-panel) { grid-template-columns: 210px minmax(0, 1fr); }
 #main:not(.with-panel) #panel,
 #main:not(.with-panel) #panel-resizer { display: none; }
+/* right-handed (settings.hand, panel.js applyLayout): mirrored - the panel on the left for the
+   hand without the pen, the project on the right. Phones: see the media query at the end. */
+@media (min-width: 601px) {
+  #main.hand-right { grid-template-columns: var(--panel-w, 270px) 5px minmax(0, 1fr); }
+  #main.hand-right.with-sidebar { grid-template-columns: var(--panel-w, 270px) 5px minmax(0, 1fr) 210px; }
+  #main.hand-right:not(.with-panel) { grid-template-columns: minmax(0, 1fr); }
+  #main.hand-right.with-sidebar:not(.with-panel) { grid-template-columns: minmax(0, 1fr) 210px; }
+  #main.hand-right #panel { order: 1; border-left: none; border-right: 1px solid var(--border); }
+  #main.hand-right #panel-resizer { order: 2; }
+  #main.hand-right #viewport { order: 3; }
+  #main.hand-right #sidebar { order: 4; border-right: none; border-left: 1px solid var(--border); }
+}
+#main.hand-right #panel-expand-btn { right: auto; left: 0; border-right: 1px solid var(--border); border-left: none;
+  border-radius: 0 8px 8px 0; box-shadow: 2px 0 8px var(--shadow); }
 
 /* drag handle between canvas and panel */
 #panel-resizer {
@@ -599,6 +613,12 @@ details.st-group.few summary { color: var(--muted); }
 #nb-bar button.dim { opacity: 0.4; }
 #nb-bar .nb-t { font: 700 18px/1 Georgia, "Times New Roman", serif; }
 #nb-bar .nb-sep { flex: none; width: 1px; height: 28px; background: var(--border); margin: 0 2px; }
+/* upright at the edge of the free hand (notebook.js placeBar) */
+#nb-bar.vertical { flex-direction: column; transform: translateY(-50%); max-width: none; overflow-x: hidden; overflow-y: auto; padding: 8px 6px; }
+#nb-bar.vertical .nb-sep { width: 28px; height: 1px; margin: 2px 0; }
+#nb-bar.vertical button.nb-label { min-width: 40px; height: auto; min-height: 40px; padding: 4px 2px; flex-direction: column; gap: 0; font-size: 15px; line-height: 1.1; }
+#nb-bar.vertical button.nb-label small { font-size: 11px; color: var(--muted); }
+#nb-bar.vertical button[data-nb="prev"], #nb-bar.vertical button[data-nb="next"] { font-size: 15px; }
 /* pictures of a block (notebook.js showPictures) */
 #nb-pictures { width: min(760px, calc(100vw - 32px)); }
 .nb-pic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 60vh; overflow-y: auto; margin: 8px 0; }
@@ -1745,6 +1765,7 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
   #panel { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 48%; overflow-y: auto;
     border-top: 1px solid var(--border); border-radius: 14px 14px 0 0; box-shadow: 0 -4px 18px var(--shadow); }
   #panel-resizer { display: none !important; }
+  #main.hand-right #sidebar { left: auto; right: 0; box-shadow: -4px 0 18px var(--shadow); }
 }
 
 /* ---- Touch screens: targets a finger can hit ------------------------------------ */

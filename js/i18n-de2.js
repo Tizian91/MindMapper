@@ -636,6 +636,11 @@
     'Blue': 'Blau',
     'Page view: fit the width': 'Seitenansicht: Breite einpassen',
     'Page view: whole page': 'Seitenansicht: ganze Seite',
+    'Writing hand': 'Schreibhand',
+    'Right-handed': 'Rechtshänder',
+    'Left-handed': 'Linkshänder',
+    'The panel and the bar of a block are on the side of the free hand, the project on the other side - so the hand with the pen covers nothing.':
+      'Panel und Leiste eines Blocks liegen auf der Seite der freien Hand, das Projekt auf der anderen – so verdeckt die Hand mit dem Stift nichts.',
     'Take a photo (straight onto this page)': 'Foto aufnehmen (direkt auf diese Seite)',
     'Add pictures from the device': 'Bilder vom Gerät einfügen',
     'Pictures of this block…': 'Bilder dieses Blocks…',
