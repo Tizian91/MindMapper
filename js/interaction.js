@@ -105,7 +105,7 @@
 
     // Ctrl+V: images from the system clipboard, otherwise files, otherwise copied notes
     window.addEventListener('paste', (e) => {
-      if (isTyping(e)) return;
+      if (isTyping(e) || (MM.board && MM.board.active())) return; // nothing is pasted into a hidden map
       const images = MM.images.filesFrom(e.clipboardData);
       const files = MM.files.filesFrom(e.clipboardData);
       if (!images.length && !files.length) {
@@ -141,6 +141,7 @@
       if (![...((e.dataTransfer && e.dataTransfer.types) || [])].includes('Files')) return;
       e.preventDefault();
       if (vp.contains(e.target)) return; // the canvas handler already took it
+      if (MM.board && MM.board.active()) return; // the board: no files into a hidden map
       insertDropped(e.dataTransfer, MM.viewCenter());
     });
   };
@@ -819,6 +820,8 @@
   I.isEmojiKey = (e) => (e.ctrlKey || e.metaKey) && (e.key === '.' || (e.shiftKey && e.key.toLowerCase() === 'e'));
 
   function onKeyDown(e) {
+    // the week board is shown: the keys of the (hidden) map do nothing
+    if (MM.board && MM.board.active()) return;
     // the emoji picker shortcut works while editing a note text as well
     if (I.isEmojiKey(e)) {
       e.preventDefault();

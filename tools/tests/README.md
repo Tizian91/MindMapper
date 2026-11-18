@@ -38,6 +38,7 @@ ELECTRON_RUN_AS_NODE=1 "/c/Users/<Name>/AppData/Local/Programs/Microsoft VS Code
 | `test_adopt.js` | Lose Kopie der offenen Map wieder mit ihrer Datei verbinden (gleicher Name, gemeinsame Notes; laden / fragen / behalten) (`project.js adoptOpenMap`) |
 | `test_checks.js` | Kästchen in Tasks / Outlines: Zähler, Speichern und Lesen, zurück zum Stichpunkt, Markdown, Typwechsel Task ↔ To-do (`state.js MM.outline`) |
 | `test_lock.js` | Start ohne verbundenen Ordner: Sperre, Verbinden (auch wenn das OK spät kommt), anderen Ordner wählen, ohne Ordner weiter, roter Balken; erster Start ohne Ordner (`project.js showLock`, `renderBar`) |
+| `test_board.js` | Wochen-Board: Spalten (Backlog / To-Do / Doing / Done), Zeilen nach Tags (erster passender, Untertask erbt von der Haupttask), Projekt bleibt im Backlog, „aus KW …“, „✂ nicht zerlegt“, Soll = Workload der Woche, verfügbar, feste Zeit, kommende / vergangene Woche (`board.js compute`) |
 
 Einige Skripte rechnen mit dem heutigen Datum (Wochenpläne im Oktober/November 2026);
 liegen die Testdaten in der Vergangenheit, Daten im Skript anpassen.

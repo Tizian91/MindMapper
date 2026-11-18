@@ -840,6 +840,8 @@
     const orig = P.originalOf(path);
     const e = P.find(path) || (orig && { name: path.split('/').pop() });
     if (!e) return false;
+    // opened from the week board or the overview over it: the map is shown, so the maps mode
+    if (MM.board && MM.board.active()) MM.board.setMode('maps');
     if (S.file.path === path) return true;
     const from = S.file.path;
     if (!(await MM.storage.confirmLeave('open another map'))) return false;

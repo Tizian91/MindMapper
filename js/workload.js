@@ -249,6 +249,22 @@
       for (let d = a; d <= b; d = addDays(d, 1)) if (isWork(d)) out.push(iso(d));
       return out;
     };
+    /**
+     * How the remaining work of one item is spread: [{ day: 'YYYY-MM-DD', minutes }] over the
+     * planning days from today to its deadline, weighted by the hours of each day (overdue:
+     * all of it today). Empty for appointments, items without estimate or without deadline.
+     * The week board (board.js) adds these up per project - the same numbers as here.
+     */
+    const spread = (it) => {
+      if (it.scheduled || it.missing || !(it.minutes > 0)) return [];
+      const dl = parse(it.deadline);
+      if (!dl) return [];
+      let days = dl < t0 ? [iso(t0)] : workdays(t0, dl);
+      if (!days.length) days = [iso(t0)]; // due before the next planning day
+      const weights = days.map((k) => baseOf(parse(k)) || 1);
+      const total = weights.reduce((a, b) => a + b, 0);
+      return days.map((k, i) => ({ day: k, minutes: (it.minutes * weights[i]) / total }));
+    };
     const byDay = new Map();
     const sched = [];
     for (const it of items) {
@@ -267,11 +283,7 @@
         unscheduledList.push(ref(it, { minutes: it.minutes }));
         continue;
       }
-      let days = dl < t0 ? [iso(t0)] : workdays(t0, dl);
-      if (!days.length) days = [iso(t0)]; // due before the next planning day
-      const weights = days.map((k) => baseOf(parse(k)) || 1);
-      const total = weights.reduce((a, b) => a + b, 0);
-      days.forEach((k, i) => byDay.set(k, (byDay.get(k) || 0) + (it.minutes * weights[i]) / total));
+      for (const p of spread(it)) byDay.set(p.day, (byDay.get(p.day) || 0) + p.minutes);
       sched.push({ due: dl < t0 ? t0 : dl, minutes: it.minutes, path: it.path, id: it.id, title: it.title });
     }
 
@@ -325,6 +337,7 @@
     }
     return {
       capDay, capOf, freeOf, apptOn, awayOn, awayMinutes, byDay, days, weeks, buffers, critical, missing, unscheduled, conflicts, isWork, routines: list,
+      spread, routineOn, offOn, baseOf, items,
       missingList: missingList.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title)),
       unscheduledList: unscheduledList.sort((a, b) => b.minutes - a.minutes || a.title.localeCompare(b.title)),
     };

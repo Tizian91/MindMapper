@@ -340,6 +340,15 @@
             label: s.label, checked: nodes.every((n) => (n.meta.status || 'none') === st), action: () => A.setStatus(st),
           })),
         },
+        // ---- week board (board.js): plan the task for a week ----
+        MM.board.plannable(nodes) && {
+          label: 'Week board',
+          submenu: MM.board.hasSubTasks(nodes) ? [{ label: 'Has sub-tasks - plan those for the week', disabled: true }] : [
+            { label: 'This week', checked: nodes.every((n) => n.meta.week === MM.board.weekOf(0)), action: () => MM.board.planWeek(nodes, 0) },
+            { label: 'Next week', checked: nodes.every((n) => n.meta.week === MM.board.weekOf(1)), action: () => MM.board.planWeek(nodes, 1) },
+            { label: 'Not planned (backlog)', disabled: !nodes.some((n) => n.meta.week), action: () => MM.board.planWeek(nodes, null) },
+          ],
+        },
         hasImage && !multi && { label: 'Crop image…', action: A.cropImage },
         hasImage && !multi && { label: 'Replace image…', action: A.replaceImage },
         hasImage && !multi && { label: 'Save original…', action: A.saveImage },

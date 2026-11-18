@@ -334,7 +334,39 @@ Toolbar **Filter** öffnet die Filterleiste: Suchtext, Tags (*any* / *all*), Sta
 - **← Back** in der Seitenleiste springt zur vorher geöffneten Map zurück.
 - **⚠ n** an einer Map: Konfliktkopien eines Sync-Programms oder aus *Beide behalten* – vergleichen, eine Version behalten, aufräumen (Kapitel 1, **Synchronisierter Ordner**).
 
-## 8. Tages-, Wochen- und Monatspläne
+## 8. Wochen-Board und Pläne
+
+### Board und Maps: planen und denken getrennt
+
+Oben links in der Toolbar wechseln zwei große Knöpfe zwischen zwei Arbeitsweisen:
+
+- **Maps** – der Ort zum Denken: Gedanken ordnen, Aufgaben ableiten und in Untertasks zerlegen. Alles wie bisher.
+- **Board** – der Ort zum Planen: *Was mache ich diese Woche?* Ein Board mit den Spalten **Backlog | To-Do | Doing | Done** (deutsch: *In Arbeit*, *Erledigt*) und einer Zeile pro Projekt.
+
+Im Board-Modus gibt es keine Map und keine Map-Werkzeuge, im Maps-Modus kein Board. **Overview** und Statusleiste gibt es in beiden. MindMapper merkt sich auf jedem Gerät, in welchem Modus du zuletzt warst. Das Board braucht einen geöffneten Projektordner, denn es zeigt die Aufgaben **aller** Maps.
+
+**Das Board speichert nichts Eigenes.** Es zeigt, was in den Maps steht:
+
+| Spalte | Was dort steht |
+|---|---|
+| **Backlog** | die offenen **Haupttasks** aller Maps, nach Deadline sortiert, überfällige rot markiert. Haupttasks **ohne** Deadline stehen eingeklappt unten in ihrer Zeile („3 ohne Frist ▸“). |
+| **To-Do** | Aufgaben, die für diese Woche vorgemerkt sind und noch nicht laufen. Was für eine frühere Woche vorgemerkt war und noch offen ist, bleibt stehen, mit **„aus KW 46“**. |
+| **Doing** | Aufgaben mit Status *In progress*. |
+| **Done** | was in dieser Woche erledigt wurde, auch Ungeplantes (**„ungeplant“**). |
+
+- **Eine Haupttask mit Untertasks ist ein Projekt:** Sie bleibt im Backlog, ihre Untertasks sind die Karten, die durch die Woche wandern. An der Haupttask steht, wie viele Teile diese Woche dran sind („2 Teile diese Woche“).
+- **✂ nicht zerlegt:** Eine Aufgabe, deren nicht aufgeteilter Rest größer ist als ein Arbeitstag (*Hours / work day*), ist vermutlich noch nicht durchdacht. Zerlegt wird in der Map, nicht auf dem Board.
+- **Zeilen = Projekte:** Unter **Zeilen…** legst du fest, welche Tags Projekte sind, und in welcher Reihenfolge. Eine Karte steht in der Zeile ihres ersten Tags aus dieser Liste; eine Untertask ohne eigenen passenden Tag in der Zeile ihrer Haupttask; alles andere unter **Sonstige**. Gespeichert wird die Liste im Projektordner (`mindmapper.settings.json`).
+- **Stunden:** Oben steht **geplant / verfügbar**: geplant = was von den Karten in To-Do und Doing noch übrig ist, verfügbar = die Stunden der Woche ab heute nach Routinen, Terminen und freien Tagen. Grün passt, gelb = über 85 %, rot = mehr geplant als Zeit da ist. Karten ohne Schätzung zählen nicht mit, darauf weist die Spalte hin.
+- **Soll:** An jeder Zeile und oben steht, was die Fristen diese Woche verlangen – die Rechnung der Workload-Seite (Kapitel 13), nach Projekten aufgeteilt. Das Vormerken ändert das Soll **nicht**: So siehst du, ob dein Plan zu dem passt, was die Fristen brauchen (`Soll 20 h · geplant 12 h`).
+- **Doing-Warnung:** 1 Karte grün, 2 gelb (grenzwertig), ab 3 rot – zu viel gleichzeitig angefangen.
+- **Fest diese Woche:** Die Zeile über dem Board zeigt Routinen (an ihren Tagen, Wochenbudgets einmal mit ihren Kästchen), Termine und freie Tage, mit dem Stand aus dem Wochenplan (☑ / ☐). Das ist die Zeit, die vor jeder Projektarbeit schon vergeben ist.
+- **Blättern:** Mit **‹ ›** zur vorigen oder nächsten Woche, ein Klick auf die Woche führt zurück zu dieser. Kommende Wochen zeigen, was für sie vorgemerkt ist, und ihre Termine – auch ohne dass es den Wochenplan schon gibt. Vergangene Wochen sind nur zum Ansehen: Was war vorgemerkt, was ist liegen geblieben, was wurde erledigt.
+- **Zur Note:** Ein Klick auf eine Karte (oder einen Eintrag in *Fest diese Woche*) wechselt zu den Maps, öffnet die Map und markiert die Note. **Wochenplan ↗** öffnet den Wochenplan der gezeigten Woche; fehlt er für diese oder eine kommende Woche, wird er angelegt. **↻** liest alle Maps neu (das passiert auch, wenn du in die App zurückkehrst).
+- **Vormerken:** In der Map Rechtsklick auf eine Task → **Wochen-Board** → **Diese Woche** / **Nächste Woche** / **Nicht vorgemerkt (Backlog)**. Eine Task mit Untertasks wird über ihre Untertasks geplant. In Arbeit oder erledigt: wie bisher über den Status.
+- **Noch nicht auf dem Board selbst:** Karten auf dem Board verschieben und bearbeiten (Stoppuhr, Chips, Panel) kommt im nächsten Schritt.
+
+### Tages-, Wochen- und Monatspläne
 
 - Vorlagen im Dialog **New map**: **Day plan** (Morning / Afternoon / Evening), **Week plan** (eine Spalte pro Tag), **Month plan** (eine Spalte pro Woche). Über dem Titel steht eine Reihe mit **Overdue**, **Open tasks**, **Goals** und **Notes** – das Wesentliche auf einen Blick, ohne dass die Map nach links ausufert. Diese vier Listen **wachsen nach oben**: Kommt ein Eintrag dazu, bleibt ihre Unterkante stehen, sodass sie nie in den Titel laufen. Die Listen der Routinen (Wochenplan) stehen links neben Montag, oben bündig mit den Tagesspalten – die, die zählen, direkt daneben, *Nice-to-have*-Listen weiter außen. Solange ein Plan noch nicht läuft (z. B. die nächste Woche), stehen nur Goals und Notes mittig über dem Titel; sobald Overdue und Open tasks dazukommen, rückt die Reihe zusammen und bleibt mittig – außer du hast Goals oder Notes schon selbst verschoben. Pläne, die vor dieser Änderung angelegt wurden, behalten ihre alte Anordnung (Goals links, Notes rechts).
 - Die Pläne sind verknüpft: Monat → Wochen → Tage (↗ an Spalten bzw. Überschrift).

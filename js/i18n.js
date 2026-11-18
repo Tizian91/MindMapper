@@ -815,6 +815,10 @@ window.MM = window.MM || {};
 
     MM.applyTheme();
     if (MM.ink && MM.ink.refreshPalette) MM.ink.refreshPalette(); // the freehand palette in the new language
+    if (MM.board) { // Board | Maps and the board itself in the new language
+      MM.board.updateButtons();
+      MM.board.render();
+    }
 
     if (MM.ui) {
       MM.ui.defaultHint = MM.t('defaultHint');

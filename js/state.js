@@ -227,6 +227,13 @@ window.MM = window.MM || {};
     })).filter((c) => !seen.has(c.id) && seen.add(c.id)).slice(0, 50);
   };
 
+  /** Lanes of the week board (board.js): tags, trimmed, each once (case does not matter), in their order. */
+  MM.normalizeLanes = function (list) {
+    const seen = new Set();
+    return (Array.isArray(list) ? list : []).map((t) => String(t == null ? '' : t).trim().slice(0, 60)).filter(Boolean)
+      .filter((t) => !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase())).slice(0, 30);
+  };
+
   /**
    * Empty metadata block of a note. estimate is in minutes, progress in percent.
    * scheduled ('YYYY-MM-DD') + scheduledTime ('HH:MM') = appointment: the note takes
@@ -580,6 +587,7 @@ window.MM = window.MM || {};
       }
       if (!Array.isArray(m.timeLog) || !m.timeLog.length) delete m.timeLog;
       if (m.doneAt !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(m.doneAt)) delete m.doneAt; // day it was finished
+      if (m.week !== undefined && !/^\d{4}-W\d{2}$/.test(m.week)) delete m.week; // planned for this ISO week (board.js)
       m.priority = oneOf(m.priority, MM.PRIORITIES, 'none');
       m.quadrant = oneOf(QUAD_LEGACY[m.quadrant] || m.quadrant, MM.QUADRANTS, 'none');
       m.status = oneOf(m.status, MM.STATUSES, 'none');
@@ -728,6 +736,8 @@ window.MM = window.MM || {};
       prioSystem: 'levels', // 'levels' | 'eisenhower' (per project folder, see storage.js)
       routineCategories: [], // [{ id, name, emoji, leisure }] (per project folder, see routines.js)
       askActual: true,     // ask for the actual time when a task is checked off (per project folder, see actual.js)
+      boardLanes: [],      // tags that are projects: one lane each on the week board (per project folder, see board.js)
+      mode: 'maps',        // 'maps' | 'board' - the last mode on this device (board.js)
     },
     // view filter (not saved, not part of undo); see meta.js
     filter: {

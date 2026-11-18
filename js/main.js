@@ -32,6 +32,7 @@
     document.getElementById('status-info').textContent = MM.tf('st_counts', { nodes, edges }) + sel + shown;
     MM.load.renderStatus(); // planned hours today / this week / smallest buffer
     if (MM.notebook) MM.notebook.renderBar(); // pen on / off
+    if (MM.board) MM.board.updateButtons(); // Board | Maps (the board needs a project folder)
   };
 
   let flashTimer = null;
@@ -337,6 +338,8 @@
       MM.refresh();
     }
     await MM.project.init(); // after the autosave, so the restored map can be linked to its file
+    MM.board.init();
+    MM.board.start(); // the last mode of this device: the week board or the maps
     window.addEventListener('resize', () => MM.render.applyView());
     window.addEventListener('beforeunload', () => MM.storage.autosave());
     MM.storage.initLifecycle(); // save when leaving, check the file when coming back
