@@ -659,7 +659,8 @@
       const name = l.tag === B.OTHER ? (d.lanes.length === 1 ? tr('All tasks') : tr('Other')) : l.tag;
       const nums = past ? '' : `<div class="bd-lanenums"><span title="${esc(tr('Soll: what the deadlines need this week'))}">${esc(tr('Soll {h}', { h: H(l.soll) }))}</span><span>${esc(tr('planned {h}', { h: H(l.plan) }))}</span></div>`;
       html += `<div class="bd-lanehead">${esc(name)}${nums}</div>`;
-      const laneKey = l.tag.toLowerCase() || '\u0000';
+      // the key of the lane in an HTML attribute: plain text (a control character comes back changed)
+      const laneKey = l.tag ? 'tag:' + l.tag.toLowerCase() : 'other';
       const nodl = l.cards.nodl.length ? `<button type="button" class="bd-nodl" data-bd-nodl="${esc(laneKey)}" aria-expanded="${openNoDl.has(laneKey)}">${openNoDl.has(laneKey) ? '▾' : '▸'} ${esc(tr('{n} without deadline', { n: l.cards.nodl.length }))}</button>` +
         (openNoDl.has(laneKey) ? l.cards.nodl.map((c) => cardHTML(c, 'backlog')).join('') : '') : '';
       html += `<div class="bd-cell" data-lane="${i}" data-col="backlog">${l.cards.backlog.map((c) => cardHTML(c, 'backlog')).join('')}${nodl}</div>`;
