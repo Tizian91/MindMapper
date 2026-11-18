@@ -187,6 +187,15 @@
     const m = n.meta;
     const set = (v) => () => setMeta(n, key, v);
     let list;
+    if (key === 'week') { // planned for a week on the board (board.js)
+      const B = MM.board;
+      M.open([
+        { label: 'This week', checked: m.week === B.weekOf(0), action: () => B.planWeek([n], 0) },
+        { label: 'Next week', checked: m.week === B.weekOf(1), action: () => B.planWeek([n], 1) },
+        { label: 'Not planned (backlog)', action: () => B.planWeek([n], null) },
+      ], rect.left, rect.bottom + 4);
+      return;
+    }
     if (key === 'status' || key === 'priority' || key === 'quadrant') {
       const catalog = key === 'status' ? MM.STATUSES : MM.prioCatalog();
       list = Object.entries(catalog).map(([k, v]) => ({

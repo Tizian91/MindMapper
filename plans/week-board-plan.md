@@ -1,6 +1,6 @@
 # MindMapper – Plan: Wochen-Board (Scrumban)
 
-Stand: 18.11.2026, mit dem Nutzer besprochen. **Etappe A umgesetzt, noch nicht vom Nutzer getestet / nicht committet** (`js/board.js`, Test `test_board.js`). Vorgezogen aus Etappe B: Kontextmenü der Map **Wochen-Board → Diese Woche / Nächste Woche / Nicht vorgemerkt** (`board.planWeek`), damit To-Do testbar ist; gesperrt für Tasks mit Untertasks. Noch offen aus B: Karten auf dem Board verschieben / bearbeiten, Chip `W47`, Abhaken in *Fest diese Woche*. Grundregeln des Projekts gelten weiter: Modell in `MM.state.doc` ändern → `MM.commit()`, keine Build-Tools, keine ES-Module, alles über `window.MM`, UI-Texte englisch mit deutscher Übersetzung in `js/i18n-de2.js`, Handbuch mitpflegen. `index.html` bleibt cloudfrei; `cloud.html` bekommt das Board über denselben Code.
+Stand: 18.11.2026, mit dem Nutzer besprochen. **Etappe A umgesetzt** (Commit 2651733, getestet PC + Handy). **Etappe B, Teil 1 umgesetzt, noch nicht getestet / nicht committet:** Karten verschieben (Ziehen + Menü), Projekt-Menü mit Untertasks, Abhaken in *Fest diese Woche* (`routines.setDone`, Wochenbudgets über ihre Kästchen), Board-Strg+Z, Chip `▦ KW 47` in der Map, Hinweis „✂ nicht zerlegt“ beim Vormerken (aus Etappe C vorgezogen). Offen aus B: **Teil 2** – Karten wie Task-Notes bearbeiten (Chips, Stoppuhr, Panel).
 
 ## Ziel
 

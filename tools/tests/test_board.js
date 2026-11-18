@@ -111,6 +111,40 @@ try {
   check('no lanes: one lane', one.lanes.length, 1);
   check('no lanes: all backlog', names(one.lanes[0], 'backlog'), ['Lehre', 'Paper']);
 
+  // a project's steps for the menu: open sub-tasks, planned ones marked
+  const lehreCard = lane(d, 'Teaching').cards.backlog[0];
+  check('project subs', lehreCard.subs.map((s) => s.title + ':' + s.planned), ['Folien:true', 'Klausur:true']);
+
+  // moving a card: what happens to the note (board.js applyMove)
+  MM.actual = { checkedOff: (n) => { n.meta.doneAt = 'TODAY'; if (n.meta.estimate != null && n.meta.estimateFirst == null) n.meta.estimateFirst = n.meta.estimate; } };
+  const note = (meta) => ({ type: 'task', meta: Object.assign(MM.emptyMeta(), meta) });
+  const pick = (n) => ({ week: n.meta.week, status: n.meta.status, progress: n.meta.progress, doneAt: n.meta.doneAt, first: n.meta.estimateFirst });
+  let x = note({ status: 'open', estimate: 120 });
+  MM.board.applyMove(x, 'todo', W, true);
+  check('→ To-Do: week', pick(x), { week: W, status: 'open', progress: null, first: null });
+  MM.board.applyMove(x, 'doing', W, true);
+  check('→ Doing: in progress, first estimate', pick(x), { week: W, status: 'progress', progress: null, first: 120 });
+  check('→ Done: checked off now', MM.board.applyMove(x, 'done', W, true), true);
+  check('→ Done: 100 %, day', pick(x), { week: W, status: 'done', progress: 100, doneAt: 'TODAY', first: 120 });
+  MM.board.applyMove(x, 'todo', W, true);
+  check('Done → To-Do: open again', pick(x), { week: W, status: 'open', progress: null, first: 120 });
+  MM.board.applyMove(x, 'backlog', W, true);
+  check('→ Backlog: no week', pick(x), { status: 'open', progress: null, first: 120 });
+  const y = note({ status: 'none', progress: 30 });
+  MM.board.applyMove(y, 'doing', W, false);
+  check('→ Doing keeps progress, sets week', pick(y), { week: W, status: 'progress', progress: 30, first: null });
+  const z = note({ status: 'open', week: Wprev });
+  MM.board.applyMove(z, 'doing', W, false);
+  check('→ Doing keeps an older week', z.meta.week, Wprev);
+  check('open map: no doneAt here (commit sets it)', (MM.board.applyMove(z, 'done', W, false), z.meta.doneAt), undefined);
+
+  // the chip of a planned task in the map (meta.js): while it is open; red for an older week
+  MM.render = { esc: (s) => String(s) };
+  const chip = (meta) => MM.meta.chipsHTML({ id: 'c1', type: 'task', tags: [], meta: Object.assign(MM.emptyMeta(), meta) }, false);
+  check('week chip', /chip-week "[^>]*>▦ Week \d+/.test(chip({ status: 'open', week: W })), true);
+  check('week chip older week', chip({ status: 'open', week: Wprev }).includes('chip-week-old'), true);
+  check('no week chip when done', chip({ status: 'done', week: W }).includes('chip-week'), false);
+
   check('normalizeLanes', MM.normalizeLanes([' Paper ', 'paper', '', 'Lehre', null]), ['Paper', 'Lehre']);
 } catch (e) { bad++; out.push('ERROR ' + e.stack); }
 out.push(bad ? bad + ' FAILED' : 'all ok');

@@ -141,20 +141,23 @@
     if (kind !== 'past') {
       // planned somewhere: a card of any week, or in progress
       const busy = (it) => isLeaf(it) && open(it) && (!!it.meta.week || it.status === 'progress');
-      const partsOf = (it) => {
-        let n = 0;
+      // the steps of a project: its open sub-tasks without sub-tasks of their own (to plan them)
+      const subsOf = (it) => {
+        const out = [];
         const walk = (x, hop) => {
           for (const c of kids(x)) {
-            if (placed.has(keyOf(c.path, c.id))) n++;
-            if (hop < 50) walk(c, hop + 1);
+            if (isLeaf(c)) {
+              if (open(c) && isCardItem(c)) out.push(card(c, { planned: placed.has(keyOf(c.path, c.id)) }));
+            } else if (hop < 50) walk(c, hop + 1);
           }
         };
         walk(it, 0);
-        return n;
+        return out;
       };
       for (const it of model.items) {
         if (!isOpenMain(it) || busy(it)) continue;
-        add(it.meta.deadline ? 'backlog' : 'nodl', it, { parts: partsOf(it) });
+        const subs = isLeaf(it) ? [] : subsOf(it);
+        add(it.meta.deadline ? 'backlog' : 'nodl', it, { parts: subs.filter((s) => s.planned).length, subs });
       }
     }
 
@@ -331,11 +334,24 @@
     B.render();
   };
 
+  let cards = new Map(); // key -> { card, col } of the board as drawn
+
   /** Draw the board from the maps as read (no reading). */
   B.render = function () {
     if (!B.active()) return;
     const mon = shownMon || T().mondayOf(today());
-    data = B.compute(MM.load.docs(), mon, { lanes: S.settings.boardLanes, sum: MM.load.summary() });
+    // calculated from the maps as they are now - a change on the board shows at once
+    // (the cached workload of the status bar follows with the next reading)
+    data = B.compute(MM.load.docs(), mon, { lanes: S.settings.boardLanes });
+    cards = new Map();
+    for (const l of data.lanes) {
+      for (const col of Object.keys(l.cards)) {
+        for (const c of l.cards[col]) {
+          cards.set(c.key, { card: c, col: col === 'nodl' ? 'backlog' : col });
+          for (const s of c.subs || []) if (!cards.has(s.key)) cards.set(s.key, { card: s, col: s.planned ? 'todo' : 'backlog' });
+        }
+      }
+    }
     const el = root();
     const scroll = el.querySelector('.bd-scroll');
     const keep = scroll ? { x: scroll.scrollLeft, y: scroll.scrollTop } : null;
@@ -392,25 +408,35 @@
   function fixedHTML(d) {
     const f = d.fixed;
     const todayIso = iso(today());
-    const chip = (e) => {
+    // a box to check off: what took place (today or before); not ahead of time
+    const tick = (e, i) => {
+      const can = (e.kind === 'appt' ? e.date : e.day) <= todayIso;
+      return can ? `<button type="button" class="bd-tick" data-bd-tick="${i}" role="checkbox" aria-checked="${!!e.done}" title="${esc(tr(e.done ? 'Open again' : 'Check off'))}">${e.done ? '☑' : '☐'}</button>`
+        : `<span class="bd-tick off" title="${esc(tr('Not yet - it has not taken place'))}">☐</span>`;
+    };
+    const open = (e) => `data-bd-open="${esc(e.path)}" data-bd-id="${esc(e.id)}" title="${esc(tr('Open the note in its map'))}"`;
+    const chip = (e, i) => {
       const day = e.day ? `<b>${esc(weekdayOf(e.day))}</b> ` : '';
       const past = e.day && (e.until || e.day) < todayIso ? ' past' : ''; // a day of this week that is over
       const dur = e.minutes ? ' · ' + esc(MM.meta.formatDuration(e.minutes)) : '';
       if (e.kind === 'off') return `<span class="bd-fx bd-fx-off${past}">${day}🏖 ${esc(e.title)}${e.full ? '' : dur}</span>`;
       if (e.kind === 'appt') {
         const when = e.allDay ? (e.until > e.date ? `${esc(shortDate(e.date))} – ${esc(shortDate(e.until))}` : esc(tr('all day'))) : esc(e.time);
-        return `<span class="bd-fx${past}${e.done ? ' done' : ''}" data-bd-open="${esc(e.path)}" data-bd-id="${esc(e.id)}" title="${esc(tr('Open the note in its map'))}">${day}${e.done ? '☑' : '☐'} 📌 ${esc(e.title)} ${when}${e.allDay ? '' : dur}</span>`;
+        return `<span class="bd-fx${past}${e.done ? ' done' : ''}">${day}${tick(e, i)}<span class="bd-fx-t" ${open(e)}>📌 ${esc(e.title)} ${when}${e.allDay ? '' : dur}</span></span>`;
       }
       if (e.kind === 'routine') {
-        return `<span class="bd-fx${past}${e.done ? ' done' : ''}${e.leisure ? ' leisure' : ''}" data-bd-open="${esc(e.path)}" data-bd-id="${esc(e.id)}" title="${esc(tr('Open the note in its map'))}">${day}${e.done ? '☑' : '☐'} 🔁 ${esc(e.title)}${e.time ? ' ' + esc(e.time) : ''}${dur}</span>`;
+        return `<span class="bd-fx${past}${e.done ? ' done' : ''}${e.leisure ? ' leisure' : ''}">${day}${tick(e, i)}<span class="bd-fx-t" ${open(e)}>🔁 ${esc(e.title)}${e.time ? ' ' + esc(e.time) : ''}${dur}</span></span>`;
       }
-      // a weekly budget / "n times per week": its boxes as ticked on the week plan
+      // a weekly budget / "n times per week": its boxes as ticked on the week plan, one click each
       const n = e.boxes || e.times || 1;
-      const boxes = '☑'.repeat(Math.min(e.ticked, n)) + '☐'.repeat(Math.max(0, n - e.ticked));
-      return `<span class="bd-fx${past}${e.leisure ? ' leisure' : ''}" data-bd-open="${esc(e.path)}" data-bd-id="${esc(e.id)}" title="${esc(tr('Open the note in its map'))}">🔁 ${esc(e.title)} ${esc(MM.routines.label(e.times ? { kind: 'times', times: e.times } : { kind: 'budget' }, e.times ? 0 : e.minutes))} ${boxes}</span>`;
+      const can = d.kind !== 'future' && (d.kind === 'current' || e.boxes > 0);
+      const boxes = Array.from({ length: n }, (x, k) => (can
+        ? `<button type="button" class="bd-tick" data-bd-box="${i}:${k}" role="checkbox" aria-checked="${k < e.ticked}">${k < e.ticked ? '☑' : '☐'}</button>`
+        : `<span class="bd-tick off">${k < e.ticked ? '☑' : '☐'}</span>`)).join('');
+      return `<span class="bd-fx${past}${e.leisure ? ' leisure' : ''}"><span class="bd-fx-t" ${open(e)}>🔁 ${esc(e.title)} ${esc(MM.routines.label(e.times ? { kind: 'times', times: e.times } : { kind: 'budget' }, e.times ? 0 : e.minutes))}</span> ${boxes}</span>`;
     };
     const head = `<span class="bd-fx-head" title="${esc(tr('Routines, appointments and days off of this week. They take their time off the capacity before any project work - that is why less than the hours of the week is available. Ticked off in the week plan.'))}">${esc(d.kind === 'current' ? tr('Fixed this week') : tr('Fixed in {w}', { w: weekShort(d.week) }))}${f.minutes ? ' · ' + esc(H(f.minutes)) : ''}</span>`;
-    return `<div class="bd-fixed">${head}${f.entries.length ? f.entries.map(chip).join('') : `<span class="hint">${esc(tr('nothing'))}</span>`}</div>`;
+    return `<div class="bd-fixed">${head}${f.entries.length ? f.entries.map((e, i) => chip(e, i)).join('') : `<span class="hint">${esc(tr('nothing'))}</span>`}</div>`;
   }
 
   function cardHTML(c, col) {
@@ -426,7 +452,9 @@
     if (c.notSplit && col !== 'done') {
       marks.push(`<span class="bd-mark bd-mark-warn" title="${esc(tr('More than a work day that is not split up into sub-tasks - plan the steps in the map first.'))}">${esc(tr('✂ not split up'))}</span>`);
     }
-    return `<div class="bd-card${c.overdue ? ' overdue' : ''}${col === 'done' ? ' done' : ''}" data-bd-open="${esc(c.path)}" data-bd-id="${esc(c.id)}" tabindex="0" title="${esc(tr('Open in the map ↗'))}">
+    // a step can be dragged into another column (not in a past week); a project is planned by its steps
+    const drag = !c.main && data && data.kind !== 'past';
+    return `<div class="bd-card${c.overdue ? ' overdue' : ''}${col === 'done' ? ' done' : ''}${c.main ? ' main' : ''}" data-bd-card="${esc(c.key)}" tabindex="0"${drag ? ' draggable="true"' : ''} title="${esc(tr(c.main ? 'Click: plan its sub-tasks or open it in the map' : drag ? 'Drag into another column, or click: move / open in the map' : 'Click: open in the map'))}">
       <div class="bd-title">${esc(c.title)}</div>
       ${meta.length ? `<div class="bd-meta">${meta.join('')}</div>` : ''}
       ${marks.length ? `<div class="bd-marks">${marks.join('')}</div>` : ''}
@@ -452,8 +480,8 @@
       const laneKey = l.tag.toLowerCase() || '\u0000';
       const nodl = l.cards.nodl.length ? `<button type="button" class="bd-nodl" data-bd-nodl="${esc(laneKey)}" aria-expanded="${openNoDl.has(laneKey)}">${openNoDl.has(laneKey) ? '▾' : '▸'} ${esc(tr('{n} without deadline', { n: l.cards.nodl.length }))}</button>` +
         (openNoDl.has(laneKey) ? l.cards.nodl.map((c) => cardHTML(c, 'backlog')).join('') : '') : '';
-      html += `<div class="bd-cell" data-lane="${i}">${l.cards.backlog.map((c) => cardHTML(c, 'backlog')).join('')}${nodl}</div>`;
-      for (const col of ['todo', 'doing', 'done']) html += `<div class="bd-cell" data-lane="${i}">${l.cards[col].map((c) => cardHTML(c, col)).join('')}</div>`;
+      html += `<div class="bd-cell" data-lane="${i}" data-col="backlog">${l.cards.backlog.map((c) => cardHTML(c, 'backlog')).join('')}${nodl}</div>`;
+      for (const col of ['todo', 'doing', 'done']) html += `<div class="bd-cell" data-lane="${i}" data-col="${col}">${l.cards[col].map((c) => cardHTML(c, col)).join('')}</div>`;
     });
     html += '</div>';
     if (!S.settings.boardLanes || !S.settings.boardLanes.length) {
@@ -485,8 +513,279 @@
     await openNote(path, null);
   }
 
+  // ---- Planning on the board: moving cards ---------------------------------------------
+  //
+  // A card is a note in its map. Moving it changes that note: the open map in one undo
+  // step of its own, another map in the board's copy at once (drawn right away) and in
+  // its file a moment later (project.js P.later - several moves in a row write the file
+  // once, as checking off from a plan's list does). Ctrl+Z on the board takes the last
+  // move back.
+
+  /** Which columns a card may go to in the week shown (a past week is only looked at). */
+  const targets = () => (!data || data.kind === 'past' ? [] : data.kind === 'future' ? ['backlog', 'todo'] : ['backlog', 'todo', 'doing', 'done']);
+
+  /**
+   * Set note n for column col of week `week` (no saving). other: n is in another map than
+   * the open one - then do here what MM.commit does for the open map (actual.js): the day
+   * it was finished, the first estimate, the stopwatch. Returns true if it was checked off now.
+   */
+  B.applyMove = function (n, col, week, other) {
+    const m = (n.meta = Object.assign(MM.emptyMeta(), n.meta || {}));
+    const wasDone = m.status === 'done';
+    const begun = m.status === 'progress' || wasDone || Number(m.progress) > 0;
+    const reopen = () => {
+      if (m.status === 'done' || m.status === 'progress') m.status = 'open';
+      if (m.progress === 100) m.progress = null;
+    };
+    if (col === 'backlog') {
+      delete m.week;
+      reopen();
+    } else if (col === 'todo') {
+      m.week = week;
+      reopen();
+    } else if (col === 'doing') {
+      m.status = 'progress';
+      if (m.progress === 100) m.progress = null;
+      if (!m.week) m.week = week;
+    } else if (col === 'done') {
+      m.status = 'done';
+      if (n.type === 'task') m.progress = 100;
+    }
+    const doneNow = m.status === 'done' && !wasDone;
+    if (other) {
+      if (doneNow) MM.actual.checkedOff(n); // the day, the first estimate, the stopwatch stops
+      else if (m.status !== 'done' && m.doneAt) delete m.doneAt;
+      if (m.status === 'progress' && !begun && m.estimateFirst == null && m.estimate != null) m.estimateFirst = m.estimate;
+    }
+    return doneNow;
+  };
+
+  const undoStack = []; // [{ label, undo: async () => {} }]
+  const clone = (v) => JSON.parse(JSON.stringify(v));
+
+  /**
+   * Change note `id` of map `path` with fn(node, other): the open map in one undo step,
+   * another map in the board's copy and (a moment later) in its file.
+   * Returns { node } as changed here (null if it is not there).
+   */
+  function editNote(path, id, fn) {
+    if (path === S.file.path) {
+      const n = S.doc.nodes[id];
+      if (!n) return null;
+      fn(n, false);
+      MM.commit();
+      return { node: n };
+    }
+    const cached = MM.load.docs().get(path);
+    const n = cached && cached.nodes && cached.nodes[id];
+    if (!n) return null;
+    fn(n, true);
+    MM.project.later(path, (doc) => { if (doc.nodes[id]) fn(doc.nodes[id], true); });
+    return { node: n };
+  }
+
+  /** Move card c into column col (with the question for a task not split up). */
+  async function move(c, col) {
+    const from = cards.get(c.key);
+    if (!targets().includes(col) || (from && from.col === col)) return;
+    if (c.main) return MM.ui.flash(tr('A project is planned by its sub-tasks'));
+    if (c.notSplit && (col === 'todo' || col === 'doing') && from && from.col === 'backlog') {
+      const answer = await askSplit(c);
+      if (answer === 'split') return openNote(c.path, c.id);
+      if (answer !== 'anyway') return;
+    }
+    const week = data.week;
+    let before = null, ask = null;
+    const r = editNote(c.path, c.id, (n, other) => {
+      if (!before) before = clone(n.meta || {});
+      const doneNow = B.applyMove(n, col, week, other);
+      if (doneNow && other && !ask && MM.actual.askable(n)) ask = n;
+    });
+    if (!r) {
+      MM.ui.flash(tr('The note of this card was not found - read the maps again (↻)'));
+      return;
+    }
+    if (ask) MM.actual.askFor([{ path: c.path, node: ask }]); // how long did it take? (the open map asks itself)
+    const label = c.title;
+    undoStack.push({
+      label,
+      undo: async () => editNote(c.path, c.id, (n) => { n.meta = clone(before); }),
+    });
+    MM.load.scheduleRefresh(); // the status bar follows
+    MM.tasks.refreshExternal();
+    B.render();
+    MM.ui.flash(tr('"{t}" → {col} (undo: Ctrl+Z)', { t: label, col: tr(COLS[col]) }));
+  }
+  const COLS = { backlog: 'Backlog', todo: 'To-Do', doing: 'Doing', done: 'Done' };
+
+  /** Ctrl+Z on the board: the last move / check back. */
+  B.undo = async function () {
+    const step = undoStack.pop();
+    if (!step) return MM.ui.flash(tr('Nothing to undo on the board'));
+    await step.undo();
+    MM.load.scheduleRefresh();
+    MM.tasks.refreshExternal();
+    B.render();
+    MM.ui.flash(tr('Undone: {t}', { t: step.label }));
+  };
+
+  // ---- "Not split up": plan the steps first ------------------------------------------
+
+  let splitDialog = null;
+  /** 'split' | 'anyway' | 'cancel' */
+  function askSplit(c) {
+    if (!splitDialog) {
+      splitDialog = document.createElement('dialog');
+      splitDialog.className = 'bd-split-dialog';
+      document.body.appendChild(splitDialog);
+      splitDialog.addEventListener('keydown', (e) => e.stopPropagation());
+    }
+    splitDialog.innerHTML = `<h3>${esc(tr('✂ not split up'))}</h3>
+      <p>${esc(tr('"{t}" has {h} that are not split up into sub-tasks. Plan the steps first.', { t: c.title, h: H(c.left) }))}</p>
+      <div class="bd-split-btns">
+        <button type="button" value="split" class="primary">${esc(tr('Split up in the map ↗'))}</button>
+        <button type="button" value="anyway">${esc(tr('Plan it anyway'))}</button>
+        <button type="button" value="cancel">${esc(tr('Cancel'))}</button>
+      </div>`;
+    return new Promise((resolve) => {
+      const done = (v) => {
+        splitDialog.onclick = null;
+        splitDialog.onclose = null;
+        if (splitDialog.open) splitDialog.close();
+        resolve(v);
+      };
+      splitDialog.onclick = (e) => {
+        const b = e.target.closest('button[value]');
+        if (b) done(b.value);
+        else if (e.target === splitDialog) done('cancel');
+      };
+      splitDialog.onclose = () => done('cancel');
+      splitDialog.showModal();
+      splitDialog.querySelector('button[value="split"]').focus();
+    });
+  }
+
+  // ---- Menu of a card (click / tap; on touch screens the way to move) --------------------
+
+  function cardMenu(c, x, y) {
+    const here = (cards.get(c.key) || {}).col;
+    const list = [];
+    if (c.main) {
+      // a project: its steps for this week (those already planned are ticked: click = back)
+      const subs = c.subs || [];
+      if (targets().includes('todo') && subs.length) {
+        list.push({ label: tr('Plan sub-tasks for {w}:', { w: weekShort(data.week) }), disabled: true });
+        for (const s of subs) {
+          list.push({
+            label: s.title + (s.left ? ' · ' + H(s.left) : '') + (s.notSplit ? ' ✂' : ''), checked: s.planned,
+            action: () => move(s, s.planned ? 'backlog' : 'todo'),
+          });
+        }
+        list.push('-');
+      } else if (!subs.length) {
+        list.push({ label: tr('No open sub-tasks'), disabled: true }, '-');
+      }
+    } else {
+      for (const col of targets()) {
+        if (col === here) continue;
+        list.push({ label: tr('→ {col}', { col: tr(COLS[col]) }), action: () => move(c, col) });
+      }
+      if (list.length) list.push('-');
+    }
+    list.push({ label: tr('Open in the map ↗'), action: () => openNote(c.path, c.id) });
+    MM.menu.open(list, x, y);
+  }
+
+  // ---- Checking off in "Fixed this week" ------------------------------------------------
+
+  /** The week plan of the week shown (made when it is missing - the board keeps it in the background). */
+  async function weekPlanPath(make) {
+    const mon = data.mon;
+    const file = T().weekValue(mon) + '.mindmap.json';
+    let path = MM.project.mapPaths().find((p) => p.split('/').pop() === file);
+    if (!path && make) {
+      path = await MM.project.ensureMap(T().weekPath(mon));
+      await MM.load.refresh();
+    }
+    return path || null;
+  }
+
+  /** Routine (on its day) or appointment: checked off where it is listed - week / day plan, the appointment note. */
+  async function toggleFixed(e) {
+    const done = !e.done;
+    const c = { id: e.id, date: e.kind === 'appt' ? e.date : e.day, done };
+    if (e.kind === 'routine') await weekPlanPath(true); // the entry lives in the week plan
+    await MM.routines.setDone([c]);
+    await MM.load.refresh();
+    undoStack.push({ label: e.title, undo: async () => { await MM.routines.setDone([Object.assign({}, c, { done: !done })]); await MM.load.refresh(); } });
+    B.render();
+    const now = data.fixed.entries.find((x) => x.id === e.id && x.kind === e.kind && (x.day === e.day));
+    if (now && now.done !== done) MM.ui.flash(tr('The week plan has no entry for this yet - open it once (Week plan ↗), then check it off.'));
+    else MM.ui.flash(tr(done ? 'Checked off: {t}' : 'Open again: {t}', { t: e.title }));
+  }
+
+  /** A box of a weekly budget / "n times per week": the first k boxes of the week plan's list are checked. */
+  async function setBoxes(e, k) {
+    const path = await weekPlanPath(data.kind === 'current');
+    if (!path) return MM.ui.flash(tr('There is no week plan of {w}', { w: weekShort(data.week) }));
+    // the lists of the routines without fixed days (routines.js routineLists)
+    const apply = (doc, count) => {
+      let changed = false, i = 0;
+      for (const n of Object.values(doc.nodes || {})) {
+        const isList = n.type === 'todo' && (n.routineList !== undefined || (n.text === 'Routines this week' && !(n.meta && n.meta.deadline)));
+        if (!isList) continue;
+        for (const it of n.items || []) {
+          if (it.routine !== e.id) continue;
+          const want = i++ < count;
+          if (!!it.done !== want) {
+            it.done = want;
+            changed = true;
+          }
+        }
+      }
+      return changed;
+    };
+    const set = (count) => {
+      if (path === S.file.path) {
+        if (apply(S.doc, count)) MM.commit();
+        return;
+      }
+      const cached = MM.load.docs().get(path);
+      if (cached) apply(cached, count);
+      MM.project.later(path, (doc) => { apply(doc, count); });
+    };
+    const before = e.ticked;
+    set(k);
+    undoStack.push({ label: e.title, undo: async () => set(before) });
+    MM.load.scheduleRefresh();
+    B.render();
+  }
+
   function onClick(e) {
     const t = e.target;
+    const tk = t.closest('[data-bd-tick]');
+    if (tk) {
+      const entry = data.fixed.entries[+tk.dataset.bdTick];
+      if (entry) toggleFixed(entry);
+      return;
+    }
+    const bx = t.closest('[data-bd-box]');
+    if (bx) {
+      const [i, k] = bx.dataset.bdBox.split(':').map(Number);
+      const entry = data.fixed.entries[i];
+      // a click on a checked box takes it (and the ones after it) back, on an open one checks up to it
+      if (entry) setBoxes(entry, k < entry.ticked ? k : k + 1);
+      return;
+    }
+    const cd = t.closest('[data-bd-card]');
+    if (cd) {
+      const hit = cards.get(cd.dataset.bdCard);
+      if (!hit) return;
+      if (data.kind === 'past') return openNote(hit.card.path, hit.card.id);
+      const r = cd.getBoundingClientRect();
+      cardMenu(hit.card, e.clientX || r.left + 12, e.clientY || r.bottom);
+      return;
+    }
     const wk = t.closest('[data-bd-week]');
     if (wk) {
       const step = +wk.dataset.bdWeek;
@@ -591,8 +890,16 @@
   };
 
   /** Plan the notes for this week + offset, or take them back into the backlog (offset null). */
-  B.planWeek = function (nodes, offset) {
+  B.planWeek = async function (nodes, offset) {
     const w = offset === null ? '' : B.weekOf(offset);
+    // more than a work day not split up: plan the steps first (see the board)
+    const left = (n) => (Number(n.meta.estimate) || 0) * (1 - (Number(n.meta.progress) || 0) / 100);
+    const big = w ? nodes.find((n) => n.meta.week !== w && left(n) > MM.load.capacity().hours * 60) : null;
+    if (big) {
+      const answer = await askSplit({ title: (big.text || '').split('\n')[0], left: left(big) });
+      if (answer === 'split') return MM.actions.focusNode(big.id);
+      if (answer !== 'anyway') return;
+    }
     for (const n of nodes) {
       if (w) n.meta.week = w;
       else delete n.meta.week;
@@ -612,6 +919,53 @@
         e.preventDefault();
         e.target.click();
       }
+    });
+    // dragging a card into another column (mouse; on touch screens the card's menu does it)
+    let dragKey = null;
+    const cellOf = (e) => e.target.closest && e.target.closest('.bd-cell[data-col]');
+    const clearDrop = () => el.querySelectorAll('.bd-drop').forEach((x) => x.classList.remove('bd-drop'));
+    el.addEventListener('dragstart', (e) => {
+      const cd = e.target.closest && e.target.closest('[data-bd-card][draggable="true"]');
+      if (!cd) return;
+      dragKey = cd.dataset.bdCard;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragKey);
+      cd.classList.add('bd-dragging');
+    });
+    el.addEventListener('dragover', (e) => {
+      const cell = cellOf(e);
+      if (!dragKey || !cell || !targets().includes(cell.dataset.col)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!cell.classList.contains('bd-drop')) {
+        clearDrop();
+        cell.classList.add('bd-drop');
+      }
+    });
+    el.addEventListener('dragleave', (e) => {
+      if (e.target.classList && e.target.classList.contains('bd-drop') && !e.target.contains(e.relatedTarget)) e.target.classList.remove('bd-drop');
+    });
+    el.addEventListener('drop', (e) => {
+      const cell = cellOf(e);
+      const hit = dragKey && cards.get(dragKey);
+      clearDrop();
+      dragKey = null;
+      if (!cell || !hit) return;
+      e.preventDefault();
+      e.stopPropagation(); // not a file for the map (interaction.js)
+      move(hit.card, cell.dataset.col);
+    });
+    el.addEventListener('dragend', () => {
+      dragKey = null;
+      clearDrop();
+      el.querySelectorAll('.bd-dragging').forEach((x) => x.classList.remove('bd-dragging'));
+    });
+    // Ctrl+Z on the board: its last move (the keys of the hidden map are off, interaction.js)
+    window.addEventListener('keydown', (e) => {
+      if (!B.active() || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || e.shiftKey) return;
+      if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"], dialog')) return;
+      e.preventDefault();
+      B.undo();
     });
     // back in the app: the maps may have changed elsewhere (other device, other window)
     document.addEventListener('visibilitychange', () => {

@@ -1304,6 +1304,8 @@ dl.keys dd { margin: 0; color: var(--label); }
 }
 .chip-checks { font-weight: 600; }
 .chip-checks.all { color: var(--accent); border-color: var(--accent-border); }
+.chip-week { color: var(--accent); border-color: var(--accent-border); background: var(--accent-soft); font-weight: 600; }
+.chip-week.chip-week-old { color: var(--danger); border-color: var(--danger-border); background: var(--danger-soft); }
 .chip-progress { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, var(--mix-base)); background: var(--accent-soft); font-weight: 600; }
 
 .task-progress { display: flex; align-items: center; gap: 6px; margin: 2px 0 4px; }
@@ -1883,6 +1885,13 @@ body.board-mode #toolbar .tb-app { margin-left: auto; }
 .bd-fx.leisure { border-style: dashed; }
 .bd-fx-off { cursor: default; }
 .bd-fx.past { opacity: 0.45; }
+.bd-fx-t { cursor: pointer; }
+.bd-fx-t:hover { text-decoration: underline; }
+.bd-fx { cursor: default; }
+.bd-tick { border: none; background: none; padding: 0 2px; margin: 0 2px 0 0; font: inherit; font-size: 15px; line-height: 1; color: inherit; cursor: pointer; }
+.bd-tick:hover:not(.off) { background: none; color: var(--accent); }
+.bd-tick.off { opacity: 0.4; cursor: default; }
+@media (pointer: coarse) { .bd-tick { font-size: 20px; padding: 2px 6px; } }
 
 .bd-scroll { flex: 1; min-height: 0; overflow: auto; padding: 0 0 16px; }
 .bd-grid {
@@ -1918,6 +1927,10 @@ body.board-mode #toolbar .tb-app { margin-left: auto; }
 }
 .bd-card:hover { border-color: var(--accent-border); }
 .bd-card.overdue { border-left: 3px solid var(--danger); }
+.bd-card[draggable="true"] { cursor: grab; }
+.bd-card.bd-dragging { opacity: 0.4; }
+.bd-card.main { border-style: dashed; }
+.bd-cell.bd-drop { background: var(--accent-soft); outline: 2px dashed var(--accent-border); outline-offset: -4px; }
 .bd-card.done .bd-title { text-decoration: line-through; color: var(--muted); }
 .bd-title { font-weight: 600; overflow-wrap: anywhere; }
 .bd-meta { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 12px; color: var(--label); margin-top: 3px; }
@@ -1932,6 +1945,10 @@ body.board-mode #toolbar .tb-app { margin-left: auto; }
 .bd-hint { padding: 0 12px; }
 
 .bd-lanes-dialog { width: 420px; }
+.bd-split-dialog { width: 440px; }
+.bd-split-dialog h3 { margin-top: 0; color: var(--danger); }
+.bd-split-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; margin-top: 14px; }
+.bd-split-btns .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .bd-lanes-dialog h3 { margin-top: 0; }
 .bd-lane-list { padding-left: 22px; }
 .bd-lane-list li { display: flex; align-items: center; gap: 4px; margin: 3px 0; }

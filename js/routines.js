@@ -735,5 +735,20 @@
     }
   }
 
+  /**
+   * Check off (or open again) from outside the plans - the week board (board.js):
+   * changes [{ id, date, done }] as in applyDone. The open map takes them in one undo
+   * step (track then takes them into the other maps), otherwise they go straight into
+   * the other maps. Resolves once they are collected for writing (P.later).
+   */
+  R.setDone = function (changes) {
+    const S = MM.state;
+    let dirty = false;
+    for (const c of changes) dirty = applyDone(S.doc, c) || dirty;
+    if (dirty) MM.commit(); // track('commit') carries them into the other maps
+    else queue = queue.then(() => syncOthers(changes, S.file.path));
+    return queue;
+  };
+
   R.iso = iso;
 })(window.MM);

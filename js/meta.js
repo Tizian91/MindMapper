@@ -261,6 +261,13 @@
     if (checks && checks.total) {
       h += `<span class="chip chip-checks${checks.done === checks.total ? ' all' : ''}" title="${esc(tr('Check boxes ticked'))}">☑ ${checks.done}/${checks.total}</span>`;
     }
+    // planned for a week on the board (board.js) - while it is open
+    if (m.week && !MM.notPlanned(m.status) && !n.repeat) {
+      const wk = +String(m.week).slice(6);
+      const now = MM.board ? MM.board.weekOf(0) : '';
+      const st = now && m.week < now ? 'chip-week-old' : '';
+      h += `<span class="chip chip-week ${st}" data-meta="week" title="${esc(tr('Planned for {w} on the week board', { w: tr('Week {n}', { n: wk }) }))}">▦ ${esc(tr('Week {n}', { n: wk }))}</span>`;
+    }
     // routine: its rule ("Every Tue 10:00")
     if (n.repeat && MM.routines) {
       const minutes = n.repeat.kind === 'budget' || n.repeat.kind === 'off' ? m.estimate : 0; // others: the estimate chip shows it
