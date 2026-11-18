@@ -849,6 +849,12 @@
     'Checked off: {t}': 'Abgehakt: {t}',
     'Open again: {t}': 'Wieder offen: {t}',
     'Planned for {w} on the week board': 'Auf dem Wochen-Board für {w} vorgemerkt',
+    'show less': 'weniger zeigen',
+    '+ {n} more': '+ {n} weitere',
+    'Plan its sub-tasks / open in the map': 'Untertasks vormerken / in der Map öffnen',
+    'Move / open in the map': 'Verschieben / in der Map öffnen',
+    'Click: details in the panel · drag into another column': 'Klick: Details im Panel · in eine andere Spalte ziehen',
+    'Click: details in the panel': 'Klick: Details im Panel',
   };
   const P = (MM.i18n.phrases = MM.i18n.phrases || {});
   P.de = Object.assign(P.de || {}, DE);

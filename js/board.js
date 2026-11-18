@@ -283,6 +283,9 @@
     document.body.classList.toggle('board-mode', board);
     root().hidden = !board;
     B.updateButtons();
+    MM.project.render(); // no project column beside the board
+    MM.panel.applyLayout(); // the board: the panel only for the card chosen
+    MM.panel.update(true);
     if (board) B.reload();
     else {
       // the canvas was hidden: its size may have changed meanwhile
@@ -352,12 +355,149 @@
         }
       }
     }
+    // what the board shows: the maps of its cards as they are now (afterCommit compares with this)
+    snaps = new Map();
+    infos.clear();
+    for (const { card } of cards.values()) {
+      const n = nodeOf(card.path, card.id);
+      if (n) nodePath.set(n, card.path);
+      if (!snaps.has(card.path)) {
+        const doc = card.path === S.file.path ? S.doc : MM.load.docs().get(card.path);
+        if (doc) snaps.set(card.path, JSON.stringify(doc.nodes));
+      }
+    }
+    if (selKey && !cards.has(selKey)) selKey = null; // its card is gone (deleted, done last week ...)
     const el = root();
     const scroll = el.querySelector('.bd-scroll');
     const keep = scroll ? { x: scroll.scrollLeft, y: scroll.scrollTop } : null;
     el.innerHTML = headHTML(data) + fixedHTML(data) + `<div class="bd-scroll">${gridHTML(data)}</div>`;
     if (keep) Object.assign(el.querySelector('.bd-scroll'), { scrollLeft: keep.x, scrollTop: keep.y });
+    MM.panel.applyLayout();
+    MM.panel.update();
   };
+
+  let renderTimer = null;
+  /** Draw again soon (several changes in a row: once). */
+  const renderSoon = () => {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(() => B.render(), 0);
+  };
+  /** The maps were read again (workload.js): the board shows the new state. */
+  B.refreshed = () => { if (B.active()) renderSoon(); };
+
+  // ---- The card chosen: shown in the panel ----------------------------------------------
+
+  let selKey = null;          // "path#id" of the card chosen
+  let snaps = new Map();      // path -> JSON of its notes when the board was drawn
+  const nodePath = new WeakMap(); // note of a card -> path of its map
+  const infos = new Map();    // path -> main / sub-task info of that map (tasks.js compute)
+
+  const splitKey = (key) => {
+    const i = key.lastIndexOf('#');
+    return { path: key.slice(0, i), id: key.slice(i + 1) };
+  };
+
+  /** The note of the card chosen (MM.selectedNodes on the board, state.js). */
+  B.selectedNodes = () => {
+    if (!selKey) return [];
+    const { path, id } = splitKey(selKey);
+    const n = nodeOf(path, id);
+    return n ? [n] : [];
+  };
+
+  /** Choose a card (null: none) - the panel shows it. */
+  B.select = function (key) {
+    if ((key || null) === selKey) return;
+    selKey = key || null;
+    B.render();
+  };
+
+  /** Name of the map a card's note is in (for the panel). */
+  B.mapOf = (n) => {
+    const p = nodePath.get(n) || (S.doc.nodes[n.id] === n ? S.file.path : '');
+    return p ? MM.project.mapName(p) : '';
+  };
+
+  /** Main / sub-task info of a card from another map, as in its own map (tasks.js info). */
+  B.infoOf = function (n) {
+    const path = nodePath.get(n);
+    if (!path || !B.active()) return null;
+    if (!infos.has(path)) {
+      const docs = MM.load.docs(), doc = docs.get(path);
+      const roots = (p) => (p !== path && docs.get(p) ? MM.tasks.compute(docs.get(p), null).roots : null);
+      infos.set(path, doc ? MM.tasks.compute(doc, roots).info : new Map());
+    }
+    return infos.get(path).get(n.id) || null;
+  };
+
+  // ---- Changes on a card: into the map of its note ------------------------------------------
+  //
+  // Chips, stopwatch, check boxes and the panel change the note and call MM.commit, as in
+  // the map. MM.commit then calls afterCommit: a note of another map is compared with the
+  // board's copy from before - the rules MM.commit applies to the open map follow (main
+  // task / sub-tasks, the day it was finished, the first estimate, the stopwatch, the
+  // question for the actual time) and the changed notes go into their map (P.later).
+  // Ctrl+Z on the board takes such a change back as well.
+
+  let quiet = 0; // the board's own changes (moves, ticks) are recorded by themselves
+
+  B.afterCommit = function () {
+    if (!B.active() || quiet) return;
+    let any = false;
+    for (const [path, snap] of snaps) {
+      const open = path === S.file.path;
+      const doc = open ? S.doc : MM.load.docs().get(path);
+      if (!doc || !doc.nodes) continue;
+      let now = JSON.stringify(doc.nodes);
+      if (now === snap) continue;
+      const prev = { nodes: JSON.parse(snap) };
+      if (!open) {
+        // what MM.commit does for the open map (tasks.js, actual.js)
+        MM.tasks.followStatus(doc, prev);
+        MM.tasks.raiseEstimates(doc);
+        MM.actual.commit(doc, prev);
+        now = JSON.stringify(doc.nodes);
+      }
+      const ids = Object.keys(doc.nodes).filter((id) => JSON.stringify(doc.nodes[id]) !== JSON.stringify(prev.nodes[id]));
+      snaps.set(path, now);
+      if (!ids.length) continue;
+      const after = ids.map((id) => [id, clone(doc.nodes[id])]);
+      const before = ids.filter((id) => prev.nodes[id]).map((id) => [id, clone(prev.nodes[id])]);
+      if (!open) {
+        MM.project.later(path, (d) => { for (const [id, n] of after) if (d.nodes[id]) d.nodes[id] = clone(n); });
+        // checked off here: how long did it take? (the open map asks itself)
+        const ask = ids.filter((id) => {
+          const n = doc.nodes[id], o = prev.nodes[id];
+          return n.meta && n.meta.status === 'done' && !(o && o.meta && o.meta.status === 'done') && MM.actual.askable(n);
+        });
+        if (ask.length) MM.actual.askFor(ask.map((id) => ({ path, node: doc.nodes[id] })));
+      }
+      const t = after.length ? (after[0][1].text || '').split('\n')[0] : '';
+      undoStack.push({ label: t, undo: async () => putNodes(path, before) });
+      any = true;
+    }
+    if (!any) return;
+    infos.clear();
+    MM.load.scheduleRefresh(); // the status bar follows
+    renderSoon();
+  };
+
+  /** Put notes [[id, node]] back into map `path` (undo of a change on the board). */
+  function putNodes(path, list) {
+    quiet++;
+    try {
+      if (path === S.file.path) {
+        for (const [id, n] of list) if (S.doc.nodes[id]) S.doc.nodes[id] = clone(n);
+        MM.commit();
+        return;
+      }
+      const doc = MM.load.docs().get(path);
+      if (doc) for (const [id, n] of list) if (doc.nodes[id]) doc.nodes[id] = clone(n);
+      MM.project.later(path, (d) => { for (const [id, n] of list) if (d.nodes[id]) d.nodes[id] = clone(n); });
+    } finally {
+      quiet--;
+    }
+  }
 
   // ---- Drawing -----------------------------------------------------------------------
 
@@ -439,12 +579,37 @@
     return `<div class="bd-fixed">${head}${f.entries.length ? f.entries.map((e, i) => chip(e, i)).join('') : `<span class="hint">${esc(tr('nothing'))}</span>`}</div>`;
   }
 
+  /** The note of a card as it is now: in the open map, or in the board's copy of its map. */
+  function nodeOf(path, id) {
+    const doc = path === S.file.path ? S.doc : MM.load.docs().get(path);
+    return (doc && doc.nodes && doc.nodes[id]) || null;
+  }
+
+  const openLines = new Set(); // cards whose lines are all shown
+  const LINES = 3; // lines of a task shown on its card before "+ n more"
+
+  /** The lines of a task (bullet points / check boxes, as in the map) - a check box can be ticked here. */
+  function linesHTML(n, key) {
+    if (!MM.hasBlocks || !MM.hasBlocks(n) || !n.blocks) return '';
+    const vis = MM.outline.visible(n.blocks).map((i) => n.blocks[i]).filter((b) => (b.text || '').trim() || MM.outline.isCheck(b));
+    if (!vis.length) return '';
+    const all = openLines.has(key);
+    const shown = all ? vis : vis.slice(0, LINES);
+    const li = shown.map((b) => {
+      const check = MM.outline.isCheck(b);
+      const mark = check
+        ? `<button type="button" class="bd-line-check" data-bd-check="${esc(b.id)}" role="checkbox" aria-checked="${!!b.check}">${b.check ? '☑' : '☐'}</button>`
+        : '<span class="bd-line-dot">•</span>';
+      return `<li class="${check && b.check ? 'checked' : ''}" style="--lvl:${Number(b.level) || 0}">${mark}<span>${esc(b.text)}</span></li>`;
+    }).join('');
+    const more = vis.length > LINES
+      ? `<button type="button" class="bd-more-lines" data-bd-lines="${esc(key)}">${esc(all ? tr('show less') : tr('+ {n} more', { n: vis.length - LINES }))}</button>` : '';
+    return `<ul class="bd-lines">${li}</ul>${more}`;
+  }
+
   function cardHTML(c, col) {
-    const meta = [];
-    if (c.deadline) meta.push(`<span class="${c.overdue ? 'bd-late' : ''}">📅 ${esc(shortDate(c.deadline))}</span>`);
-    if (c.left) meta.push(`<span>⏱ ${esc(H(c.left))}</span>`);
-    else if (!c.estimate && col !== 'done') meta.push(`<span class="bd-noest">${esc(tr('no estimate'))}</span>`);
-    if (c.progress && col !== 'done') meta.push(`<span>${Math.round(c.progress)} %${c.main ? ' ∑' : ''}</span>`);
+    const n = nodeOf(c.path, c.id);
+    const sel = c.key === selKey;
     const marks = [];
     if (c.from) marks.push(`<span class="bd-mark" title="${esc(tr('Planned for an earlier week and not done yet'))}">${esc(tr('from {w}', { w: weekShort(c.from) }))}</span>`);
     if (c.unplanned) marks.push(`<span class="bd-mark bd-mark-soft">${esc(tr('unplanned'))}</span>`);
@@ -452,11 +617,28 @@
     if (c.notSplit && col !== 'done') {
       marks.push(`<span class="bd-mark bd-mark-warn" title="${esc(tr('More than a work day that is not split up into sub-tasks - plan the steps in the map first.'))}">${esc(tr('✂ not split up'))}</span>`);
     }
+    // the task as in the map: progress, chips (a click opens their menu), stopwatch, lines;
+    // the empty chips and the list of the stopwatch only on the card chosen
+    let body = '';
+    if (n) {
+      if (n.type === 'task') {
+        const calc = MM.tasks.info(n);
+        const value = calc ? calc.progress : n.meta.progress;
+        if (calc || MM.meta.hasProgress(n.meta)) {
+          body += `<div class="task-progress bd-progress">${MM.meta.progressBar(value)}<span class="task-progress-val">${MM.meta.progressLabel(value)}${calc ? ' ∑' : ''}</span></div>`;
+        }
+      }
+      body += `<div class="task-meta bd-chips">${MM.meta.chipsHTML(n, sel && col !== 'done', { noWeek: true })}${n.type === 'task' ? MM.actual.buttonHTML(n) : ''}</div>`;
+      if (sel && n.type === 'task') body += MM.actual.logHTML(n) || '';
+      body += linesHTML(n, c.key);
+    }
     // a step can be dragged into another column (not in a past week); a project is planned by its steps
     const drag = !c.main && data && data.kind !== 'past';
-    return `<div class="bd-card${c.overdue ? ' overdue' : ''}${col === 'done' ? ' done' : ''}${c.main ? ' main' : ''}" data-bd-card="${esc(c.key)}" tabindex="0"${drag ? ' draggable="true"' : ''} title="${esc(tr(c.main ? 'Click: plan its sub-tasks or open it in the map' : drag ? 'Drag into another column, or click: move / open in the map' : 'Click: open in the map'))}">
-      <div class="bd-title">${esc(c.title)}</div>
-      ${meta.length ? `<div class="bd-meta">${meta.join('')}</div>` : ''}
+    const moveBtn = data && data.kind !== 'past'
+      ? `<button type="button" class="bd-more" data-bd-more title="${esc(tr(c.main ? 'Plan its sub-tasks / open in the map' : 'Move / open in the map'))}" aria-label="${esc(tr(c.main ? 'Plan its sub-tasks / open in the map' : 'Move / open in the map'))}">${c.main ? '☰' : '⇄'}</button>` : '';
+    return `<div class="bd-card${c.overdue ? ' overdue' : ''}${col === 'done' ? ' done' : ''}${c.main ? ' main' : ''}${sel ? ' selected' : ''}" data-bd-card="${esc(c.key)}" tabindex="0"${drag ? ' draggable="true"' : ''} title="${esc(tr(drag ? 'Click: details in the panel · drag into another column' : 'Click: details in the panel'))}">
+      <div class="bd-card-head"><div class="bd-title">${esc(c.title)}</div>${moveBtn}</div>
+      ${body}
       ${marks.length ? `<div class="bd-marks">${marks.join('')}</div>` : ''}
       <div class="bd-map">${esc(c.map)}</div>
     </div>`;
@@ -573,7 +755,8 @@
       const n = S.doc.nodes[id];
       if (!n) return null;
       fn(n, false);
-      MM.commit();
+      quiet++;
+      try { MM.commit(); } finally { quiet--; }
       return { node: n };
     }
     const cached = MM.load.docs().get(path);
@@ -715,9 +898,15 @@
     const done = !e.done;
     const c = { id: e.id, date: e.kind === 'appt' ? e.date : e.day, done };
     if (e.kind === 'routine') await weekPlanPath(true); // the entry lives in the week plan
-    await MM.routines.setDone([c]);
-    await MM.load.refresh();
-    undoStack.push({ label: e.title, undo: async () => { await MM.routines.setDone([Object.assign({}, c, { done: !done })]); await MM.load.refresh(); } });
+    const setDone = async (list) => {
+      quiet++;
+      let run;
+      try { run = MM.routines.setDone(list); } finally { quiet--; }
+      await run;
+      await MM.load.refresh();
+    };
+    await setDone([c]);
+    undoStack.push({ label: e.title, undo: async () => setDone([Object.assign({}, c, { done: !done })]) });
     B.render();
     const now = data.fixed.entries.find((x) => x.id === e.id && x.kind === e.kind && (x.day === e.day));
     if (now && now.done !== done) MM.ui.flash(tr('The week plan has no entry for this yet - open it once (Week plan ↗), then check it off.'));
@@ -747,7 +936,8 @@
     };
     const set = (count) => {
       if (path === S.file.path) {
-        if (apply(S.doc, count)) MM.commit();
+        quiet++;
+        try { if (apply(S.doc, count)) MM.commit(); } finally { quiet--; }
         return;
       }
       const cached = MM.load.docs().get(path);
@@ -781,9 +971,48 @@
     if (cd) {
       const hit = cards.get(cd.dataset.bdCard);
       if (!hit) return;
-      if (data.kind === 'past') return openNote(hit.card.path, hit.card.id);
-      const r = cd.getBoundingClientRect();
-      cardMenu(hit.card, e.clientX || r.left + 12, e.clientY || r.bottom);
+      const c = hit.card, n = nodeOf(c.path, c.id);
+      // the arrows: move the card, plan a project's sub-tasks, open it in the map
+      const more = t.closest('[data-bd-more]');
+      if (more) {
+        const r = more.getBoundingClientRect();
+        cardMenu(c, r.left, r.bottom + 2);
+        return;
+      }
+      const lines = t.closest('[data-bd-lines]');
+      if (lines) {
+        if (openLines.has(c.key)) openLines.delete(c.key);
+        else openLines.add(c.key);
+        B.render();
+        return;
+      }
+      if (n) {
+        // as on the task in the map (interaction.js): stopwatch, its list, chips, check boxes
+        if (t.closest('[data-timer]')) return MM.actual.toggle(n);
+        const del = t.closest('[data-log-del]');
+        if (del) return MM.actual.remove(n, Number(del.dataset.logDel));
+        const entry = t.closest('[data-log-edit]');
+        if (entry || t.closest('[data-log-add]')) return MM.actual.editEntry(n, entry ? Number(entry.dataset.logEdit) : -1);
+        const chip = t.closest('.chip[data-meta]');
+        if (chip) {
+          if (selKey !== c.key) B.select(c.key);
+          // the card is drawn anew: the menu opens at the chip as it is now
+          const now = root().querySelector(`[data-bd-card="${CSS.escape(c.key)}"] .chip[data-meta="${CSS.escape(chip.dataset.meta)}"]`) || chip;
+          MM.menu.openMeta(n, chip.dataset.meta, now.getBoundingClientRect());
+          return;
+        }
+        const box = t.closest('[data-bd-check]');
+        if (box) {
+          const b = (n.blocks || []).find((x) => x.id === box.dataset.bdCheck);
+          if (b) {
+            b.check = !b.check;
+            MM.commit();
+          }
+          return;
+        }
+      }
+      // anywhere else: the card is chosen, the panel shows its details (again: closed)
+      B.select(selKey === c.key ? null : c.key);
       return;
     }
     const wk = t.closest('[data-bd-week]');
@@ -897,7 +1126,7 @@
     const big = w ? nodes.find((n) => n.meta.week !== w && left(n) > MM.load.capacity().hours * 60) : null;
     if (big) {
       const answer = await askSplit({ title: (big.text || '').split('\n')[0], left: left(big) });
-      if (answer === 'split') return MM.actions.focusNode(big.id);
+      if (answer === 'split') return B.active() ? openNote(nodePath.get(big) || S.file.path, big.id) : MM.actions.focusNode(big.id);
       if (answer !== 'anyway') return;
     }
     for (const n of nodes) {
@@ -960,9 +1189,15 @@
       clearDrop();
       el.querySelectorAll('.bd-dragging').forEach((x) => x.classList.remove('bd-dragging'));
     });
-    // Ctrl+Z on the board: its last move (the keys of the hidden map are off, interaction.js)
+    // Ctrl+Z on the board: its last change (the keys of the hidden map are off, interaction.js);
+    // Escape: no card chosen any more
     window.addEventListener('keydown', (e) => {
-      if (!B.active() || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || e.shiftKey) return;
+      if (!B.active()) return;
+      if (e.key === 'Escape' && selKey && !document.querySelector('dialog[open]') && !(MM.menu && MM.menu.isOpen())) {
+        B.select(null);
+        return;
+      }
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || e.shiftKey) return;
       if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"], dialog')) return;
       e.preventDefault();
       B.undo();
@@ -974,4 +1209,13 @@
   };
 
   MM.actions.setMode = (mode) => B.setMode(mode);
+  /** Panel of a card: "Open in the map". */
+  MM.actions.boardOpenCard = () => {
+    if (!selKey) return;
+    const { path, id } = splitKey(selKey);
+    openNote(path, id);
+  };
+  // the close button of the panel on the board: the card is no longer chosen (the panel setting of the maps stays)
+  const togglePanel = MM.actions.togglePanel;
+  MM.actions.togglePanel = (source) => (B.active() ? B.select(null) : togglePanel(source));
 })(window.MM);

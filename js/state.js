@@ -756,8 +756,11 @@ window.MM = window.MM || {};
 
   MM.node = (id) => MM.state.doc.nodes[id];
   MM.edge = (id) => MM.state.doc.edges[id];
-  MM.selectedNodes = () => [...MM.state.selection].map(MM.node).filter(Boolean);
-  MM.selectedEdges = () => [...MM.state.selection].map(MM.edge).filter(Boolean);
+  // on the week board (board.js) the selection is the card chosen there - a note of any map;
+  // the panel and the chip menus work on it as on a note of the open map
+  const onBoard = () => !!(MM.board && MM.board.active());
+  MM.selectedNodes = () => (onBoard() ? MM.board.selectedNodes() : [...MM.state.selection].map(MM.node).filter(Boolean));
+  MM.selectedEdges = () => (onBoard() ? [] : [...MM.state.selection].map(MM.edge).filter(Boolean));
 
   MM.select = function (ids) {
     MM.state.selection = new Set(ids);
@@ -853,6 +856,8 @@ window.MM = window.MM || {};
       if (MM.storage) MM.storage.scheduleAutosave();
     }
     MM.refresh();
+    // a card of the week board changed (chip, stopwatch, panel): into the map of its note
+    if (MM.board) MM.board.afterCommit();
   };
 
   /** Redraw everything (defined fully in main.js once all modules are loaded). */

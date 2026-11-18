@@ -1,6 +1,6 @@
 # MindMapper – Plan: Wochen-Board (Scrumban)
 
-Stand: 18.11.2026, mit dem Nutzer besprochen. **Etappe A umgesetzt** (Commit 2651733, getestet PC + Handy). **Etappe B, Teil 1 umgesetzt, noch nicht getestet / nicht committet:** Karten verschieben (Ziehen + Menü), Projekt-Menü mit Untertasks, Abhaken in *Fest diese Woche* (`routines.setDone`, Wochenbudgets über ihre Kästchen), Board-Strg+Z, Chip `▦ KW 47` in der Map, Hinweis „✂ nicht zerlegt“ beim Vormerken (aus Etappe C vorgezogen). Offen aus B: **Teil 2** – Karten wie Task-Notes bearbeiten (Chips, Stoppuhr, Panel).
+Stand: 18.11.2026, mit dem Nutzer besprochen. **Etappe A umgesetzt** (Commit 2651733, getestet PC + Handy). **Etappe B, Teil 1 umgesetzt** (Commit 25ad773, am PC getestet): Karten verschieben (Ziehen + Menü), Projekt-Menü mit Untertasks, Abhaken in *Fest diese Woche* (`routines.setDone`, Wochenbudgets über ihre Kästchen), Board-Strg+Z, Chip `▦ KW 47` in der Map, Hinweis „✂ nicht zerlegt“ beim Vormerken (aus Etappe C vorgezogen). **Etappe B, Teil 2 umgesetzt, noch nicht getestet / nicht committet:** Karten als Task-Notes (Chips mit Menü, Stoppuhr, Kästchen, Zeilen), Panel für die gewählte Karte (nur Details), Speichern über `board.afterCommit` (Vergleich mit der Kopie beim Zeichnen, Regeln von `MM.commit` für fremde Maps, `P.later`), `MM.selectedNodes` = gewählte Karte im Board-Modus, `tasks.info` für fremde Maps über `board.infoOf`. Offen: Etappe D (Tages-/Monatspläne hinter Einstellung).
 
 ## Ziel
 

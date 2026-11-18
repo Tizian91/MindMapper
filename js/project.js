@@ -1256,7 +1256,8 @@
   let lastKey = '';
   P.render = function () {
     if (!root) return;
-    document.getElementById('main').classList.toggle('with-sidebar', !!S.settings.showProject);
+    // the week board shows all maps: no project column beside it (board.js)
+    document.getElementById('main').classList.toggle('with-sidebar', !!S.settings.showProject && !(MM.board && MM.board.active()));
     // rebuild only when something visible changed (keeps clicks from getting lost)
     const key = JSON.stringify([P.status, P.backend && P.backend.name, P.cloud && P.cloud.signedIn(), paths(P.entries), S.file.path, S.file.name, [...collapsed], P.history, MM.getLang(), P.diaries.map((d) => [d.name, (d.copies || []).length])]);
     if (key === lastKey) return;

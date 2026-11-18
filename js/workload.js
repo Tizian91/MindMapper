@@ -73,7 +73,7 @@
 
   /**
    * Planned work items of the given docs (Map path -> doc).
-   * skip: Set of note ids of the open map to leave out (for the "without this note" preview).
+   * skip: Set of note ids to leave out, in any map (ids are unique) (for the "without this note" preview).
    * Item: { path, id, title, deadline, scheduled, time, minutes, missing }
    */
   L.items = function (docs, skip) {
@@ -84,11 +84,10 @@
     };
     const out = [];
     for (const [path, doc] of docs) {
-      const isOpen = doc === S.doc;
       // tasks with sub-tasks (here or in their derived map): their sub-tasks carry the work
       const parents = MM.tasks.compute(doc, (p) => (p !== path ? rootsOf(p) : null)).info;
       for (const n of Object.values(doc.nodes || {})) {
-        if (n.movedTo || n.repeat || (isOpen && skip && skip.has(n.id))) continue; // routines reduce the capacity instead
+        if (n.movedTo || n.repeat || (skip && skip.has(n.id))) continue; // routines reduce the capacity instead
         if (n.type === 'diary') continue; // a diary entry is no planned work
         if (n.taskList) continue; // "Overdue" / "Open tasks": references to tasks counted where they are
         const m = n.meta || {};
@@ -404,6 +403,7 @@
     failed = bad;
     othersVersion++;
     if (MM.ui) MM.ui.update();
+    if (MM.board) MM.board.refreshed(); // the week board shows what was read
     // entries of "Overdue" / "Open tasks" show the state of their tasks in the other maps
     if (MM.render && Object.values(S.doc.nodes).some((n) => n.taskList)) MM.render.all();
   }

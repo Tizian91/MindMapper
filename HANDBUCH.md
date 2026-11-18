@@ -362,7 +362,7 @@ Im Board-Modus gibt es keine Map und keine Map-Werkzeuge, im Maps-Modus kein Boa
 - **Doing-Warnung:** 1 Karte grün, 2 gelb (grenzwertig), ab 3 rot – zu viel gleichzeitig angefangen.
 - **Fest diese Woche:** Die Zeile über dem Board zeigt Routinen (an ihren Tagen, Wochenbudgets einmal mit ihren Kästchen), Termine und freie Tage. Das ist die Zeit, die vor jeder Projektarbeit schon vergeben ist. **Abhaken** mit einem Klick auf ☐: Das wirkt wie das Abhaken im Wochenplan – der Eintrag im Wochen- (und ggf. Tages-)plan wird abgehakt, bei einem Termin auch die Termin-Note; Verlauf und Serie der Routinen zählen es. Abhaken geht nur, was heute oder früher stattfand. Gibt es den Wochenplan dieser Woche noch nicht, legt das Board ihn im Hintergrund an. Bei Wochenbudgets und „x-mal pro Woche“ hakt ein Klick auf ein Kästchen bis zu diesem ab, ein Klick auf ein abgehaktes nimmt es (und die danach) zurück. Ein Klick auf den Text öffnet die Note in ihrer Map.
 - **Blättern:** Mit **‹ ›** zur vorigen oder nächsten Woche, ein Klick auf die Woche führt zurück zu dieser. Kommende Wochen zeigen, was für sie vorgemerkt ist, und ihre Termine – auch ohne dass es den Wochenplan schon gibt. Vergangene Wochen sind nur zum Ansehen: Was war vorgemerkt, was ist liegen geblieben, was wurde erledigt.
-- **Karten verschieben:** Mit der Maus eine Karte in eine andere Spalte **ziehen** – oder die Karte anklicken bzw. antippen (Handy, Tablet) und im Menü **→ To-Do / → In Arbeit / → Erledigt / → Backlog** wählen. Das ändert die Task in ihrer Map:
+- **Karten verschieben:** Mit der Maus eine Karte in eine andere Spalte **ziehen** – oder **⇄** oben rechts an der Karte antippen (Handy, Tablet) und **→ To-Do / → In Arbeit / → Erledigt / → Backlog** wählen. Das ändert die Task in ihrer Map:
   - **→ To-Do:** für die gezeigte Woche vorgemerkt; war sie in Arbeit oder erledigt, ist sie wieder offen.
   - **→ In Arbeit:** Status *In progress* (noch nicht vorgemerkt: für diese Woche).
   - **→ Erledigt:** Status *Done*, 100 %, mit dem Tag; wie beim Abhaken in der Map stoppt die Stoppuhr und MindMapper fragt nach der tatsächlichen Zeit.
@@ -370,10 +370,17 @@ Im Board-Modus gibt es keine Map und keine Map-Werkzeuge, im Maps-Modus kein Boa
   - In einer **kommenden** Woche gibt es nur Backlog und To-Do, eine **vergangene** ist nur zum Ansehen.
   - **Strg+Z** auf dem Board nimmt den letzten Zug (oder das letzte Abhaken) zurück.
   - Die Map der Task wird einen Moment später gespeichert – mehrere Züge hintereinander schreiben sie einmal (wichtig für synchronisierte Ordner).
-- **Projekte:** Ein Klick auf eine Haupttask mit Untertasks listet ihre offenen Untertasks – anklicken merkt sie für die gezeigte Woche vor (✓ = schon vorgemerkt, nochmal klicken = zurück ins Backlog). Die Haupttask selbst wandert nicht.
-- **Zur Note:** **In der Map öffnen ↗** im Menü einer Karte wechselt zu den Maps, öffnet die Map und markiert die Note. **Wochenplan ↗** öffnet den Wochenplan der gezeigten Woche; fehlt er für diese oder eine kommende Woche, wird er angelegt. **↻** liest alle Maps neu (das passiert auch, wenn du in die App zurückkehrst).
+- **Projekte:** **☰** an einer Haupttask mit Untertasks listet ihre offenen Untertasks – anklicken merkt sie für die gezeigte Woche vor (✓ = schon vorgemerkt, nochmal klicken = zurück ins Backlog). Die Haupttask selbst wandert nicht.
+- **Zur Note:** **In der Map öffnen ↗** (im Menü ⇄ / ☰ einer Karte oder im Panel) wechselt zu den Maps, öffnet die Map und markiert die Note. **Wochenplan ↗** öffnet den Wochenplan der gezeigten Woche; fehlt er für diese oder eine kommende Woche, wird er angelegt. **↻** liest alle Maps neu (das passiert auch, wenn du in die App zurückkehrst).
 - **Vormerken in der Map:** Rechtsklick auf eine Task → **Wochen-Board** → **Diese Woche** / **Nächste Woche** / **Nicht vorgemerkt (Backlog)**. Eine Task mit Untertasks wird über ihre Untertasks geplant. Vorgemerkte Tasks tragen in der Map den Chip **▦ KW 47** (rot, wenn die Woche vorbei ist); ein Klick darauf ändert die Woche.
-- **Noch nicht auf dem Board:** Karten wie in der Map bearbeiten (Stoppuhr, Chips, Panel) kommt im nächsten Schritt.
+- **Karten bearbeiten wie in der Map:** Jede Karte ist die Task selbst – mit Fortschrittsbalken, Chips, Stoppuhr ▶/■ und ihren Zeilen (die ersten drei, „+ n weitere“ klappt den Rest auf):
+  - **Chips** anklicken öffnet dasselbe Menü wie in der Map (Status, Frist, Aufwand, Fortschritt …).
+  - **▶ / ■** startet und stoppt die Stoppuhr; die Liste der Läufe (korrigieren, von Hand eintragen) zeigt die gewählte Karte.
+  - **Kästchen** in den Zeilen lassen sich abhaken.
+  - Ein **Klick auf die Karte** wählt sie: Das **Panel** zeigt ihre Details – Datum, Aufwand, Ist-Zeit, Fortschritt, Auslastung, Wiederholung, Status, Priorität, Tags, Link. Die gewählte Karte zeigt auch ihre leeren Chips. Nochmal klicken, **Esc** oder **✕** im Panel: nicht mehr gewählt. Auf dem Handy kommt das Panel von unten.
+  - Es gelten dieselben Regeln wie in der Map: Haupttask erledigt → offene Untertasks mit, Untertasks heben die Schätzung der Haupttask an, Erledigt-Datum, erste Schätzung, Frage nach der tatsächlichen Zeit.
+  - **Nicht auf dem Board:** Text, Typ, Form, Farben und Löschen – dafür **In der Map öffnen ↗**. Text ist Denkarbeit und gehört in die Map.
+  - Gespeichert wird in der Map der Task (bei einer anderen als der offenen: einen Moment später, mehrere Änderungen auf einmal). **Strg+Z** auf dem Board nimmt auch diese Änderungen zurück.
 
 ### Tages-, Wochen- und Monatspläne
 

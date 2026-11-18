@@ -365,7 +365,9 @@
 
   /** { progress, count } of a task of the open map that has sub-tasks, else null. */
   TK.info = function (n) {
-    if (!isTask(n) || S.doc.nodes[n.id] !== n) return null;
+    if (!isTask(n)) return null;
+    // a card of the week board from another map: as calculated for its own map (board.js)
+    if (S.doc.nodes[n.id] !== n) return MM.board && MM.board.infoOf ? MM.board.infoOf(n) : null;
     const key = S.rev + '|' + extVersion;
     if (cache.key !== key || cache.doc !== S.doc) {
       const external = (path) => {

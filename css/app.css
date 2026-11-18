@@ -199,6 +199,7 @@ button.danger { color: var(--danger); }
   #main.hand-right #panel { order: 1; border-left: none; border-right: 1px solid var(--border); }
   #main.hand-right #panel-resizer { order: 2; }
   #main.hand-right #viewport { order: 3; }
+  #main.hand-right #board { order: 3; }
   #main.hand-right #sidebar { order: 4; border-right: none; border-left: 1px solid var(--border); }
 }
 #main.hand-right #panel-expand-btn { right: auto; left: 0; border-right: 1px solid var(--border); border-left: none;
@@ -1841,14 +1842,13 @@ dialog { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); max-heig
 .tb-mode button:first-child { border-radius: 6px 0 0 6px; }
 .tb-mode button:last-child { border-radius: 0 6px 6px 0; margin-left: -5px; }
 .tb-mode button.unavailable:not(.active) { opacity: 0.5; }
-/* in the board mode: no map, no map tools */
-body.board-mode #main, body.board-mode #filterbar,
+/* in the board mode: no map, no project, no map tools - the panel shows the card chosen (board.js) */
+body.board-mode #viewport, body.board-mode #sidebar, body.board-mode #panel-expand-btn, body.board-mode #filterbar,
 body.board-mode #toolbar .tb-map, body.board-mode #toolbar [data-map-only],
 body.board-mode #ink-palette, body.board-mode #nb-bar { display: none !important; }
 body.board-mode #toolbar .tb-app { margin-left: auto; }
 
 #board {
-  grid-row: 4;
   display: flex; flex-direction: column;
   min-height: 0; min-width: 0;
   background: var(--bg);
@@ -1941,6 +1941,26 @@ body.board-mode #toolbar .tb-app { margin-left: auto; }
 .bd-mark-soft { border-color: var(--chip-border); background: var(--chip-bg); color: var(--chip-text); }
 .bd-mark-warn { border-color: var(--danger-border); background: var(--danger-soft); color: var(--danger); font-weight: 600; }
 .bd-map { font-size: 11px; color: var(--muted); margin-top: 3px; overflow-wrap: anywhere; }
+/* a card is the task as in the map: chips, stopwatch, lines; the one chosen is in the panel */
+.bd-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), 0 1px 2px var(--line-soft); }
+.bd-card-head { display: flex; align-items: flex-start; gap: 6px; }
+.bd-card-head .bd-title { flex: 1; min-width: 0; }
+.bd-more { flex: none; border: none; background: none; padding: 0 4px; margin: -2px -4px 0 0; font-size: 15px; line-height: 1.2; color: var(--muted); }
+.bd-more:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent); }
+.bd-progress { margin: 4px 0 2px; }
+.bd-chips { margin: 4px 0 2px; }
+.bd-chips .chip { font-size: 11px; }
+.bd-card.selected .task-timer-add, .bd-card:hover .task-timer-add { opacity: 0.8; }
+.bd-lines { list-style: none; margin: 4px 0 0; padding: 0; font-size: 12px; color: var(--label); }
+.bd-lines li { display: flex; gap: 4px; align-items: flex-start; padding-left: calc(var(--lvl, 0) * 12px); overflow-wrap: anywhere; }
+.bd-lines li.checked > span:last-child { text-decoration: line-through; color: var(--muted); }
+.bd-line-dot { flex: none; width: 1em; text-align: center; color: var(--muted); }
+.bd-line-check { flex: none; border: none; background: none; padding: 0; width: 1.2em; font: inherit; font-size: 14px; line-height: 1; color: inherit; cursor: pointer; }
+.bd-line-check:hover:not(:disabled) { background: none; color: var(--accent); }
+.bd-more-lines { border: none; background: none; padding: 0; margin-top: 2px; font-size: 11px; color: var(--accent); }
+.bd-more-lines:hover:not(:disabled) { background: none; text-decoration: underline; }
+.bd-panel-title { font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+@media (pointer: coarse) { .bd-more { font-size: 20px; padding: 2px 8px; } .bd-line-check { font-size: 18px; } }
 .bd-nodl { align-self: flex-start; border: none; background: none; color: var(--label); padding: 2px 0; }
 .bd-hint { padding: 0 12px; }
 

@@ -143,6 +143,7 @@
   }
 
   function nodePanel(nodes) {
+    if (MM.board && MM.board.active()) return boardPanel(nodes);
     if (nodes.every((x) => x.type === 'draw')) return drawPanel(nodes);
     const n = nodes[0], st = n.style;
     const count = nodes.length > 1 ? ` <span class="muted">(${nodes.length})</span>` : '';
@@ -219,6 +220,20 @@
   }
 
   /** Deadline, estimate, priority and tags of the selected notes. */
+  /**
+   * A card of the week board (board.js): the details of its task - no type, shape, style or
+   * delete; the map is the place for those (and for the text).
+   */
+  function boardPanel(nodes) {
+    const n = nodes[0];
+    const title = (n.text || '').split('\n')[0] || MM.tr('Task');
+    return `<section>${head(esc(MM.tr('Task')))}
+        <div class="bd-panel-title">${esc(title)}</div>
+        <div class="muted">${esc(MM.board.mapOf(n))}</div>
+        <div class="btn-row"><button data-action="boardOpenCard">${esc(MM.tr('Open in the map ↗'))}</button></div>
+      </section>` + detailsSection(nodes);
+  }
+
   function detailsSection(nodes) {
     const m = nodes[0].meta || MM.emptyMeta();
     const prioIcon = () => '<span class="prio-dot"></span>';
@@ -472,7 +487,8 @@
   P.applyLayout = function () {
     const main = document.getElementById('main');
     if (!main) return;
-    const show = S.settings.showPanel !== false;
+    // the week board: the panel is there while a card is chosen (board.js)
+    const show = MM.board && MM.board.active() ? MM.board.selectedNodes().length > 0 : S.settings.showPanel !== false;
     const w = Math.max(PANEL_MIN, Math.min(PANEL_MAX, S.settings.panelWidth || PANEL_DEFAULT));
     main.classList.toggle('with-panel', show);
     // writing hand: the panel on the side of the free hand, the project on the other (MM.panelLeft)

@@ -119,7 +119,13 @@
 
   // ---- Correcting an entry / entering one by hand ----------------------------------------
 
-  let entryDialog = null, editing = null; // editing: { doc, id, i } (i = -1: new entry)
+  let entryDialog = null, editing = null; // editing: { doc, id, i, node } (i = -1: new entry)
+  /** The task whose entry is edited: in the open map, or a card of the week board from another map (board.js). */
+  const editedNode = () => {
+    if (!editing) return null;
+    if (editing.doc === S.doc && S.doc.nodes[editing.id]) return S.doc.nodes[editing.id];
+    return MM.board && MM.board.active() ? editing.node : null;
+  };
   const toDate = (day, time) => {
     const [y, mo, d] = day.split('-').map(Number), [h, mi] = time.split(':').map(Number);
     return new Date(y, mo - 1, d, h, mi).getTime();
@@ -150,7 +156,7 @@
     d.addEventListener('keydown', (e) => e.stopPropagation());
     d.querySelector('[data-te="cancel"]').addEventListener('click', () => d.close());
     d.querySelector('[data-te="delete"]').addEventListener('click', () => {
-      const n = editing && editing.doc === S.doc && S.doc.nodes[editing.id];
+      const n = editedNode();
       d.close();
       if (n && editing.i >= 0) AT.remove(n, editing.i);
     });
@@ -173,7 +179,7 @@
     });
     f.addEventListener('submit', (e) => {
       e.preventDefault();
-      const x = span(), n = editing && editing.doc === S.doc && S.doc.nodes[editing.id];
+      const x = span(), n = editedNode();
       if (!x || !n) return d.close();
       const log = (n.meta.timeLog || []).slice();
       if (editing.i >= 0 && log[editing.i]) log[editing.i] = x;
@@ -193,7 +199,7 @@
     // by hand: the last half hour, ending now (rounded to 5 minutes)
     const end = x ? x.e : Math.round(Date.now() / 300000) * 300000;
     const start = x ? x.s : end - 30 * 60000;
-    editing = { doc: S.doc, id: n.id, i: x ? i : -1 };
+    editing = { doc: S.doc, id: n.id, i: x ? i : -1, node: n };
     entryDialog.querySelector('h3').textContent = x ? tr('Correct the time') : tr('Enter a time');
     const hint = entryDialog.querySelector('.te-note');
     hint.textContent = note || '';

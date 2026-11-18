@@ -187,8 +187,9 @@
   /**
    * HTML for a note's metadata chips.
    * placeholders: also show empty fields (used by task notes, where they are always visible).
+   * opts.noWeek: without the chip of the planned week (the cards of the week board, board.js).
    */
-  META.chipsHTML = function (n, placeholders) {
+  META.chipsHTML = function (n, placeholders, opts) {
     const m = n.meta || MM.emptyMeta();
     let h = '';
     const status = m.status || 'none';
@@ -261,8 +262,8 @@
     if (checks && checks.total) {
       h += `<span class="chip chip-checks${checks.done === checks.total ? ' all' : ''}" title="${esc(tr('Check boxes ticked'))}">☑ ${checks.done}/${checks.total}</span>`;
     }
-    // planned for a week on the board (board.js) - while it is open
-    if (m.week && !MM.notPlanned(m.status) && !n.repeat) {
+    // planned for a week on the board (board.js) - while it is open; not on the board's cards (the board is the week)
+    if (m.week && !MM.notPlanned(m.status) && !n.repeat && !(opts && opts.noWeek)) {
       const wk = +String(m.week).slice(6);
       const now = MM.board ? MM.board.weekOf(0) : '';
       const st = now && m.week < now ? 'chip-week-old' : '';
